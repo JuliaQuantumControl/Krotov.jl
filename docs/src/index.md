@@ -2,13 +2,36 @@
 CurrentModule = Krotov
 ```
 
-# Krotov
+# Krotov.jl
 
-Documentation for [Krotov](https://github.com/goerz/Krotov.jl).
+Julia implementation of Krotov's method for quantum optimal control
 
-```@index
+[Krotov.jl](https://github.com/goerz/Krotov.jl) is a port of the [krotov Python package](https://github.com/qucontrol/krotov)
+
+### Overview
+
+```@contents
+Pages = [
+    "overview.md",
+]
+Depth = 1
 ```
 
-```@autodocs
-Modules = [Krotov]
+### Examples
+
+```@contents
+Pages = [
+    "examples/simple_state_to_state.md",
+    "examples/state_to_state_rwa.md",
+]
+Depth = 1
+```
+
+### API
+
+```@contents
+Pages = [
+    "api.md",
+]
+Depth = 1
 ```
