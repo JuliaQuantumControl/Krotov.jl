@@ -1,0 +1,3 @@
+var documenterSearchIndex = {"docs":
+[{"location":"","page":"Home","title":"Home","text":"CurrentModule = Krotov","category":"page"},{"location":"#Krotov","page":"Home","title":"Krotov","text":"","category":"section"},{"location":"","page":"Home","title":"Home","text":"Documentation for Krotov.","category":"page"},{"location":"","page":"Home","title":"Home","text":"","category":"page"},{"location":"","page":"Home","title":"Home","text":"Modules = [Krotov]","category":"page"},{"location":"#Krotov.Objective","page":"Home","title":"Krotov.Objective","text":"A single objective for optimization with Krotov's method.\n\n\n\n\n\n","category":"type"}]
+}
