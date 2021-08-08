@@ -1,4 +1,8 @@
-# Optimization of a State-to-State Transfer in a Lambda System in the RWA
+# # Optimization of a State-to-State Transfer in a Lambda System in the RWA
+
+#md # !!! tip
+#md #     This example is also available as a Jupyter notebook:
+#md #     [`state_to_state_rwa.ipynb`](@__NBVIEWER_ROOT_URL__/examples/state_to_state_rwa.ipynb)
 
 # This example is illustrates the use of complex-valued control fields. This is
 # accomplished by rewriting the Hamiltonian as the sum of two independent
