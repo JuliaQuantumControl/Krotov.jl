@@ -1,3 +1,5 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Krotov = "b05dcdc7-62f6-4360-bf2c-0898bba419de"
+Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"

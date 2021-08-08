@@ -28,4 +28,5 @@ docs: ## Build the documentation
 	julia --project=docs docs/make.jl
 
 clean: ## Clean up build/doc/testing artifacts
+	for file in examples/*.jl; do rm -f docs/src/"$${file%.jl}".*; done
 	rm -rf docs/build

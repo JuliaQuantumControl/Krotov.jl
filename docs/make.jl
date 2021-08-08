@@ -1,6 +1,9 @@
 using Krotov
 using Documenter
 
+# Generate examples
+include("generate.jl")
+
 DocMeta.setdocmeta!(Krotov, :DocTestSetup, :(using Krotov); recursive=true)
 
 makedocs(;
