@@ -24,3 +24,12 @@ function hamiltonian(Ω=1.0, E0=0.2)
     return [Ĥ₀, [Ĥ₁, ϵ]]
 
 end
+
+H = hamiltonian()
+
+#jl @test length(H) == 2
+
+# The control field here switches on from zero at $t=0$ to it's maximum amplitude
+# 0.2 within the time period 0.3 (the switch-on shape is half a [Blackman pulse](https://en.wikipedia.org/wiki/Window_function#Blackman_window)).
+# It switches off again in the time period 0.3 before the
+# final time $T=5$). We use a time grid with 500 time steps between 0 and $T$:
