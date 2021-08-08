@@ -1,2 +1,4 @@
 *.md
+*.jl
+*.ipynb
 !index.md
