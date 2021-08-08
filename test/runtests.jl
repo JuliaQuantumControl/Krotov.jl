@@ -1,8 +1,10 @@
 using Krotov
 using Test
 
-@testset "Krotov.jl" begin
-    # Write your tests here.
-end
+@testset verbose=true "Krotov.jl" begin
 
-include("test_examples.jl")
+    @testset verbose=true "Examples" begin
+        include("test_examples.jl")
+    end
+
+end

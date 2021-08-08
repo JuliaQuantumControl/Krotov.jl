@@ -1,4 +1,4 @@
-# Test the scripts
+# Test the example scripts
 import Literate
 
 EXAMPLEDIR = joinpath(@__DIR__, "..", "examples")
@@ -16,7 +16,9 @@ module TestSimpleStateToState
     using Test
     mktempdir() do dir
         cd(dir) do
-            include(joinpath(@__DIR__, "examples", "simple_state_to_state.jl"))
+            @testset "Simple State-to-State" begin
+                include(joinpath(@__DIR__, "examples", "simple_state_to_state.jl"))
+            end
         end
     end
 end
@@ -25,7 +27,9 @@ module TestStateToStateRWA
     using Test
     mktempdir() do dir
         cd(dir) do
-            include(joinpath(@__DIR__, "examples", "state_to_state_rwa.jl"))
+            @testset "State-to-State-RWA" begin
+                include(joinpath(@__DIR__, "examples", "state_to_state_rwa.jl"))
+            end
         end
     end
 end
