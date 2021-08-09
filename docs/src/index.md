@@ -6,7 +6,7 @@ CurrentModule = Krotov
 
 Julia implementation of Krotov's method for quantum optimal control
 
-[Krotov.jl](https://github.com/goerz/Krotov.jl) is a port of the [krotov Python package](https://github.com/qucontrol/krotov)
+[Krotov.jl](https://github.com/quantumcontrol-jl/Krotov.jl) is a port of the [krotov Python package](https://github.com/qucontrol/krotov)
 
 ### Overview
 
