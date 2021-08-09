@@ -3,13 +3,16 @@ uuid = "b05dcdc7-62f6-4360-bf2c-0898bba419de"
 authors = ["Michael Goerz <mail@michaelgoerz.net> and contributors"]
 version = "0.1.0"
 
+[deps]
+QuantumControlBase = "f10a33bc-5a64-497c-be7b-6f86b4f0c2aa"
+
 [compat]
 julia = "1.6"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-QuantumOptics = "6e0679c1-51ea-5a7c-ac74-d61b76210b0c"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+QuantumOptics = "6e0679c1-51ea-5a7c-ac74-d61b76210b0c"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "QuantumOptics", "Literate"]
