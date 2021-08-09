@@ -26,6 +26,8 @@ makedocs(;
     ],
 )
 
+rm(joinpath(@__DIR__, "build", "examples", ".gitignore"))
+
 deploydocs(;
     repo="github.com/goerz/Krotov.jl",
 )
