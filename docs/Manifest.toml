@@ -67,7 +67,7 @@ version = "0.21.2"
 [[Krotov]]
 path = ".."
 uuid = "b05dcdc7-62f6-4360-bf2c-0898bba419de"
-version = "0.1.0"
+version = "0.0.1"
 
 [[LaTeXStrings]]
 git-tree-sha1 = "c7f1c695e06c01b95a67f0cd1d34994f3e7db104"

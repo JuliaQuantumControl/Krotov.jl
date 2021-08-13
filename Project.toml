@@ -1,7 +1,7 @@
 name = "Krotov"
 uuid = "b05dcdc7-62f6-4360-bf2c-0898bba419de"
 authors = ["Michael Goerz <mail@michaelgoerz.net> and contributors"]
-version = "0.1.0"
+version = "0.0.1"
 
 [deps]
 QuantumControlBase = "f10a33bc-5a64-497c-be7b-6f86b4f0c2aa"
