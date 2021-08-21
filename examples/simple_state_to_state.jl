@@ -10,7 +10,7 @@
 
 using QuantumControlBase
 using Krotov
-using Plots
+using PyPlot
 #-
 const σ̂_z = ComplexF64[1 0; 0 -1]
 const σ̂_x = ComplexF64[0 1; 1  0]
@@ -30,13 +30,13 @@ function hamiltonian(Ω=1.0, E0=0.2)
 end
 #-
 
-H = hamiltonian()
+H = hamiltonian();
 #jl @test length(H) == 2
 #-
-tlist = collect(range(0, 5, length=500))
+tlist = collect(range(0, 5, length=500));
 #-
 
-plot(tlist, H[2][2].(tlist))
+plot(tlist, H[2][2].(tlist));
 
 
 # The control field here switches on from zero at $t=0$ to it's maximum amplitude

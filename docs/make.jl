@@ -6,6 +6,8 @@ include("generate.jl")
 
 DocMeta.setdocmeta!(Krotov, :DocTestSetup, :(using Krotov); recursive=true)
 
+println("Starting makedocs")
+
 makedocs(;
     modules=[Krotov],
     authors="Michael Goerz <mail@michaelgoerz.net> and contributors",
@@ -25,6 +27,8 @@ makedocs(;
         "API" => "api.md",
     ],
 )
+
+println("Finished makedocs")
 
 rm(joinpath(@__DIR__, "build", "examples", ".gitignore"))
 

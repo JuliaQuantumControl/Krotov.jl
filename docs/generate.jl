@@ -1,6 +1,8 @@
 # generate examples
 import Literate
 
+println("Start generating Literate.jl examples")
+
 EXAMPLEDIR = joinpath(@__DIR__, "..", "examples")
 GENERATEDDIR = joinpath(@__DIR__, "src", "examples")
 mkpath(GENERATEDDIR)
@@ -24,3 +26,5 @@ cd(GENERATEDDIR) do
     foreach(file -> endswith(file, ".vtu") && rm(file), readdir())
     foreach(file -> endswith(file, ".pvd") && rm(file), readdir())
 end
+
+println("Finished generating Literate.jl examples")
