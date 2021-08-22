@@ -1,4 +1,4 @@
-# # Optimization of a State-to-State Transfer in a Two-Level-System
+# # Example 1: Optimization of a State-to-State Transfer in a Two-Level-System
 
 #md # !!! tip
 #md #     This example is also available as a Jupyter notebook:

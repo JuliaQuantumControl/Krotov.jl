@@ -22,9 +22,10 @@ makedocs(;
     pages=[
         "Home" => "index.md",
         "Overview" => "overview.md",
-        hide("Examples" => "examples/index.md",
-             ["examples/simple_state_to_state.md",
-              "examples/state_to_state_rwa.md"]),
+        "Examples" => [
+            "List of Examples" => "examples/index.md",
+            "Example 1 (TLS)" => "examples/simple_state_to_state.md",
+            "Example 2 (RWA)" => "examples/state_to_state_rwa.md"],
         "API" => "api.md",
     ],
 )
