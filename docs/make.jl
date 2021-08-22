@@ -14,9 +14,10 @@ makedocs(;
     repo="https://github.com/QuantumControl-jl/Krotov.jl/blob/{commit}{path}#{line}",
     sitename="Krotov.jl",
     format=Documenter.HTML(;
-        prettyurls=get(ENV, "CI", "false") == "true",
+        prettyurls=true,
         canonical="https://QuantumControl-jl.github.io/Krotov.jl",
         assets=String[],
+        mathengine=KaTeX(),
     ),
     pages=[
         "Home" => "index.md",
