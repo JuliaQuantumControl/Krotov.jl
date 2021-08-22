@@ -44,6 +44,7 @@
 # simple canonical optimization problem: the transfer of population in a two
 # level system.
 
+using QuantumPropagators
 using QuantumControlBase
 using Krotov
 
@@ -65,7 +66,7 @@ function hamiltonian(Ω=1.0, E0=0.2)
     Ĥ₀ = -0.5 * Ω * σ̂_z
     Ĥ₁ = σ̂_x
     ϵ(t) = E0 * flattop(t, T=5, t_rise=0.3, func=:blackman)
-    return [Ĥ₀, [Ĥ₁, ϵ]]
+    return (Ĥ₀, (Ĥ₁, ϵ))
 end
 ;
 #-
@@ -95,7 +96,7 @@ end
 plot_pulse(ϵ::T, tlist) where T<:Function =
     plot_pulse([ϵ(t) for t in tlist], tlist)
 
-plot_pulse(H[2][2], tlist)
+#!jl plot_pulse(H[2][2], tlist)
 
 # ## Optimization target
 
@@ -119,19 +120,45 @@ end
 #jl @test dot(ket(0), ket(1)) ≈ 0
 #-
 
-objectives = [Objective(ket(0), H, ket(1))]
+objectives = [Objective(initial_state=ket(0), generator=H, target=ket(1))]
 
 #-
 #jl @test length(objectives) == 1
 #-
 
 problem = ControlProblem(
-    objectives,
-    Dict(
+    objectives=objectives,
+    pulse_options=Dict(
         H[2][2]  => Dict(
             :lambda_a => 5,
             :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
         )
     ),
-    tlist
+    tlist=tlist,
 );
+
+# ## Simulate dynamics under the guess field
+
+# Before running the optimization procedure, we first simulate the dynamics under the
+# guess field $\epsilon_{0}(t)$. The following solves equation of motion for the
+# defined objective, which contains the initial state $\ket{\Psi_{\init}}$ and
+# the Hamiltonian $\op{H}(t)$ defining its evolution.
+
+guess_dynamics = propagate(
+        objectives[1], problem.tlist;
+        storage=true, observables=(Ψ->abs.(Ψ).^2, )
+)
+
+#-
+
+function plot_population(pop0::Vector, pop1::Vector, tlist)
+    fig, ax = matplotlib.pyplot.subplots(figsize=(6, 3))
+    ax.plot(tlist, pop0, label="0")
+    ax.plot(tlist, pop1, label="1")
+    ax.legend()
+    ax.set_xlabel("time")
+    ax.set_ylabel("population")
+    return fig
+end
+
+#!jl plot_population(guess_dynamics[1,:], guess_dynamics[2,:], tlist)
