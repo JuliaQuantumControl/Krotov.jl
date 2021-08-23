@@ -64,15 +64,32 @@ struct KrotovWrk
 end
 
 
-function optimize_pulses(
-    control_problem;
-    #=chi_constructor,=#
-    # TODO: use kwargs from ControlProblem
-    sigma=nothing,
-    iter_start=0,
-    iter_stop=5000,
-    skip_initial_forward_propagation=false,
-)
+"""Use Krotov's method to optimize the given optimization problem.
+
+```julia
+result = optimize_pulses(control_problem; chi_func, kwargs...)
+```
+
+optimizes the control problem defined in `control_problem`. The optimization
+functional is given implicitly via the mandatory keyword argument `chi_func`.
+
+# Optional Keyword Arguments
+
+The following keyword arguments are supported (with default values):
+
+* `sigma=nothing`: Function that calculate the second-order contribution. If not given,
+   the first-order Krotov method is used.
+* `iter_start=0`: the initial iteration number
+* `iter_stop=5000`: the maximum iteration number
+
+"""
+function optimize_pulses(control_problem; kwargs...)
+    #=chi_constructor = kwargs[:chi_constructor]=#
+    sigma = get(kwargs, :sigma, nothing)
+    iter_start = get(kwargs, :iter_start, 0)
+    iter_stop = get(kwargs, :iter_stop, 5000)
+    skip_initial_forward_propagation = get(kwargs, :skip_initial_forward_propagation, false)
+
     wrk = KrotovWrk(control_problem)
 
     if skip_initial_forward_propagation
