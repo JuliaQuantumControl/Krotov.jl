@@ -76,5 +76,7 @@ function plot_population(pop0::Vector, pop1::Vector, tlist)
     return fig
 end
 
+opt_result = optimize_pulses(problem)
+
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 
