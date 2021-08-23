@@ -40,7 +40,6 @@ using QuantumPropagators
     Ψ = copy(Ψ₀)
     wrk = NewtonWrk(Ψ₀, 5)
     newton!(Ψ, H, dt, wrk)
-    println(wrk.restarts)
     Ψ_out = copy(Ψ)
     @test norm(Ψ_out) ≈ 1
 

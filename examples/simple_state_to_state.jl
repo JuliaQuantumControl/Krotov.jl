@@ -48,6 +48,8 @@ using QuantumPropagators
 using QuantumControlBase
 using Krotov
 
+#jl using Test
+
 # ## Two-level Hamiltonian
 
 # We consider the Hamiltonian $\op{H}_{0} = - \frac{\omega}{2} \op{\sigma}_{z}$, representing

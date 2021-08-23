@@ -14,9 +14,10 @@ Run
 
 for running the entire test suite. Alternatively, run e.g.
 
-    include("test/test_examples.jl")
+    include("test/generate_example_tests.jl")
+    include("test/examples/simple_state_to_state.jl")
 
-for running an individual test file. Run
+for running an individual example test file. Run
 
     include("docs/make.jl")
 
