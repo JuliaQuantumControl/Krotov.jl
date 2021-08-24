@@ -137,6 +137,7 @@ problem = ControlProblem(
         )
     ),
     tlist=tlist,
+    iter_stop=10,
 );
 
 # ## Simulate dynamics under the guess field
