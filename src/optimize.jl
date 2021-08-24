@@ -1,5 +1,5 @@
 using QuantumControlBase
-using QuantumPropagators
+using QuantumPropagators: initpropwrk, propstep!, init_storage, write_to_storage!, get_from_storage!
 import Base.Threads.@threads
 
 # Krotov workspace (for internal use)
@@ -36,7 +36,11 @@ struct KrotovWrk
 
     vals_dict :: Vector{Any}
 
-    fw_storage :: Vector{Any}
+    fw_storage :: Vector{Any}  # forward storage array (per objective)
+
+    fw_storage2 :: Vector{Any}  # forward storage array (per objective)
+
+    bw_storage :: Vector{Any}  # backward storage array (per objective)
 
     prop_wrk :: Vector{Any}
 
@@ -54,11 +58,16 @@ struct KrotovWrk
         zero_vals = IdDict(control => zero(guess_pulses[i][1]) for (i, control) in enumerate(controls))
         G = [setcontrolvals(obj.generator, zero_vals) for obj in objectives]
         vals_dict = [copy(zero_vals) for _ in objectives]
+        # TODO: forward_storage only if g_b != 0
         fw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
+        # TODO: second forward storage only if second order
+        fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
+        bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
         prop_wrk = [initpropwrk(state[i], tlist, G[i]) for i in 1:length(objectives)]
+        # TODO: Result object
         new(objectives, adjoint_objectives, tlist, controls,
             guess_pulses, pulses, pulse_options, state, G, vals_dict,
-            fw_storage, prop_wrk)
+            fw_storage, fw_storage2, bw_storage, prop_wrk)
     end
 
 end
@@ -72,6 +81,9 @@ result = optimize_pulses(control_problem; chi_func, kwargs...)
 
 optimizes the control problem defined in `control_problem`. The optimization
 functional is given implicitly via the mandatory keyword argument `chi_func`.
+
+The `control_problem` is set up as a
+[`QuantumControlBase.ControlProblem`](@ref).
 
 # Optional Keyword Arguments
 
@@ -91,38 +103,118 @@ function optimize_pulses(control_problem; kwargs...)
     skip_initial_forward_propagation = get(kwargs, :skip_initial_forward_propagation, false)
 
     wrk = KrotovWrk(control_problem)
+    # TODO: if continuing previous optimization, ammend work from existing Result
 
+    i = iter_start
+
+    # TODO: tic-toc time (for infohook)
     if skip_initial_forward_propagation
         @info "Skipping initial forward propagation"
     else
         @info "Initial Forward Propagation"
-        @threads for (i_obj, obj) in collect(enumerate(wrk.objectives))
-            _krotov_initial_fw_prop!(
-                wrk.state[i_obj], obj.initial_state, wrk.tlist,
-                wrk.controls, wrk.vals_dict[i_obj], wrk.guess_pulses,
-                wrk.G[i_obj], wrk.objectives[i_obj].generator,
-                wrk.prop_wrk[i_obj], wrk.fw_storage[i_obj]
-            )
+        @threads for (k, obj) in collect(enumerate(wrk.objectives))
+            krotov_initial_fw_prop!(wrk.state[k], obj.initial_state, k, wrk)
         end
     end
 
-    return wrk # XXX
+    # TODO: tau_vals
+    # TODO: if sigma, fw_storage0 = fw_storage
+    # TODO: set up Result
+    # TODO: info_hook
+
+    return wrk # XXX (premature exit for debugging)
+
+    converged = (iter_stop <= i)
+
+    @info "Optimization"
+    while !converged
+        # TODO: tic-toc time (for infohook)
+        @debug "Krotov iteration $i"
+        krotov_iteration(wrk)
+        # TODO: info_hook
+        # TODO: check convergence
+        i = i + 1
+    end
+
+    # TODO: return result
 
 end
 
+# The dynamical generator for the forward propagation
+function _fw_gen(k, n, wrk) # TODO
+    vals_dict = wrk.vals_dict[k]
+    ϵ = wrk.guess_pulses
+    t = wrk.tlist
+    for (l, control) in enumerate(wrk.controls)
+        vals_dict[control] = ϵ[l][n]
+    end
+    dt = t[n+1] - t[n]
+    setcontrolvals!(wrk.G[k], wrk.objectives[k].generator, vals_dict)
+    return wrk.G[k], dt
+end
 
-function _krotov_initial_fw_prop!(Ψ, Ψ₀, tlist, controls, vals_dict,
-                                  guess_pulses, G, generator, prop_wrk, storage)
-    copyto!(Ψ, Ψ₀)
-    write_to_storage!(storage, 1, Ψ₀)
-    nsteps = length(tlist) - 1
-    for i = 1:nsteps
-        for (i_ctrl, control) in enumerate(controls)
-            vals_dict[control] = guess_pulses[i_ctrl][i]
+function krotov_initial_fw_prop!(ϕₖ, ϕₖⁱⁿ, k, wrk)
+    Φ₀ = wrk.fw_storage[k]
+    copyto!(ϕₖ,  ϕₖⁱⁿ)
+    (Φ₀ ≠ nothing) && write_to_storage!(Φ₀, 1,  ϕₖⁱⁿ)
+    N_T = length(wrk.tlist) - 1
+    for n = 1:N_T
+        G, dt = _fw_gen(k, n, wrk)
+        propstep!(ϕₖ, G, dt, wrk.prop_wrk[k])
+        (Φ₀ ≠ nothing) && write_to_storage!(Φ₀, n+1, ϕₖ)
+    end
+end
+
+# The dynamical generator for the backward propagation
+function _bw_gen(k, n, wrk) # TODO: check if this is correct
+    vals_dict = wrk.vals_dict[k]
+    ϵ = wrk.guess_pulses
+    t = wrk.tlist
+    for (l, control) in enumerate(wrk.controls)
+        vals_dict[control] = ϵ[l][n]
+    end
+    dt = t[n+1] - t[n]
+    setcontrolvals!(wrk.G[k], wrk.adjoint_objectives[k].generator, vals_dict)
+    return G, -dt
+end
+
+function krotov_iteration(wrk)
+
+    ϕ = wrk.state  # assumed to contain the results of forward propagation
+    chi_constructor = ϕ -> ϕ  # TODO: get function from arguments
+    χ = chi_constructor(ϕ)
+    N_T = length(wrk.tlist) - 1
+    N = length(wrk.objectives)
+    L = length(wrk.controls)
+    X = wrk.bw_storage
+
+    # backward propagation
+    @threads for k = 1:N
+        write_to_storage!(X[k], N_T+1, χ[k])
+        for n = N_T:-1:1
+            local (G, dt) = _bw_gen(k, n, wrk)
+            propstep!(χ[k], G, dt, wrk.prop_work[k])
+            write_to_storage!(X[k], n, χ[k])
         end
-        dt = tlist[i+1] - tlist[i]
-        setcontrolvals!(G, generator, vals_dict)
-        QuantumPropagators.propstep!(Ψ, G, dt, prop_wrk)
-        write_to_storage!(storage, i+1, Ψ)
+    end
+
+    # pulse update and forward propagation
+
+    @threads for k = 1:N
+        copyto!(ϕ[k], wrk.objectives[k].initial_state)
+    end
+
+    for n = 1:N_T
+        χ = wrk.state
+        for k = 1:N
+            get_from_storage!(χ[k], X[k], n)
+        end
+        Δϵₙ = [_update() for l in 1:L]
+        # TODO: second order
+        # TODO: apply pulse update
+        @threads for k = 1:N
+            # TODO: fw-prop and storage
+        end
+        # TODO: update sigma
     end
 end
