@@ -1,5 +1,6 @@
 using QuantumControlBase
 using QuantumPropagators: initpropwrk, propstep!, init_storage, write_to_storage!, get_from_storage!
+using LinearAlgebra
 using Dates
 import Base.Threads.@threads
 
@@ -88,7 +89,7 @@ struct KrotovWrk
     guess_pulses :: Vector{Any}
 
     # The optimized pulses
-    pulses :: Vector{Any}
+    optimized_pulses :: Vector{Any}
 
     # map of controls to options
     pulse_options :: AbstractDict
@@ -130,7 +131,7 @@ struct KrotovWrk
         guess_pulses = [
             discretize_on_midpoints(control, tlist) for control in controls
         ]
-        pulses = [copy(pulse) for pulse in guess_pulses]
+        optimized_pulses = [copy(pulse) for pulse in guess_pulses]
         pulse_options = problem.pulse_options
         result = KrotovResult(problem)
         ϕ = [similar(obj.initial_state) for obj in objectives]
@@ -146,8 +147,8 @@ struct KrotovWrk
         prop_wrk = [initpropwrk(ϕ[i], tlist, G[i]) for i in 1:length(objectives)]
         # TODO: need separate prop_wrk for bw-prop?
         new(objectives, adjoint_objectives, kwargs, controls,
-            guess_pulses, pulses, pulse_options, result, ϕ, χ, G, vals_dict,
-            fw_storage, fw_storage2, bw_storage, prop_wrk)
+            guess_pulses, optimized_pulses, pulse_options, result, ϕ, χ, G,
+            vals_dict, fw_storage, fw_storage2, bw_storage, prop_wrk)
     end
 
 end
@@ -211,14 +212,18 @@ function optimize_pulses(problem)
     converged = (iter_stop <= i)
     # TODO: converged = converged || check_convergence(wrk)
 
+    ϵ⁰ = wrk.guess_pulses
+    ϵ¹ = wrk.optimized_pulses
+
     while !converged
         i = i + 1
         @info "Krotov iteration $i"
-        krotov_iteration(wrk)
+        krotov_iteration(wrk, ϵ⁰, ϵ¹)
         # TODO: info_hook(wrk, i)
         update_result!(wrk.result, i)
         converged = converged || (iter_stop <= i)
         # TODO: converged = converged || check_convergence(wrk)
+        ϵ⁰, ϵ¹ = ϵ¹, ϵ⁰
     end
 
     finalize_result!(wrk.result)
@@ -232,15 +237,16 @@ function krotov_initial_fw_prop!(ϕₖ, ϕₖⁱⁿ, k, wrk)
     copyto!(ϕₖ,  ϕₖⁱⁿ)
     (Φ₀ ≠ nothing) && write_to_storage!(Φ₀, 1,  ϕₖⁱⁿ)
     N_T = length(wrk.result.tlist) - 1
+    ϵ⁰ = wrk.guess_pulses
     for n = 1:N_T
-        G, dt = _fw_gen(k, n, wrk)
+        G, dt = _fw_gen(ϵ⁰, k, n, wrk)
         propstep!(ϕₖ, G, dt, wrk.prop_wrk[k])
         (Φ₀ ≠ nothing) && write_to_storage!(Φ₀, n+1, ϕₖ)
     end
 end
 
 
-function krotov_iteration(wrk)
+function krotov_iteration(wrk, ϵ⁰, ϵ¹)
 
     ϕ = wrk.ϕ  # assumed to contain the results of forward propagation
     χ = wrk.χ
@@ -249,6 +255,7 @@ function krotov_iteration(wrk)
     N = length(wrk.objectives)
     L = length(wrk.controls)
     X = wrk.bw_storage
+    Φ = wrk.fw_storage  # TODO: pass in Φ₁, Φ₀ as parameters
 
     # TODO: re-initialize wrk.prop_wrk?
 
@@ -257,7 +264,7 @@ function krotov_iteration(wrk)
     @threads for k = 1:N
         write_to_storage!(X[k], N_T+1, χ[k])
         for n = N_T:-1:1
-            local (G, dt) = _bw_gen(k, n, wrk)
+            local (G, dt) = _bw_gen(ϵ⁰, k, n, wrk)
             propstep!(χ[k], G, dt, wrk.prop_wrk[k])
             write_to_storage!(X[k], n, χ[k])
         end
@@ -274,27 +281,32 @@ function krotov_iteration(wrk)
         for k = 1:N
             get_from_storage!(χ[k], X[k], n)
         end
-        Δϵₙ = [_update() for l in 1:L]
-        # TODO: second order
-        # TODO: apply pulse update
+        Δuₙ = zeros(L)
+        for l = 1:L
+            Sₗₙ_λₐₗ = 1.0 # TODO
+            for k = 1:N
+                μ_lkn = 1.0 # TODO
+                Δuₙ[l] += Sₗₙ_λₐₗ * imag(dot(χ[k], μ_lkn, ϕ[k]))
+            end
+        end
+        # TODO: second order update
+        Δϵₙ = Δuₙ  # no parameterization (TODO)
+        for l = 1:L
+            ϵ¹[l][n] = ϵ⁰[l][n] + Δϵₙ[l]
+        end
         @threads for k = 1:N
-            # TODO: fw-prop and storage
+            local (G, dt) = _fw_gen(ϵ¹, k, n, wrk)
+            propstep!(ϕ[k], G, dt, wrk.prop_wrk[k])
+            write_to_storage!(Φ[k], n, ϕ[k])
         end
         # TODO: update sigma
     end
 end
 
 
-# calculate the pulse update at a particular point in time
-function _update() # TODO
-    return 0.0
-end
-
-
 # The dynamical generator for the forward propagation
-function _fw_gen(k, n, wrk) # TODO
+function _fw_gen(ϵ, k, n, wrk) # TODO
     vals_dict = wrk.vals_dict[k]
-    ϵ = wrk.guess_pulses
     t = wrk.result.tlist
     for (l, control) in enumerate(wrk.controls)
         vals_dict[control] = ϵ[l][n]
@@ -306,9 +318,8 @@ end
 
 
 # The dynamical generator for the backward propagation
-function _bw_gen(k, n, wrk) # TODO: check if this is correct
+function _bw_gen(ϵ, k, n, wrk) # TODO: check if this is correct
     vals_dict = wrk.vals_dict[k]
-    ϵ = wrk.guess_pulses
     t = wrk.result.tlist
     for (l, control) in enumerate(wrk.controls)
         vals_dict[control] = ϵ[l][n]
