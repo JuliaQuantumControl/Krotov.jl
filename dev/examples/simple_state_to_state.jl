@@ -59,6 +59,7 @@ problem = ControlProblem(
         )
     ),
     tlist=tlist,
+    iter_stop=10,
 );
 
 guess_dynamics = propagate(
