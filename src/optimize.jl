@@ -4,6 +4,7 @@ import Base.Threads.@threads
 
 # Krotov workspace (for internal use)
 struct KrotovWrk
+    # TODO: specify types more strictly
 
     # a copy of the objectives
     objectives :: Vector{QuantumControlBase.Objective}
@@ -15,6 +16,9 @@ struct KrotovWrk
     # time grid for propagated states 0, dt, ... T
     tlist :: Vector{Float64}
 
+    # The kwargs from the control problem
+    kwargs :: AbstractDict
+
     # Tuple of the original controls (probably functions)
     controls :: Tuple
 
@@ -25,13 +29,18 @@ struct KrotovWrk
     pulses :: Vector{Any}
 
     # map of controls to options
-    pulse_options :: Dict{Any, Any}
+    pulse_options :: AbstractDict
 
     #################################
     # scratch objects, per objective:
 
-    state :: Vector{Any}
+    # forward-propagated states
+    ϕ :: Vector{Any}
 
+    # backward-propagated states
+    χ :: Vector{Any}
+
+    # dynamical generator at a particular point in time
     G :: Vector{Any}
 
     vals_dict :: Vector{Any}
@@ -49,12 +58,14 @@ struct KrotovWrk
         adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
         controls = getcontrols(objectives)
         tlist = problem.tlist
+        kwargs = problem.kwargs
         guess_pulses = [
             discretize_on_midpoints(control, tlist) for control in controls
         ]
         pulses = [copy(pulse) for pulse in guess_pulses]
         pulse_options = problem.pulse_options
-        state = [similar(obj.initial_state) for obj in objectives]
+        ϕ = [similar(obj.initial_state) for obj in objectives]
+        χ = [similar(obj.initial_state) for obj in objectives]
         zero_vals = IdDict(control => zero(guess_pulses[i][1]) for (i, control) in enumerate(controls))
         G = [setcontrolvals(obj.generator, zero_vals) for obj in objectives]
         vals_dict = [copy(zero_vals) for _ in objectives]
@@ -63,10 +74,10 @@ struct KrotovWrk
         # TODO: second forward storage only if second order
         fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
         bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
-        prop_wrk = [initpropwrk(state[i], tlist, G[i]) for i in 1:length(objectives)]
+        prop_wrk = [initpropwrk(ϕ[i], tlist, G[i]) for i in 1:length(objectives)]
         # TODO: Result object
-        new(objectives, adjoint_objectives, tlist, controls,
-            guess_pulses, pulses, pulse_options, state, G, vals_dict,
+        new(objectives, adjoint_objectives, tlist, kwargs, controls,
+            guess_pulses, pulses, pulse_options, ϕ, χ, G, vals_dict,
             fw_storage, fw_storage2, bw_storage, prop_wrk)
     end
 
@@ -76,33 +87,40 @@ end
 """Use Krotov's method to optimize the given optimization problem.
 
 ```julia
-result = optimize_pulses(control_problem; chi_func, kwargs...)
+result = optimize_pulses(problem)
 ```
 
-optimizes the control problem defined in `control_problem`. The optimization
-functional is given implicitly via the mandatory keyword argument `chi_func`.
-
-The `control_problem` is set up as a
+optimizes the control `problem`, see
 [`QuantumControlBase.ControlProblem`](@ref).
 
-# Optional Keyword Arguments
+Parameters are taken from the keyword arguments used in the instantiation of
+`problem`.
 
-The following keyword arguments are supported (with default values):
+# Required problem keyword arguments
 
-* `sigma=nothing`: Function that calculate the second-order contribution. If not given,
-   the first-order Krotov method is used.
+The optimization functional is given implicitly via the mandatory `problem`
+keyword argument `chi!`.
+
+# Optional problem keyword arguments
+
+The following `problem` keyword arguments are supported (with default values):
+
+* `sigma=nothing`: Function that calculate the second-order contribution. If
+   not given, the first-order Krotov method is used.
 * `iter_start=0`: the initial iteration number
 * `iter_stop=5000`: the maximum iteration number
 
 """
-function optimize_pulses(control_problem; kwargs...)
-    #=chi_constructor = kwargs[:chi_constructor]=#
-    sigma = get(kwargs, :sigma, nothing)
-    iter_start = get(kwargs, :iter_start, 0)
-    iter_stop = get(kwargs, :iter_stop, 5000)
-    skip_initial_forward_propagation = get(kwargs, :skip_initial_forward_propagation, false)
+function optimize_pulses(problem)
+    #=chi! = problem.kwargs[:chi!]=#
+    sigma = get(problem.kwargs, :sigma, nothing)
+    iter_start = get(problem.kwargs, :iter_start, 0)
+    iter_stop = get(problem.kwargs, :iter_stop, 5000)
+    skip_initial_forward_propagation = get(
+        problem.kwargs, :skip_initial_forward_propagation, false
+    )
 
-    wrk = KrotovWrk(control_problem)
+    wrk = KrotovWrk(problem)
     # TODO: if continuing previous optimization, ammend work from existing Result
 
     i = iter_start
@@ -113,7 +131,7 @@ function optimize_pulses(control_problem; kwargs...)
     else
         @info "Initial Forward Propagation"
         @threads for (k, obj) in collect(enumerate(wrk.objectives))
-            krotov_initial_fw_prop!(wrk.state[k], obj.initial_state, k, wrk)
+            krotov_initial_fw_prop!(wrk.ϕ[k], obj.initial_state, k, wrk)
         end
     end
 
@@ -180,15 +198,16 @@ end
 
 function krotov_iteration(wrk)
 
-    ϕ = wrk.state  # assumed to contain the results of forward propagation
-    chi_constructor = ϕ -> ϕ  # TODO: get function from arguments
-    χ = chi_constructor(ϕ)
+    ϕ = wrk.ϕ  # assumed to contain the results of forward propagation
+    χ = wrk.χ
+    chi! = (χ, ϕ) -> copyto!(χ, ϕ)  # TODO: get function from arguments
     N_T = length(wrk.tlist) - 1
     N = length(wrk.objectives)
     L = length(wrk.controls)
     X = wrk.bw_storage
 
     # backward propagation
+    chi!(χ, ϕ)
     @threads for k = 1:N
         write_to_storage!(X[k], N_T+1, χ[k])
         for n = N_T:-1:1
@@ -205,7 +224,7 @@ function krotov_iteration(wrk)
     end
 
     for n = 1:N_T
-        χ = wrk.state
+        χ = wrk.χ
         for k = 1:N
             get_from_storage!(χ[k], X[k], n)
         end
