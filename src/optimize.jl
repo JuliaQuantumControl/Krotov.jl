@@ -1,6 +1,55 @@
 using QuantumControlBase
 using QuantumPropagators: initpropwrk, propstep!, init_storage, write_to_storage!, get_from_storage!
+using Dates
 import Base.Threads.@threads
+
+"""Result object returned by [`optimize_pulses`](@ref)."""
+mutable struct KrotovResult
+    tlist :: Vector{Float64}
+    iters :: Vector{Int64}
+    iter_seconds :: Vector{Float64}
+    tau_vals :: Vector{ComplexF64}
+    guess_controls
+    optimized_controls
+    all_pulses
+    states
+    start_local_time
+    end_local_time
+    message
+
+    function KrotovResult(problem)
+        tlist = problem.tlist
+        controls = getcontrols(problem.objectives)
+        iters = Vector{Int64}()
+        iter_seconds = Vector{Float64}()
+        tau_vals = Vector{ComplexF64}()
+        guess_controls = [
+            discretize(control, tlist) for control in controls
+        ]
+        optimized_controls = [copy(guess) for guess in guess_controls]
+        all_pulses = Vector{Any}()
+        states = [similar(obj.initial_state) for obj in problem.objectives]
+        start_local_time = now()
+        end_local_time = now()
+        message = "in progress"
+        new(tlist, iters, iter_seconds, tau_vals, guess_controls,
+            optimized_controls, all_pulses, states, start_local_time,
+            end_local_time, message)
+    end
+end
+
+Base.show(io::IO, r::KrotovResult) = print(io, "KrotovResult<$(r.message)>")
+Base.show(io::IO, ::MIME"text/plain", r::KrotovResult) = print(io, """
+Krotov Optimization Result
+--------------------------
+- Started at $(r.start_local_time)
+- Number of objectives: $(length(r.states))
+- Number of iterations: $(length(r.iters))
+- Reason for termination: $(r.message)
+- Ended at $(r.end_local_time) ($(r.end_local_time - r.start_local_time))""")
+
+
+
 
 # Krotov workspace (for internal use)
 struct KrotovWrk
@@ -12,9 +61,6 @@ struct KrotovWrk
     # the adjoint objectives, containing the adjoint generators for the
     # backward propagation
     adjoint_objectives :: Vector{QuantumControlBase.Objective}
-
-    # time grid for propagated states 0, dt, ... T
-    tlist :: Vector{Float64}
 
     # The kwargs from the control problem
     kwargs :: AbstractDict
@@ -30,6 +76,10 @@ struct KrotovWrk
 
     # map of controls to options
     pulse_options :: AbstractDict
+
+    # Result object
+
+    result :: KrotovResult
 
     #################################
     # scratch objects, per objective:
@@ -64,6 +114,7 @@ struct KrotovWrk
         ]
         pulses = [copy(pulse) for pulse in guess_pulses]
         pulse_options = problem.pulse_options
+        result = KrotovResult(problem)
         ϕ = [similar(obj.initial_state) for obj in objectives]
         χ = [similar(obj.initial_state) for obj in objectives]
         zero_vals = IdDict(control => zero(guess_pulses[i][1]) for (i, control) in enumerate(controls))
@@ -75,9 +126,8 @@ struct KrotovWrk
         fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
         bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
         prop_wrk = [initpropwrk(ϕ[i], tlist, G[i]) for i in 1:length(objectives)]
-        # TODO: Result object
-        new(objectives, adjoint_objectives, tlist, kwargs, controls,
-            guess_pulses, pulses, pulse_options, ϕ, χ, G, vals_dict,
+        new(objectives, adjoint_objectives, kwargs, controls,
+            guess_pulses, pulses, pulse_options, result, ϕ, χ, G, vals_dict,
             fw_storage, fw_storage2, bw_storage, prop_wrk)
     end
 
@@ -140,7 +190,7 @@ function optimize_pulses(problem)
     # TODO: set up Result
     # TODO: info_hook
 
-    return wrk # XXX (premature exit for debugging)
+    return wrk.result # XXX (premature exit for debugging)
 
     converged = (iter_stop <= i)
 
@@ -162,7 +212,7 @@ end
 function _fw_gen(k, n, wrk) # TODO
     vals_dict = wrk.vals_dict[k]
     ϵ = wrk.guess_pulses
-    t = wrk.tlist
+    t = wrk.result.tlist
     for (l, control) in enumerate(wrk.controls)
         vals_dict[control] = ϵ[l][n]
     end
@@ -175,7 +225,7 @@ function krotov_initial_fw_prop!(ϕₖ, ϕₖⁱⁿ, k, wrk)
     Φ₀ = wrk.fw_storage[k]
     copyto!(ϕₖ,  ϕₖⁱⁿ)
     (Φ₀ ≠ nothing) && write_to_storage!(Φ₀, 1,  ϕₖⁱⁿ)
-    N_T = length(wrk.tlist) - 1
+    N_T = length(wrk.result.tlist) - 1
     for n = 1:N_T
         G, dt = _fw_gen(k, n, wrk)
         propstep!(ϕₖ, G, dt, wrk.prop_wrk[k])
@@ -187,7 +237,7 @@ end
 function _bw_gen(k, n, wrk) # TODO: check if this is correct
     vals_dict = wrk.vals_dict[k]
     ϵ = wrk.guess_pulses
-    t = wrk.tlist
+    t = wrk.result.tlist
     for (l, control) in enumerate(wrk.controls)
         vals_dict[control] = ϵ[l][n]
     end
@@ -201,7 +251,7 @@ function krotov_iteration(wrk)
     ϕ = wrk.ϕ  # assumed to contain the results of forward propagation
     χ = wrk.χ
     chi! = (χ, ϕ) -> copyto!(χ, ϕ)  # TODO: get function from arguments
-    N_T = length(wrk.tlist) - 1
+    N_T = length(wrk.result.tlist) - 1
     N = length(wrk.objectives)
     L = length(wrk.controls)
     X = wrk.bw_storage
