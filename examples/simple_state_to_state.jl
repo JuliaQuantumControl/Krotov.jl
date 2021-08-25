@@ -2,7 +2,10 @@
 
 #md # !!! tip
 #md #     This example is also available as a Jupyter notebook:
-#md #     [`simple_state_to_state.ipynb`](@__NBVIEWER_ROOT_URL__/examples/simple_state_to_state.ipynb)
+#md #     [`simple_state_to_state.ipynb`](@__NBVIEWER_ROOT_URL__/examples/simple_state_to_state.ipynb).
+#md #
+#md #     Compare this example against the [same example using the `krotov`
+#md #     Python package](https://qucontrol.github.io/krotov/v1.2.1/notebooks/01_example_simple_state_to_state.html).
 
 #md # ``\gdef\op#1{\hat{#1}}``
 #md # ``\gdef\init{\text{init}}``
@@ -47,6 +50,7 @@
 using QuantumPropagators
 using QuantumControlBase
 using Krotov
+using LinearAlgebra
 
 #jl using Test
 
@@ -58,16 +62,19 @@ using Krotov
 # the Hamiltonian $\op{H}_{1}(t) = \epsilon(t) \op{\sigma}_{x}$ to the qubit,
 # i.e., the control field effectively drives transitions between both qubit
 # states.
+#
+# We we will use
 
-const σ̂_z = ComplexF64[1 0; 0 -1];
-const σ̂_x = ComplexF64[0 1; 1  0];
+ϵ(t) = 0.2 * flattop(t, T=5, t_rise=0.3, func=:blackman);
+
 
 #-
 """Two-level-system Hamiltonian."""
-function hamiltonian(Ω=1.0, E0=0.2)
+function hamiltonian(Ω=1.0, ϵ=ϵ)
+    σ̂_z = ComplexF64[1 0; 0 -1];
+    σ̂_x = ComplexF64[0 1; 1  0];
     Ĥ₀ = -0.5 * Ω * σ̂_z
     Ĥ₁ = σ̂_x
-    ϵ(t) = E0 * flattop(t, T=5, t_rise=0.3, func=:blackman)
     return (Ĥ₀, (Ĥ₁, ϵ))
 end
 ;
@@ -86,8 +93,9 @@ tlist = collect(range(0, 5, length=500));
 #-
 
 using PyPlot
+matplotlib.use("Agg")
 
-function plot_pulse(pulse::Vector, tlist)
+function plot_control(pulse::Vector, tlist)
     fig, ax = matplotlib.pyplot.subplots(figsize=(6, 3))
     ax.plot(tlist, pulse)
     ax.set_xlabel("time")
@@ -95,10 +103,10 @@ function plot_pulse(pulse::Vector, tlist)
     return fig
 end
 
-plot_pulse(ϵ::T, tlist) where T<:Function =
-    plot_pulse([ϵ(t) for t in tlist], tlist)
+plot_control(ϵ::T, tlist) where T<:Function =
+    plot_control([ϵ(t) for t in tlist], tlist)
 
-#!jl plot_pulse(H[2][2], tlist)
+#!jl plot_control(H[2][2], tlist)
 
 # ## Optimization target
 
@@ -118,7 +126,6 @@ end
 ;
 
 #-
-#jl using LinearAlgebra
 #jl @test dot(ket(0), ket(1)) ≈ 0
 #-
 
@@ -128,16 +135,46 @@ objectives = [Objective(initial_state=ket(0), generator=H, target=ket(1))]
 #jl @test length(objectives) == 1
 #-
 
+"""Krotov boundary conditions for the state-to-state functional."""
+function chi_ss!(χ, ϕ, wrk)
+    N = length(wrk.objectives)
+    for k = 1:N
+        ϕₖ_tgt = wrk.objectives[k].target
+        ϕₖ = wrk.result.states[k]
+        τₖ = dot(ϕₖ_tgt, ϕₖ)
+        copyto!(χ[k], ϕₖ_tgt)
+        lmul!(τₖ, χ[k])
+    end
+end
+
+#-
+
+"""State-to-state functional."""
+function J_T_ss(ϕ, wrk)
+    N = length(ϕ)
+    F_ss = 0.0
+    for k = 1:N
+        ϕₖ_tgt = wrk.objectives[k].target
+        τₖ = dot(ϕₖ_tgt, ϕ[k])
+        F_ss += abs(τₖ)^2
+    end
+    return 1.0 - (F_ss / N)
+end
+
+#-
+
 problem = ControlProblem(
     objectives=objectives,
-    pulse_options=Dict(
-        H[2][2]  => Dict(
+    pulse_options=IdDict(
+        ϵ  => Dict(
             :lambda_a => 5,
             :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
         )
     ),
     tlist=tlist,
-    iter_stop=10,
+    iter_stop=18,
+    chi=chi_ss!,
+    J_T=J_T_ss,
 );
 
 # ## Simulate dynamics under the guess field
@@ -176,4 +213,29 @@ end
 # via `chi_constructor`, which calculates the states $\ket{\chi} =
 # \frac{J_T}{\bra{\Psi}}$).
 
-opt_result = optimize_pulses(problem)
+opt_result = optimize_pulses(problem);
+#-
+opt_result
+
+# We can plot the optimized field:
+
+#-
+#!jl plot_control(opt_result.optimized_controls[1], tlist)
+#-
+
+# ## Simulate the dynamics under the optimized field
+
+# Having obtained the optimized control field, we can simulate the dynamics to
+# verify that the optimized field indeed drives the initial state
+# $\ket{\Psi_{\init}} = \ket{0}$ to the desired target state
+# $\ket{\Psi_{\tgt}} = \ket{1}$.
+
+opt_dynamics = propagate(
+        objectives[1], problem.tlist;
+        controls_map=IdDict(ϵ  => opt_result.optimized_controls[1]),
+        storage=true, observables=(Ψ->abs.(Ψ).^2, )
+)
+
+#-
+#!jl plot_population(opt_dynamics[1,:], opt_dynamics[2,:], tlist)
+#-
