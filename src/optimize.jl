@@ -92,8 +92,8 @@ struct KrotovWrk
     # values of ∫gₐ(t)dt for each pulse
     g_a_int :: Vector{Float64}
 
-    # control shapes for each pulse, discretized on intervals
-    control_shapes :: Vector{Any} # TODO: Vector{Vector{Float64}}?
+    # update shapes S(t) for each pulse, discretized on intervals
+    update_shapes :: Vector{Any} # TODO: Vector{Vector{Float64}}?
 
     lambda_vals :: Vector{Float64}
 
@@ -137,7 +137,7 @@ struct KrotovWrk
         pulses1 = [copy(pulse) for pulse in pulses0]
         g_a_int = zeros(length(pulses0))
         pulse_options = problem.pulse_options
-        control_shapes = [
+        update_shapes = [
             discretize_on_midpoints(
                     pulse_options[control][:update_shape],
                     tlist
@@ -160,7 +160,7 @@ struct KrotovWrk
         prop_wrk = [initpropwrk(result.states[i], tlist, G[i]) for i in 1:length(objectives)]
         # TODO: need separate prop_wrk for bw-prop?
         new(objectives, adjoint_objectives, kwargs, controls,
-            pulses0, pulses1, g_a_int, control_shapes, lambda_vals,
+            pulses0, pulses1, g_a_int, update_shapes, lambda_vals,
             pulse_options, result, bw_states, G, vals_dict, fw_storage,
             fw_storage2, bw_storage, prop_wrk)
     end
@@ -303,7 +303,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         end
         Δuₙ = zeros(L)
         for l = 1:L  # `l` is the index for the different controls
-            Sₗ = wrk.control_shapes[l]
+            Sₗ = wrk.update_shapes[l]
             λₐ = wrk.lambda_vals[l]
             for k = 1:N
                 μₗₖₙ = mu(wrk, l, k, n)
