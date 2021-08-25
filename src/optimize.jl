@@ -2,6 +2,7 @@ using QuantumControlBase
 using QuantumPropagators: initpropwrk, propstep!, init_storage, write_to_storage!, get_from_storage!
 using LinearAlgebra
 using Dates
+using Printf
 import Base.Threads.@threads
 
 """Result object returned by [`optimize_pulses`](@ref)."""
@@ -11,6 +12,8 @@ mutable struct KrotovResult
     iter :: Int64  # the current iteration number
     secs :: Float64  # seconds that the last iteration took
     tau_vals :: Vector{ComplexF64}
+    J_T :: Float64  # the current value of the final-time functional J_T
+    J_T_prev :: Float64  # previous value of J_T
     guess_controls
     optimized_controls
     all_pulses
@@ -37,7 +40,7 @@ mutable struct KrotovResult
         end_local_time = now()
         records = Vector{Tuple}()
         message = "in progress"
-        new(tlist, iter_start, iter, secs, tau_vals, guess_controls,
+        new(tlist, iter_start, iter, secs, tau_vals, 0.0, 0.0, guess_controls,
             optimized_controls, all_pulses, states, start_local_time,
             end_local_time, records, message)
     end
@@ -79,6 +82,9 @@ struct KrotovWrk
     # second pulse storage: pulses0 and pulses1 alternate in storing the guess
     # pulses and optimized pulses in each iteration
     pulses1 :: Vector{Any} # TODO: Vector{Vector{Float64}}?
+
+    # values of ∫gₐ(t)dt for each pulse
+    g_a_int :: Vector{Float64}
 
     # control shapes for each pulse, discretized on intervals
     control_shapes :: Vector{Any} # TODO: Vector{Vector{Float64}}?
@@ -123,6 +129,7 @@ struct KrotovWrk
             discretize_on_midpoints(control, tlist) for control in controls
         ]
         pulses1 = [copy(pulse) for pulse in pulses0]
+        g_a_int = zeros(length(pulses0))
         pulse_options = problem.pulse_options
         control_shapes = [
             discretize_on_midpoints(
@@ -147,7 +154,7 @@ struct KrotovWrk
         prop_wrk = [initpropwrk(result.states[i], tlist, G[i]) for i in 1:length(objectives)]
         # TODO: need separate prop_wrk for bw-prop?
         new(objectives, adjoint_objectives, kwargs, controls,
-            pulses0, pulses1, control_shapes, lambda_vals,
+            pulses0, pulses1, g_a_int, control_shapes, lambda_vals,
             pulse_options, result, bw_states, G, vals_dict, fw_storage,
             fw_storage2, bw_storage, prop_wrk)
     end
@@ -211,7 +218,7 @@ function optimize_pulses(problem)
     end
 
     # TODO: if sigma, fw_storage0 = fw_storage
-    update_result!(wrk.result, 0)
+    update_result!(wrk, 0)
     info_hook(wrk, 0)
 
     converged = (iter_stop <= i)
@@ -220,8 +227,8 @@ function optimize_pulses(problem)
     while !converged
         i = i + 1
         krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
+        update_result!(wrk, i)
         info_hook(wrk, i)
-        update_result!(wrk.result, i)
         converged = converged || (iter_stop <= i)
         # TODO: converged = converged || check_convergence(wrk)
         ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾ = ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾
@@ -278,7 +285,9 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         copyto!(ϕ[k], wrk.objectives[k].initial_state)
     end
 
+    wrk.g_a_int .= 0.0
     for n = 1:N_T  # n is the index for the time interval
+        dt = wrk.result.tlist[n+1] - wrk.result.tlist[n]
         for k = 1:N
             get_from_storage!(χ[k], X[k], n)
         end
@@ -290,6 +299,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
                 μ_lkn = mu(wrk, l, k, n)
                 Δuₙ[l] += (Sₗ[n]/λₐ) * imag(dot(χ[k], μ_lkn, ϕ[k]))
             end
+            wrk.g_a_int[l] += abs(Δuₙ[l])^2 * dt
         end
         # TODO: second order update
         Δϵₙ = Δuₙ  # no parameterization (TODO)
@@ -351,11 +361,15 @@ function derivate_wrt_pulse(wrk::KrotovWrk, G::Tuple, control, n::Int64)
 end
 
 
-function update_result!(r::KrotovResult, i::Int64)
-    r.iter = i
-    prev_time = r.end_local_time
-    r.end_local_time = now()
-    r.secs = Dates.toms(r.end_local_time - prev_time) / 1000.0
+function update_result!(wrk::KrotovWrk, i::Int64)
+    res = wrk.result
+    J_T_func = wrk.kwargs[:J_T]
+    res.J_T_prev = res.J_T
+    res.J_T = J_T_func(res.states, wrk)
+    res.iter = i
+    prev_time = res.end_local_time
+    res.end_local_time = now()
+    res.secs = Dates.toms(res.end_local_time - prev_time) / 1000.0
     # TODO: calculate τ values
 end
 
@@ -370,14 +384,37 @@ function finalize_result!(ϵ_opt, wrk::KrotovWrk)
 end
 
 
-
-
 """Default info_hook"""
 function print_table(wrk, iteration)
-    # TODO: print an actual table
-    J_T = wrk.kwargs[:J_T](wrk.result.states, wrk)
+    J_T = wrk.result.J_T
+    g_a_int = sum(wrk.g_a_int)
+    J = J_T + g_a_int
+    ΔJ_T = J_T - wrk.result.J_T_prev
+    ΔJ = ΔJ_T + g_a_int
+    secs = wrk.result.secs
+
+    iter_stop = "$(get(wrk.kwargs, :iter_stop, 5000))"
+    widths = [max(length("$iter_stop"), 6), 11, 11, 11, 11, 11, 8]
+
     if iteration == 0
-        println("iter: J_T")
+        header = ["iter.", "J_T", "∫gₐ(t)dt", "J", "ΔJ_T", "ΔJ", "secs"]
+        for (header, w) in zip(header, widths)
+            print(lpad(header, w))
+        end
+        print("\n")
     end
-    println("$iteration: $J_T")
+
+    strs = (
+        "$iteration",
+        @sprintf("%.2e", J_T),
+        @sprintf("%.2e", g_a_int),
+        @sprintf("%.2e", J),
+        (iteration > 0) ? @sprintf("%.2e", ΔJ_T) : "n/a",
+        (iteration > 0) ? @sprintf("%.2e", ΔJ) : "n/a",
+        @sprintf("%.1f", secs),
+    )
+    for (str, w) in zip(strs, widths)
+        print(lpad(str, w))
+    end
+    print("\n")
 end
