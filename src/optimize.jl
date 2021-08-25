@@ -309,7 +309,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
                 μₗₖₙ = mu(wrk, l, k, n)
                 Δuₙ[l] += (Sₗ[n]/λₐ) * imag(dot(χ[k], μₗₖₙ, ϕ[k]))
             end
-            ∫gₐdt[l] += abs(Δuₙ[l])^2 * dt
+            (∫gₐdt)[l] += abs(Δuₙ[l])^2 * dt
         end
         # TODO: second order update
         Δϵₙ = Δuₙ  # no parameterization (TODO)
