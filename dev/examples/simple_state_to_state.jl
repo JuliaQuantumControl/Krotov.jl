@@ -84,9 +84,14 @@ problem = ControlProblem(
         )
     ),
     tlist=tlist,
-    iter_stop=18,
+    iter_stop=50,
     chi=chi_ss!,
     J_T=J_T_ss,
+    check_convergence= res -> begin (
+            (res.J_T < 1e-3)
+            && (res.converged = true)
+            && (res.message="J_T < 10⁻³")
+        ) end
 );
 
 guess_dynamics = propagate(
