@@ -8,7 +8,8 @@ import Base.Threads.@threads
 """Result object returned by [`optimize_pulses`](@ref)."""
 mutable struct KrotovResult
     tlist :: Vector{Float64}
-    iter_start :: Int64  # the starting iteratin number
+    iter_start :: Int64  # the starting iteration number
+    iter_stop :: Int64 # the maximum iteration number
     iter :: Int64  # the current iteration number
     secs :: Float64  # seconds that the last iteration took
     tau_vals :: Vector{ComplexF64}
@@ -21,28 +22,33 @@ mutable struct KrotovResult
     start_local_time
     end_local_time
     records :: Vector{Tuple}  # storage for info_hook to write data into at each iteration
-    message
+    converged :: Bool
+    message :: String
 
     function KrotovResult(problem)
         tlist = problem.tlist
         controls = getcontrols(problem.objectives)
         iter_start = get(problem.kwargs, :iter_start, 0)
+        iter_stop = get(problem.kwargs, :iter_stop, 5000)
         iter = 0
         secs = 0
         tau_vals = Vector{ComplexF64}()
         guess_controls = [
             discretize(control, tlist) for control in controls
         ]
+        J_T = 0.0
+        J_T_prev = 0.0
         optimized_controls = [copy(guess) for guess in guess_controls]
         all_pulses = Vector{Any}()
         states = [similar(obj.initial_state) for obj in problem.objectives]
         start_local_time = now()
         end_local_time = now()
         records = Vector{Tuple}()
+        converged = false
         message = "in progress"
-        new(tlist, iter_start, iter, secs, tau_vals, 0.0, 0.0, guess_controls,
-            optimized_controls, all_pulses, states, start_local_time,
-            end_local_time, records, message)
+        new(tlist, iter_start, iter_stop, iter, secs, tau_vals, J_T, J_T_prev,
+            guess_controls, optimized_controls, all_pulses, states,
+            start_local_time, end_local_time, records, converged, message)
     end
 end
 
@@ -187,13 +193,20 @@ The following `problem` keyword arguments are supported (with default values):
    not given, the first-order Krotov method is used.
 * `iter_start=0`: the initial iteration number
 * `iter_stop=5000`: the maximum iteration number
+* `check_convergence`: a function to check whether convergence has been
+  reached. Receives a [`KrotovResult`](@ref) object `result`, and should set
+  `result.converged` to `true` and `result.message` to an appropriate string in
+  case of convergence. Multiple convergence checks can be performed by chaining
+  functions with `∘`.
 
 """
 function optimize_pulses(problem)
     sigma = get(problem.kwargs, :sigma, nothing)
     iter_start = get(problem.kwargs, :iter_start, 0)
-    iter_stop = get(problem.kwargs, :iter_stop, 5000)
     info_hook = get(problem.kwargs, :info_hook, print_table)
+    check_convergence! = get(problem.kwargs, :check_convergence, res -> res)
+    # note: the default `check_convergence!` is a no-op. We still always check
+    # for "Reached maximum number of iterations" in `update_result!`
     skip_initial_forward_propagation = get(
         problem.kwargs, :skip_initial_forward_propagation, false
     )
@@ -221,16 +234,12 @@ function optimize_pulses(problem)
     update_result!(wrk, 0)
     info_hook(wrk, 0)
 
-    converged = (iter_stop <= i)
-    # TODO: converged = converged || check_convergence(wrk)
-
-    while !converged
+    while !wrk.result.converged
         i = i + 1
         krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         update_result!(wrk, i)
         info_hook(wrk, i)
-        converged = converged || (iter_stop <= i)
-        # TODO: converged = converged || check_convergence(wrk)
+        check_convergence!(wrk.result)
         ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾ = ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾
     end
 
@@ -265,6 +274,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     X = wrk.bw_storage
     Φ = wrk.fw_storage  # TODO: pass in Φ₁, Φ₀ as parameters
     mu = get(wrk.kwargs, :mu, derivative_wrt_pulse)
+    ∫gₐdt = wrk.g_a_int
 
     # TODO: re-initialize wrk.prop_wrk?
 
@@ -285,21 +295,21 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         copyto!(ϕ[k], wrk.objectives[k].initial_state)
     end
 
-    wrk.g_a_int .= 0.0
-    for n = 1:N_T  # n is the index for the time interval
+    ∫gₐdt .= 0.0
+    for n = 1:N_T  # `n` is the index for the time interval
         dt = wrk.result.tlist[n+1] - wrk.result.tlist[n]
         for k = 1:N
             get_from_storage!(χ[k], X[k], n)
         end
         Δuₙ = zeros(L)
-        for l = 1:L
+        for l = 1:L  # `l` is the index for the different controls
             Sₗ = wrk.control_shapes[l]
             λₐ = wrk.lambda_vals[l]
             for k = 1:N
-                μ_lkn = mu(wrk, l, k, n)
-                Δuₙ[l] += (Sₗ[n]/λₐ) * imag(dot(χ[k], μ_lkn, ϕ[k]))
+                μₗₖₙ = mu(wrk, l, k, n)
+                Δuₙ[l] += (Sₗ[n]/λₐ) * imag(dot(χ[k], μₗₖₙ, ϕ[k]))
             end
-            wrk.g_a_int[l] += abs(Δuₙ[l])^2 * dt
+            ∫gₐdt[l] += abs(Δuₙ[l])^2 * dt
         end
         # TODO: second order update
         Δϵₙ = Δuₙ  # no parameterization (TODO)
@@ -367,6 +377,12 @@ function update_result!(wrk::KrotovWrk, i::Int64)
     res.J_T_prev = res.J_T
     res.J_T = J_T_func(res.states, wrk)
     res.iter = i
+    if i >= res.iter_stop
+        res.converged = true
+        res.message = "Reached maximum number of iterations"
+        # Note: other convergence checks are done in user-supplied
+        # check_convergence routine
+    end
     prev_time = res.end_local_time
     res.end_local_time = now()
     res.secs = Dates.toms(res.end_local_time - prev_time) / 1000.0
@@ -380,7 +396,6 @@ function finalize_result!(ϵ_opt, wrk::KrotovWrk)
     for l in 1:length(ϵ_opt)
         res.optimized_controls[l] = discretize(ϵ_opt[l], res.tlist)
     end
-    res.message = "Reached maximum number of iterations"  # TODO
 end
 
 
