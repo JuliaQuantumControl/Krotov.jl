@@ -125,6 +125,7 @@ struct KrotovWrk
     prop_wrk :: Vector{Any}
 
     function KrotovWrk(problem::QuantumControlBase.ControlProblem)
+        prop_method = get(problem.kwargs, :prop_method, :auto)
         objectives = [obj for obj in problem.objectives]
         adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
         controls = getcontrols(objectives)
@@ -158,7 +159,10 @@ struct KrotovWrk
         fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
         bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
         # TODO: allow using a custom initpropwrk routine
-        prop_wrk = [initpropwrk(obj, tlist) for obj in objectives]
+        prop_wrk = [
+            initpropwrk(obj, tlist; method=prop_method)
+            for obj in objectives
+        ]
         new(objectives, adjoint_objectives, kwargs, controls,
             pulses0, pulses1, g_a_int, update_shapes, lambda_vals,
             pulse_options, result, bw_states, G, vals_dict, fw_storage,
@@ -198,6 +202,7 @@ The following `problem` keyword arguments are supported (with default values):
   `result.converged` to `true` and `result.message` to an appropriate string in
   case of convergence. Multiple convergence checks can be performed by chaining
   functions with `∘`.
+* `prop_method=:auto`: The propagation method to use
 
 """
 function optimize_pulses(problem)
