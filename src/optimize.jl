@@ -1,5 +1,5 @@
-using QuantumControlBase
 using QuantumPropagators: initpropwrk, propstep!, init_storage, write_to_storage!, get_from_storage!
+using QuantumControlBase
 using LinearAlgebra
 using Dates
 using Printf
@@ -157,8 +157,8 @@ struct KrotovWrk
         # TODO: second forward storage only if second order
         fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
         bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
-        prop_wrk = [initpropwrk(result.states[i], tlist, G[i]) for i in 1:length(objectives)]
-        # TODO: need separate prop_wrk for bw-prop?
+        # TODO: allow using a custom initpropwrk routine
+        prop_wrk = [initpropwrk(obj, tlist) for obj in objectives]
         new(objectives, adjoint_objectives, kwargs, controls,
             pulses0, pulses1, g_a_int, update_shapes, lambda_vals,
             pulse_options, result, bw_states, G, vals_dict, fw_storage,
@@ -233,6 +233,7 @@ function optimize_pulses(problem)
     # TODO: if sigma, fw_storage0 = fw_storage
     update_result!(wrk, 0)
     info_hook(wrk, 0)
+    # TODO: update_hook
 
     while !wrk.result.converged
         i = i + 1
@@ -240,6 +241,8 @@ function optimize_pulses(problem)
         update_result!(wrk, i)
         info_hook(wrk, i)
         check_convergence!(wrk.result)
+        # TODO: update_hook, e.g. to re-initialize propagation, apply spectral
+        # filter
         ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾ = ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾
     end
 
@@ -260,6 +263,7 @@ function krotov_initial_fw_prop!(ϵ⁽⁰⁾, ϕₖ, ϕₖⁱⁿ, k, wrk)
         propstep!(ϕₖ, G, dt, wrk.prop_wrk[k])
         (Φ₀ ≠ nothing) && write_to_storage!(Φ₀, n+1, ϕₖ)
     end
+    # TODO: allow a custom propstep! routine
 end
 
 
