@@ -1,4 +1,4 @@
-using QuantumPropagators: initpropwrk, propstep!, init_storage, write_to_storage!, get_from_storage!
+using QuantumPropagators: propstep!, init_storage, write_to_storage!, get_from_storage!
 using QuantumControlBase
 using LinearAlgebra
 using Dates
@@ -158,9 +158,8 @@ struct KrotovWrk
         # TODO: second forward storage only if second order
         fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
         bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
-        # TODO: allow using a custom initpropwrk routine
         prop_wrk = [
-            initpropwrk(obj, tlist; method=prop_method)
+            QuantumControlBase.initobjpropwrk(obj, tlist, prop_method; kwargs...)
             for obj in objectives
         ]
         new(objectives, adjoint_objectives, kwargs, controls,
