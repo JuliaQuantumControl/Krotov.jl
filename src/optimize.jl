@@ -1,9 +1,9 @@
 using QuantumPropagators: propstep!, init_storage, write_to_storage!, get_from_storage!
 using QuantumControlBase
+using QuantumControlBase.ConditionalThreads: @threadsif
 using LinearAlgebra
 using Dates
 using Printf
-import Base.Threads.@threads
 
 """Result object returned by [`optimize_pulses`](@ref)."""
 mutable struct KrotovResult
@@ -124,8 +124,11 @@ struct KrotovWrk
 
     prop_wrk :: Vector{Any}
 
+    use_threads :: Bool
+
     function KrotovWrk(problem::QuantumControlBase.ControlProblem)
-        prop_method = get(problem.kwargs, :prop_method, :auto)
+        prop_method = get(problem.kwargs, :prop_method, Val(:auto))
+        use_threads = get(problem.kwargs, :use_threads, false)
         objectives = [obj for obj in problem.objectives]
         adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
         controls = getcontrols(objectives)
@@ -162,10 +165,11 @@ struct KrotovWrk
             QuantumControlBase.initobjpropwrk(obj, tlist, prop_method; kwargs...)
             for obj in objectives
         ]
+        # TODO: separate propwrk for backward propagation
         new(objectives, adjoint_objectives, kwargs, controls,
             pulses0, pulses1, g_a_int, update_shapes, lambda_vals,
             pulse_options, result, bw_states, G, vals_dict, fw_storage,
-            fw_storage2, bw_storage, prop_wrk)
+            fw_storage2, bw_storage, prop_wrk, use_threads)
     end
 
 end
@@ -227,7 +231,7 @@ function optimize_pulses(problem)
     if skip_initial_forward_propagation
         @info "Skipping initial forward propagation"
     else
-        @threads for (k, obj) in collect(enumerate(wrk.objectives))
+        @threadsif wrk.use_threads for (k, obj) in collect(enumerate(wrk.objectives))
             krotov_initial_fw_prop!(
                 ϵ⁽ⁱ⁾, wrk.result.states[k], obj.initial_state, k, wrk
             )
@@ -288,7 +292,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
 
     # backward propagation
     chi!(χ, ϕ, wrk)
-    @threads for k = 1:N
+    @threadsif wrk.use_threads for k = 1:N
         write_to_storage!(X[k], N_T+1, χ[k])
         for n = N_T:-1:1
             local (G, dt) = _bw_gen(ϵ⁽ⁱ⁾, k, n, wrk)
@@ -299,7 +303,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
 
     # pulse update and forward propagation
 
-    @threads for k = 1:N
+    @threadsif wrk.use_threads for k = 1:N
         copyto!(ϕ[k], wrk.objectives[k].initial_state)
     end
 
@@ -324,7 +328,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         for l = 1:L
             ϵ⁽ⁱ⁺¹⁾[l][n] = ϵ⁽ⁱ⁾[l][n] + Δϵₙ[l]
         end
-        @threads for k = 1:N
+        @threadsif wrk.use_threads for k = 1:N
             local (G, dt) = _fw_gen(ϵ⁽ⁱ⁺¹⁾, k, n, wrk)
             propstep!(ϕ[k], G, dt, wrk.prop_wrk[k])
             write_to_storage!(Φ[k], n, ϕ[k])
