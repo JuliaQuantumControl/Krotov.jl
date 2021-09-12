@@ -6,7 +6,7 @@ using Dates
 using Printf
 
 """Result object returned by [`optimize_pulses`](@ref)."""
-mutable struct KrotovResult
+mutable struct KrotovResult{STST}
     tlist :: Vector{Float64}
     iter_start :: Int64  # the starting iteration number
     iter_stop :: Int64 # the maximum iteration number
@@ -15,12 +15,12 @@ mutable struct KrotovResult
     tau_vals :: Vector{ComplexF64}
     J_T :: Float64  # the current value of the final-time functional J_T
     J_T_prev :: Float64  # previous value of J_T
-    guess_controls
-    optimized_controls
-    all_pulses
-    states
-    start_local_time
-    end_local_time
+    guess_controls :: Vector{Vector{Float64}}
+    optimized_controls :: Vector{Vector{Float64}}
+    all_pulses :: Vector{Any} # TODO
+    states :: Vector{STST}
+    start_local_time :: DateTime
+    end_local_time :: DateTime
     records :: Vector{Tuple}  # storage for info_hook to write data into at each iteration
     converged :: Bool
     message :: String
@@ -46,7 +46,8 @@ mutable struct KrotovResult
         records = Vector{Tuple}()
         converged = false
         message = "in progress"
-        new(tlist, iter_start, iter_stop, iter, secs, tau_vals, J_T, J_T_prev,
+        new{eltype(states)}(
+            tlist, iter_start, iter_stop, iter, secs, tau_vals, J_T, J_T_prev,
             guess_controls, optimized_controls, all_pulses, states,
             start_local_time, end_local_time, records, converged, message)
     end
@@ -63,66 +64,67 @@ Krotov Optimization Result
 - Ended at $(r.end_local_time) ($(r.end_local_time - r.start_local_time))""")
 
 
-
-
 # Krotov workspace (for internal use)
-struct KrotovWrk
-    # TODO: specify types more strictly
+struct KrotovWrk{
+        OT<:QuantumControlBase.AbstractControlObjective,
+        AOT<:QuantumControlBase.AbstractControlObjective,
+        KWT, CTRST<:Tuple, POT<:AbstractDict, STST, VDT, STORT, PRWT, GT
+    }
 
     # a copy of the objectives
-    objectives :: Vector{QuantumControlBase.Objective}
+    objectives :: Vector{OT}
 
     # the adjoint objectives, containing the adjoint generators for the
     # backward propagation
-    adjoint_objectives :: Vector{QuantumControlBase.Objective}
+    adjoint_objectives :: Vector{AOT}
 
     # The kwargs from the control problem
-    kwargs :: AbstractDict
+    kwargs :: KWT
 
     # Tuple of the original controls (probably functions)
-    controls :: Tuple
+    controls :: CTRST
 
     # storage for controls discretized on intervals of tlist
-    pulses0 :: Vector{Any} # TODO: Vector{Vector{Float64}}?
+    pulses0 :: Vector{Vector{Float64}}
 
     # second pulse storage: pulses0 and pulses1 alternate in storing the guess
     # pulses and optimized pulses in each iteration
-    pulses1 :: Vector{Any} # TODO: Vector{Vector{Float64}}?
+    pulses1 ::  Vector{Vector{Float64}}
 
     # values of ∫gₐ(t)dt for each pulse
     g_a_int :: Vector{Float64}
 
     # update shapes S(t) for each pulse, discretized on intervals
-    update_shapes :: Vector{Any} # TODO: Vector{Vector{Float64}}?
+    update_shapes ::  Vector{Vector{Float64}}
 
     lambda_vals :: Vector{Float64}
 
     # map of controls to options
-    pulse_options :: AbstractDict  # TODO: this is not a good name
+    pulse_options :: POT  # TODO: this is not a good name
 
     # Result object
 
-    result :: KrotovResult
+    result :: KrotovResult{STST}
 
     #################################
     # scratch objects, per objective:
 
     # backward-propagated states
     # note: storage for fw-propagated states is in result.states
-    bw_states :: Vector{Any}
+    bw_states :: Vector{STST}
 
     # dynamical generator at a particular point in time
-    G :: Vector{Any}
+    G :: Vector{GT}
 
-    vals_dict :: Vector{Any}
+    vals_dict :: Vector{VDT}
 
-    fw_storage :: Vector{Any}  # forward storage array (per objective)
+    fw_storage :: Vector{STORT}  # forward storage array (per objective)
 
-    fw_storage2 :: Vector{Any}  # forward storage array (per objective)
+    fw_storage2 :: Vector{STORT}  # forward storage array (per objective)
 
-    bw_storage :: Vector{Any}  # backward storage array (per objective)
+    bw_storage :: Vector{STORT}  # backward storage array (per objective)
 
-    prop_wrk :: Vector{Any}
+    prop_wrk :: Vector{PRWT}
 
     use_threads :: Bool
 
@@ -166,10 +168,16 @@ struct KrotovWrk
             for obj in objectives
         ]
         # TODO: separate propwrk for backward propagation
-        new(objectives, adjoint_objectives, kwargs, controls,
-            pulses0, pulses1, g_a_int, update_shapes, lambda_vals,
-            pulse_options, result, bw_states, G, vals_dict, fw_storage,
-            fw_storage2, bw_storage, prop_wrk, use_threads)
+        new{eltype(objectives),eltype(adjoint_objectives), typeof(kwargs),
+            typeof(controls), typeof(pulse_options),
+            typeof(objectives[1].initial_state), eltype(vals_dict),
+            eltype(fw_storage), eltype(prop_wrk), eltype(G)
+        }(
+            objectives, adjoint_objectives, kwargs, controls, pulses0, pulses1,
+            g_a_int, update_shapes, lambda_vals, pulse_options, result,
+            bw_states, G, vals_dict, fw_storage, fw_storage2, bw_storage,
+            prop_wrk, use_threads
+        )
     end
 
 end
