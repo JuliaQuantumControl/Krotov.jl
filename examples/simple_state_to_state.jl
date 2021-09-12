@@ -129,7 +129,9 @@ end
 #jl @test dot(ket(0), ket(1)) ≈ 0
 #-
 
-objectives = [Objective(initial_state=ket(0), generator=H, target=ket(1))]
+objectives = [
+    Objective(initial_state=ket(0), generator=H, target_state=ket(1))
+]
 
 #-
 #jl @test length(objectives) == 1
@@ -139,7 +141,7 @@ objectives = [Objective(initial_state=ket(0), generator=H, target=ket(1))]
 function chi_ss!(χ, ϕ, wrk)
     N = length(wrk.objectives)
     for k = 1:N
-        ϕₖ_tgt = wrk.objectives[k].target
+        ϕₖ_tgt = wrk.objectives[k].target_state
         ϕₖ = wrk.result.states[k]
         τₖ = dot(ϕₖ_tgt, ϕₖ)
         copyto!(χ[k], ϕₖ_tgt)
@@ -154,7 +156,7 @@ function J_T_ss(ϕ, wrk)
     N = length(ϕ)
     F_ss = 0.0
     for k = 1:N
-        ϕₖ_tgt = wrk.objectives[k].target
+        ϕₖ_tgt = wrk.objectives[k].target_state
         τₖ = dot(ϕₖ_tgt, ϕ[k])
         F_ss += abs(τₖ)^2
     end
