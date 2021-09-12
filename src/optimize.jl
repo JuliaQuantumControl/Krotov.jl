@@ -299,7 +299,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     # TODO: re-initialize wrk.prop_wrk?
 
     # backward propagation
-    chi!(χ, ϕ, wrk)
+    chi!(χ, ϕ, wrk.objectives)
     @threadsif wrk.use_threads for k = 1:N
         write_to_storage!(X[k], N_T+1, χ[k])
         for n = N_T:-1:1
@@ -395,7 +395,7 @@ function update_result!(wrk::KrotovWrk, i::Int64)
     res = wrk.result
     J_T_func = wrk.kwargs[:J_T]
     res.J_T_prev = res.J_T
-    res.J_T = J_T_func(res.states, wrk)
+    res.J_T = J_T_func(res.states, wrk.objectives)
     res.iter = i
     if i >= res.iter_stop
         res.converged = true

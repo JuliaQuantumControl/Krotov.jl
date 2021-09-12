@@ -138,12 +138,11 @@ objectives = [
 #-
 
 """Krotov boundary conditions for the state-to-state functional."""
-function chi_ss!(χ, ϕ, wrk)
-    N = length(wrk.objectives)
+function chi_ss!(χ, ϕ, objectives)
+    N = length(objectives)
     for k = 1:N
-        ϕₖ_tgt = wrk.objectives[k].target_state
-        ϕₖ = wrk.result.states[k]
-        τₖ = dot(ϕₖ_tgt, ϕₖ)
+        ϕₖ_tgt = objectives[k].target_state
+        τₖ = dot(ϕₖ_tgt, ϕ[k])
         copyto!(χ[k], ϕₖ_tgt)
         lmul!(τₖ, χ[k])
     end
@@ -152,11 +151,11 @@ end
 #-
 
 """State-to-state functional."""
-function J_T_ss(ϕ, wrk)
+function J_T_ss(ϕ, objectives)
     N = length(ϕ)
     F_ss = 0.0
     for k = 1:N
-        ϕₖ_tgt = wrk.objectives[k].target_state
+        ϕₖ_tgt = objectives[k].target_state
         τₖ = dot(ϕₖ_tgt, ϕ[k])
         F_ss += abs(τₖ)^2
     end
