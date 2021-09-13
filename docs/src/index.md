@@ -23,6 +23,7 @@ Depth = 1
 Pages = [
     "examples/simple_state_to_state.md",
     "examples/state_to_state_rwa.md",
+    "examples/rho_3states.md",
 ]
 Depth = 1
 ```

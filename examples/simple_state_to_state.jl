@@ -137,33 +137,6 @@ objectives = [
 #jl @test length(objectives) == 1
 #-
 
-"""Krotov boundary conditions for the state-to-state functional."""
-function chi_ss!(χ, ϕ, objectives)
-    N = length(objectives)
-    for k = 1:N
-        ϕₖ_tgt = objectives[k].target_state
-        τₖ = dot(ϕₖ_tgt, ϕ[k])
-        copyto!(χ[k], ϕₖ_tgt)
-        lmul!(τₖ, χ[k])
-    end
-end
-
-#-
-
-"""State-to-state functional."""
-function J_T_ss(ϕ, objectives)
-    N = length(ϕ)
-    F_ss = 0.0
-    for k = 1:N
-        ϕₖ_tgt = objectives[k].target_state
-        τₖ = dot(ϕₖ_tgt, ϕ[k])
-        F_ss += abs(τₖ)^2
-    end
-    return 1.0 - (F_ss / N)
-end
-
-#-
-
 problem = ControlProblem(
     objectives=objectives,
     pulse_options=IdDict(

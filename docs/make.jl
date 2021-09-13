@@ -25,7 +25,8 @@ makedocs(;
         "Examples" => [
             "List of Examples" => "examples/index.md",
             "Example 1 (TLS)" => "examples/simple_state_to_state.md",
-            "Example 2 (RWA)" => "examples/state_to_state_rwa.md"],
+            "Example 2 (RWA)" => "examples/state_to_state_rwa.md",
+            "Example 3 (Diss. Gate)" => "examples/rho_3states.md"],
         "API" => "api.md",
     ],
 )
