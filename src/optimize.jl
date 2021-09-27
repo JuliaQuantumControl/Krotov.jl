@@ -99,6 +99,10 @@ struct KrotovWrk{
 
     lambda_vals :: Vector{Float64}
 
+    is_parametrized :: Vector{Bool}
+
+    parametrization :: Vector{PulseParametrization} # TODO
+
     # map of controls to options
     pulse_options :: POT  # TODO: this is not a good name
 
@@ -153,6 +157,14 @@ struct KrotovWrk{
         lambda_vals = [
             pulse_options[control][:lambda_a] for control in controls
         ]
+        is_parametrized = [
+            haskey(pulse_options[control], :parametrization)
+            for control in controls
+        ]
+        parametrization = [
+            get(pulse_options[control], :parametrization, NoParametrization())
+            for control in controls
+        ]
         result = KrotovResult(problem)
         bw_states = [similar(obj.initial_state) for obj in objectives]
         zero_vals = IdDict(control => zero(pulses0[i][1]) for (i, control) in enumerate(controls))
@@ -174,7 +186,7 @@ struct KrotovWrk{
             eltype(fw_storage), eltype(prop_wrk), eltype(G)
         }(
             objectives, adjoint_objectives, kwargs, controls, pulses0, pulses1,
-            g_a_int, update_shapes, lambda_vals, pulse_options, result,
+            g_a_int, update_shapes, lambda_vals, is_parametrized, parametrization, pulse_options, result,
             bw_states, G, vals_dict, fw_storage, fw_storage2, bw_storage,
             prop_wrk, use_threads
         )
@@ -295,7 +307,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     Φ = wrk.fw_storage  # TODO: pass in Φ₁, Φ₀ as parameters
     mu = get(wrk.kwargs, :mu, derivative_wrt_pulse)
     ∫gₐdt = wrk.g_a_int
-
+    Im = imag
     # TODO: re-initialize wrk.prop_wrk?
 
     # backward propagation
@@ -321,28 +333,45 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         for k = 1:N
             get_from_storage!(χ[k], X[k], n)
         end
+        ϵₙ⁽ⁱ⁺¹⁾ = [ϵ⁽ⁱ⁾[l][n]  for l ∈ 1:L]  # ϵₙ⁽ⁱ⁺¹⁾ ≈ ϵₙ⁽ⁱ⁾ for non-linear controls
+        # TODO: we could add a self-consistent loop here for ϵₙ⁽ⁱ⁺¹⁾
         Δuₙ = zeros(L)
         for l = 1:L  # `l` is the index for the different controls
             Sₗ = wrk.update_shapes[l]
             λₐ = wrk.lambda_vals[l]
+            ∂ϵₗ╱∂u = wrk.parametrization[l].de_du_derivative
+            uₗ = wrk.parametrization[l].u_of_epsilon
             for k = 1:N
-                μₗₖₙ = mu(wrk, l, k, n)
-                Δuₙ[l] += (Sₗ[n]/λₐ) * imag(dot(χ[k], μₗₖₙ, ϕ[k]))
+                μₗₖₙ = mu(wrk, l, k, n; control_value=ϵₙ⁽ⁱ⁺¹⁾[l])
+                αₗ = (Sₗ[n]/λₐ)  # Krotov step size
+                if wrk.is_parametrized[l]
+                    ∂ϵₗ╱∂uₗ = (∂ϵₗ╱∂u)(uₗ(ϵₙ⁽ⁱ⁺¹⁾[l]))
+                    Δuₙ[l] += αₗ * ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
+                else
+                    Δuₙ[l] += αₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
+                end
             end
-            (∫gₐdt)[l] += abs(Δuₙ[l])^2 * dt
         end
         # TODO: second order update
-        Δϵₙ = Δuₙ  # no parameterization (TODO)
         for l = 1:L
-            ϵ⁽ⁱ⁺¹⁾[l][n] = ϵ⁽ⁱ⁾[l][n] + Δϵₙ[l]
+            if wrk.is_parametrized[l]
+                uₗ = wrk.parametrization[l].u_of_epsilon
+                ϵₗ = wrk.parametrization[l].epsilon_of_u
+                ϵ⁽ⁱ⁺¹⁾[l][n] = ϵₗ(uₗ(ϵ⁽ⁱ⁾[l][n]) + Δuₙ[l])
+            else
+                Δϵₗₙ = Δuₙ[l]
+                ϵ⁽ⁱ⁺¹⁾[l][n] = ϵ⁽ⁱ⁾[l][n] + Δϵₗₙ
+            end
         end
+        # TODO: end of self-consistent loop
+        @. ∫gₐdt += abs(Δuₙ)^2 * dt
         @threadsif wrk.use_threads for k = 1:N
             local (G, dt) = _fw_gen(ϵ⁽ⁱ⁺¹⁾, k, n, wrk)
             propstep!(ϕ[k], G, dt, wrk.prop_wrk[k])
             write_to_storage!(Φ[k], n, ϕ[k])
         end
         # TODO: update sigma
-    end
+    end  # time loop
 end
 
 
@@ -372,14 +401,14 @@ function _bw_gen(ϵ, k, n, wrk)
 end
 
 
-function derivative_wrt_pulse(wrk::KrotovWrk, l::Int64, k::Int64, n::Int64)
+function derivative_wrt_pulse(wrk::KrotovWrk, l::Int64, k::Int64, n::Int64; control_value::Float64=0.0)
     # l: control index; k: objectives index, n: time grid interval index
     G = wrk.objectives[k].generator
     control = wrk.controls[l]
-    return derivate_wrt_pulse(wrk, G, control, n)
+    return derivate_wrt_pulse(wrk, G, control, n; control_value=control_value)
 end
 
-function derivate_wrt_pulse(wrk::KrotovWrk, G::Tuple, control, n::Int64)
+function derivate_wrt_pulse(wrk::KrotovWrk, G::Tuple, control, n::Int64; control_value::Float64=0.0)
     # assume G to be a nested tuple, and that `control` only occurs once
     for part in G
         if isa(part, Tuple)

@@ -15,6 +15,9 @@ include("generate_example_tests.jl")
     print("\n* Example 3 (examples/rho_3states.jl):")
     @time @safetestset "Example 3" begin include(joinpath("examples", "rho_3states.jl")) end
 
+    print("\n* Example 4 (examples/state_to_state_parametrizations.jl):")
+    @time @safetestset "Example 4" begin include(joinpath("examples", "state_to_state_parametrizations.jl")) end
+
     println("")
 
 end

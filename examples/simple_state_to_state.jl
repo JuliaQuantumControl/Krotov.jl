@@ -218,3 +218,7 @@ opt_dynamics = propagate(
 #-
 #!jl plot_population(opt_dynamics[1,:], opt_dynamics[2,:], tlist)
 #-
+
+#-
+#jl @test opt_dynamics[2,end] > 0.99
+#-
