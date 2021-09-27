@@ -91,6 +91,8 @@ opt_result = optimize_pulses(problem);
 
 opt_result
 
+@test opt_result.J_T < 1e-3
+
 opt_dynamics = propagate(
         objectives[1], problem.tlist;
         controls_map=IdDict(ϵ  => opt_result.optimized_controls[1]),
