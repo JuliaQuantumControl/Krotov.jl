@@ -195,6 +195,9 @@ end
 opt_result = optimize_pulses(problem);
 #-
 opt_result
+#-
+#jl @test opt_result.J_T < 1e-3
+#-
 
 # We can plot the optimized field:
 
