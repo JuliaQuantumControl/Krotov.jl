@@ -220,17 +220,30 @@ The following `problem` keyword arguments are supported (with default values):
    not given, the first-order Krotov method is used.
 * `iter_start=0`: the initial iteration number
 * `iter_stop=5000`: the maximum iteration number
+* `prop_method=:auto`: The propagation method to use
+* `update_hook`: A function that receives the Krotov workspace, the iteration
+   number, the list of updated pulses and the list of guess pulses as
+   positional arguments. The function may mutate any of its arguments. This may
+   be used e.g. to apply a spectral filter to the updated pulses, or to update
+   propagation workspaces inside the Krotov workspace.
+* `info_hook`: A function that receives the same argumens as `update_hook`, in
+   order to write information about the current iteration to the screen or to a
+   file. The default `info_hook` prints a table with convergence information to
+   the screen. Runs after `update_hook`. The `info_hook` function may return a
+   tuple, which is stored in the list of `records` inside the
+   [`KrotovResult`](@ref) object.
 * `check_convergence`: a function to check whether convergence has been
   reached. Receives a [`KrotovResult`](@ref) object `result`, and should set
   `result.converged` to `true` and `result.message` to an appropriate string in
   case of convergence. Multiple convergence checks can be performed by chaining
-  functions with `∘`.
-* `prop_method=:auto`: The propagation method to use
+  functions with `∘`. The convergence check is performed after any calls to
+  `update_hook` and `info_hook`.
 
 """
 function optimize_pulses(problem)
     sigma = get(problem.kwargs, :sigma, nothing)
     iter_start = get(problem.kwargs, :iter_start, 0)
+    update_hook! = get(problem.kwargs, :update_hook, (args...) -> nothing)
     info_hook = get(problem.kwargs, :info_hook, print_table)
     check_convergence! = get(problem.kwargs, :check_convergence, res -> res)
     # note: the default `check_convergence!` is a no-op. We still always check
@@ -260,17 +273,18 @@ function optimize_pulses(problem)
 
     # TODO: if sigma, fw_storage0 = fw_storage
     update_result!(wrk, 0)
-    info_hook(wrk, 0)
-    # TODO: update_hook
+    update_hook!(wrk, 0, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
+    info_tuple = info_hook(wrk, 0, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
+    (info_tuple !== nothing) && push!(wrk.records, info_tuple)
 
     while !wrk.result.converged
         i = i + 1
         krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         update_result!(wrk, i)
-        info_hook(wrk, i)
+        update_hook!(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
+        info_tuple = info_hook(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
+        (info_tuple !== nothing) && push!(wrk.records, info_tuple)
         check_convergence!(wrk.result)
-        # TODO: update_hook, e.g. to re-initialize propagation, apply spectral
-        # filter
         ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾ = ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾
     end
 
@@ -284,12 +298,12 @@ end
 function krotov_initial_fw_prop!(ϵ⁽⁰⁾, ϕₖ, ϕₖⁱⁿ, k, wrk)
     Φ₀ = wrk.fw_storage[k]
     copyto!(ϕₖ,  ϕₖⁱⁿ)
-    (Φ₀ ≠ nothing) && write_to_storage!(Φ₀, 1,  ϕₖⁱⁿ)
+    (Φ₀ !== nothing) && write_to_storage!(Φ₀, 1,  ϕₖⁱⁿ)
     N_T = length(wrk.result.tlist) - 1
     for n = 1:N_T
         G, dt = _fw_gen(ϵ⁽⁰⁾, k, n, wrk)
         propstep!(ϕₖ, G, dt, wrk.prop_wrk[k])
-        (Φ₀ ≠ nothing) && write_to_storage!(Φ₀, n+1, ϕₖ)
+        (Φ₀ !== nothing) && write_to_storage!(Φ₀, n+1, ϕₖ)
     end
     # TODO: allow a custom propstep! routine
 end
@@ -449,7 +463,7 @@ end
 
 
 """Default info_hook"""
-function print_table(wrk, iteration)
+function print_table(wrk, iteration, args...)
     J_T = wrk.result.J_T
     g_a_int = sum(wrk.g_a_int)
     J = J_T + g_a_int
