@@ -97,5 +97,7 @@ opt_dynamics = propagate(
         storage=true, observables=(Ψ->abs.(Ψ).^2, )
 )
 
+@test opt_dynamics[2,end] > 0.99
+
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 
