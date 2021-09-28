@@ -179,5 +179,18 @@ const problem = ControlProblem(
 
 opt_result = optimize_pulses(problem);
 
+opt_result
+
+using Serialization
+dumpdir = joinpath(@__DIR__, "dump"); mkpath(dumpdir)
+serialize(joinpath(dumpdir, "./opt_result.jls"), opt_result)
+opt_result_prev = deserialize(joinpath(dumpdir, "./opt_result.jls"))
+problem.kwargs[:iter_stop] = 5
+problem.kwargs[:continue_from] = opt_result_prev
+
+opt_result2 = optimize_pulses(problem);
+
+opt_result2
+
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 
