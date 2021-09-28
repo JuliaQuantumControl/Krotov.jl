@@ -58,7 +58,7 @@ test/Manifest.toml: test/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANT
 
 
 devrepl: test/Manifest.toml ## Start an interactive REPL for testing and building documentation
-	@julia --project=test --banner=no --startup-file=yes -e 'include("test/init.jl")' -i
+	@julia --threads auto --project=test --banner=no --startup-file=yes -e 'include("test/init.jl")' -i
 
 
 docs/Manifest.toml: docs/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml

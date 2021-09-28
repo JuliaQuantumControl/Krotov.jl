@@ -259,6 +259,7 @@ rho_00_expvals = propagate(
 const problem = ControlProblem(
     objectives=objectives,
     prop_method=:newton,
+    use_threads=true,
     pulse_options=IdDict(
         Ωre  => Dict(
             :lambda_a => 1.0,
