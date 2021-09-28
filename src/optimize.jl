@@ -29,7 +29,7 @@ mutable struct KrotovResult{STST}
         controls = getcontrols(problem.objectives)
         iter_start = get(problem.kwargs, :iter_start, 0)
         iter_stop = get(problem.kwargs, :iter_stop, 5000)
-        iter = 0
+        iter = iter_start
         secs = 0
         tau_vals = Vector{ComplexF64}()
         guess_controls = [
@@ -137,13 +137,8 @@ struct KrotovWrk{
         adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
         controls = getcontrols(objectives)
         tlist = problem.tlist
-        kwargs = problem.kwargs
+        kwargs = Dict(problem.kwargs)
         # TODO: check that kwargs has all the required parameters
-        pulses0 = [
-            discretize_on_midpoints(control, tlist) for control in controls
-        ]
-        pulses1 = [copy(pulse) for pulse in pulses0]
-        g_a_int = zeros(length(pulses0))
         pulse_options = problem.pulse_options
         update_shapes = [
             discretize_on_midpoints(
@@ -163,7 +158,29 @@ struct KrotovWrk{
             get(pulse_options[control], :parametrization, NoParametrization())
             for control in controls
         ]
-        result = KrotovResult(problem)
+        if haskey(kwargs, :continue_from)
+            @info "Continuing previous optimization"
+            result = kwargs[:continue_from]
+            if !(result isa KrotovResult)
+                # account for continuing from a different optimization method
+                result = convert(KrotovResult, result)
+            end
+            result.iter_stop = get(problem.kwargs, :iter_stop, 5000)
+            result.converged = false
+            result.start_local_time = now()
+            result.message = "in progress"
+            pulses0 = [
+                discretize_on_midpoints(control, tlist)
+                for control in result.optimized_controls
+            ]
+        else
+            result = KrotovResult(problem)
+            pulses0 = [
+                discretize_on_midpoints(control, tlist) for control in controls
+            ]
+        end
+        pulses1 = [copy(pulse) for pulse in pulses0]
+        g_a_int = zeros(length(pulses0))
         bw_states = [similar(obj.initial_state) for obj in objectives]
         zero_vals = IdDict(control => zero(pulses0[i][1]) for (i, control) in enumerate(controls))
         G = [setcontrolvals(obj.generator, zero_vals) for obj in objectives]
@@ -199,7 +216,7 @@ end
 result = optimize_pulses(problem)
 ```
 
-optimizes the control `problem`, see
+optimizes the given control problem, see
 [`QuantumControlBase.ControlProblem`](@ref).
 
 Parameters are taken from the keyword arguments used in the instantiation of
@@ -239,6 +256,7 @@ The following `problem` keyword arguments are supported (with default values):
 
 """
 function optimize_pulses(problem)
+    # TODO: merge!(problem.kwargs, kwargs)
     sigma = get(problem.kwargs, :sigma, nothing)
     iter_start = get(problem.kwargs, :iter_start, 0)
     update_hook! = get(problem.kwargs, :update_hook, (args...) -> nothing)
@@ -251,10 +269,6 @@ function optimize_pulses(problem)
     )
 
     wrk = KrotovWrk(problem)
-    # TODO: if continuing previous optimization (`continue_from` argument),
-    # ammend wrk from existing Result
-
-    i = iter_start
 
     ϵ⁽ⁱ⁾ = wrk.pulses0
     ϵ⁽ⁱ⁺¹⁾ = wrk.pulses1
@@ -275,6 +289,7 @@ function optimize_pulses(problem)
     info_tuple = info_hook(wrk, 0, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
     (info_tuple !== nothing) && push!(wrk.records, info_tuple)
 
+    i = wrk.result.iter  # = 0, unless continuing from previous optimization
     while !wrk.result.converged
         i = i + 1
         krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
@@ -437,7 +452,7 @@ function update_result!(wrk::KrotovWrk, i::Int64)
     J_T_func = wrk.kwargs[:J_T]
     res.J_T_prev = res.J_T
     res.J_T = J_T_func(res.states, wrk.objectives)
-    res.iter = i
+    (i > 0) && (res.iter = i)
     if i >= res.iter_stop
         res.converged = true
         res.message = "Reached maximum number of iterations"
