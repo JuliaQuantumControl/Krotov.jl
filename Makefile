@@ -79,3 +79,4 @@ clean: ## Clean up build/doc/testing artifacts
 
 distclean: clean ## Restore to a clean checkout state
 	rm -f Manifest.toml docs/Manifest.toml test/Manifest.toml
+	rm -rf test/examples/dump docs/src/examples/dump

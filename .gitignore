@@ -3,6 +3,8 @@
 *.jl.mem
 /Manifest.toml
 /test/Manifest.toml
+/test/examples/dump/
 /docs/Manifest.toml
 /docs/build/
+/docs/src/examples/dump/
 /gh-pages/
