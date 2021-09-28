@@ -142,6 +142,7 @@ rho_00_expvals = propagate(
 );</code></pre><h2 id="Optimization"><a class="docs-heading-anchor" href="#Optimization">Optimization</a><a id="Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Optimization" title="Permalink"></a></h2><pre><code class="language-julia hljs">const problem = ControlProblem(
     objectives=objectives,
     prop_method=:newton,
+    use_threads=true,
     pulse_options=IdDict(
         Ωre  =&gt; Dict(
             :lambda_a =&gt; 1.0,
@@ -165,32 +166,32 @@ rho_00_expvals = propagate(
 
 
 opt_result = optimize_pulses(problem);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> iter.        J_T   ∫gₐ(t)dt          J       ΔJ_T         ΔJ    secs
-     0   1.06e-01   0.00e+00   1.06e-01        n/a        n/a    14.2
-     1   7.44e-02   1.54e-02   8.98e-02  -3.15e-02  -1.61e-02    28.2
-     2   7.37e-02   3.47e-04   7.40e-02  -7.03e-04  -3.57e-04    27.8
-     3   7.30e-02   3.28e-04   7.33e-02  -6.65e-04  -3.37e-04    27.7</code></pre><pre><code class="language-julia hljs">opt_result</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Krotov Optimization Result
+     0   1.06e-01   0.00e+00   1.06e-01        n/a        n/a    12.9
+     1   7.44e-02   1.54e-02   8.98e-02  -3.15e-02  -1.61e-02    23.5
+     2   7.37e-02   3.47e-04   7.40e-02  -7.03e-04  -3.57e-04    22.9
+     3   7.30e-02   3.28e-04   7.33e-02  -6.65e-04  -3.37e-04    23.0</code></pre><pre><code class="language-julia hljs">opt_result</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Krotov Optimization Result
 --------------------------
-- Started at 2021-09-28T19:44:59.178
+- Started at 2021-09-28T23:10:00.105
 - Number of objectives: 3
 - Number of iterations: 3
 - Reason for termination: Reached maximum number of iterations
-- Ended at 2021-09-28T19:46:37.176 (97998 milliseconds)</code></pre><h2 id="Debugging-Continuation-of-Optimization"><a class="docs-heading-anchor" href="#Debugging-Continuation-of-Optimization">Debugging Continuation of Optimization</a><a id="Debugging-Continuation-of-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Debugging-Continuation-of-Optimization" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Serialization
+- Ended at 2021-09-28T23:11:22.477 (82372 milliseconds)</code></pre><h2 id="Debugging-Continuation-of-Optimization"><a class="docs-heading-anchor" href="#Debugging-Continuation-of-Optimization">Debugging Continuation of Optimization</a><a id="Debugging-Continuation-of-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Debugging-Continuation-of-Optimization" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Serialization
 dumpdir = joinpath(@__DIR__, &quot;dump&quot;); mkpath(dumpdir)
 serialize(joinpath(dumpdir, &quot;./opt_result.jls&quot;), opt_result)
 opt_result_prev = deserialize(joinpath(dumpdir, &quot;./opt_result.jls&quot;))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Krotov Optimization Result
 --------------------------
-- Started at 2021-09-28T19:44:59.178
+- Started at 2021-09-28T23:10:00.105
 - Number of objectives: 3
 - Number of iterations: 3
 - Reason for termination: Reached maximum number of iterations
-- Ended at 2021-09-28T19:46:37.176 (97998 milliseconds)</code></pre><pre><code class="language-julia hljs">opt_result2 = optimize_pulses(problem, continue_from=opt_result_prev, iter_stop=5);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">[ Info: Continuing previous optimization
+- Ended at 2021-09-28T23:11:22.477 (82372 milliseconds)</code></pre><pre><code class="language-julia hljs">opt_result2 = optimize_pulses(problem, continue_from=opt_result_prev, iter_stop=5);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">[ Info: Continuing previous optimization
  iter.        J_T   ∫gₐ(t)dt          J       ΔJ_T         ΔJ    secs
-     0   7.30e-02   0.00e+00   7.30e-02        n/a        n/a    14.0
-     4   7.24e-02   3.10e-04   7.27e-02  -6.29e-04  -3.19e-04    27.1
-     5   7.18e-02   2.94e-04   7.21e-02  -5.97e-04  -3.03e-04    27.0</code></pre><pre><code class="language-julia hljs">opt_result2</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Krotov Optimization Result
+     0   7.30e-02   0.00e+00   7.30e-02        n/a        n/a    11.9
+     4   7.24e-02   3.10e-04   7.27e-02  -6.29e-04  -3.19e-04    23.8
+     5   7.18e-02   2.94e-04   7.21e-02  -5.97e-04  -3.03e-04    23.4</code></pre><pre><code class="language-julia hljs">opt_result2</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Krotov Optimization Result
 --------------------------
-- Started at 2021-09-28T19:46:37.315
+- Started at 2021-09-28T23:11:22.648
 - Number of objectives: 3
 - Number of iterations: 5
 - Reason for termination: Reached maximum number of iterations
-- Ended at 2021-09-28T19:47:45.318 (68003 milliseconds)</code></pre><h2 id="Optimization-result"><a class="docs-heading-anchor" href="#Optimization-result">Optimization result</a><a id="Optimization-result-1"></a><a class="docs-heading-anchor-permalink" href="#Optimization-result" title="Permalink"></a></h2><p>TODO</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../state_to_state_rwa/">« Example 2 (RWA)</a><a class="docs-footer-nextpage" href="../state_to_state_parametrizations/">Example 4 (Parametrization) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.7 on <span class="colophon-date" title="Tuesday 28 September 2021 19:48">Tuesday 28 September 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+- Ended at 2021-09-28T23:12:21.609 (58961 milliseconds)</code></pre><h2 id="Optimization-result"><a class="docs-heading-anchor" href="#Optimization-result">Optimization result</a><a id="Optimization-result-1"></a><a class="docs-heading-anchor-permalink" href="#Optimization-result" title="Permalink"></a></h2><p>TODO</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../state_to_state_rwa/">« Example 2 (RWA)</a><a class="docs-footer-nextpage" href="../state_to_state_parametrizations/">Example 4 (Parametrization) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.7 on <span class="colophon-date" title="Tuesday 28 September 2021 23:12">Tuesday 28 September 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
