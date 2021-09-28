@@ -48,7 +48,7 @@ jobs:
             Pkg.instantiate()'
       - run: |
           # Run tests
-          julia --project=@. -e '
+          julia --threads auto --project=@. -e '
             using Pkg
             Pkg.activate(".")
             Pkg.test(coverage=true)'
@@ -82,14 +82,14 @@ jobs:
             Pkg.instantiate()'
       - run: |
           # Run doctests
-          julia --project=docs -e '
+          julia  --threads auto --project=docs -e '
             using Documenter: DocMeta, doctest
             using Krotov
             DocMeta.setdocmeta!(Krotov, :DocTestSetup, :(using Krotov); recursive=true)
             doctest(Krotov)'
       - run: |
           # Make documentation
-          julia --project=docs docs/make.jl
+          julia  --threads auto --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
