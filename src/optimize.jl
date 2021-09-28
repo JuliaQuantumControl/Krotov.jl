@@ -17,7 +17,6 @@ mutable struct KrotovResult{STST}
     J_T_prev :: Float64  # previous value of J_T
     guess_controls :: Vector{Vector{Float64}}
     optimized_controls :: Vector{Vector{Float64}}
-    all_pulses :: Vector{Any} # TODO
     states :: Vector{STST}
     start_local_time :: DateTime
     end_local_time :: DateTime
@@ -39,7 +38,6 @@ mutable struct KrotovResult{STST}
         J_T = 0.0
         J_T_prev = 0.0
         optimized_controls = [copy(guess) for guess in guess_controls]
-        all_pulses = Vector{Any}()
         states = [similar(obj.initial_state) for obj in problem.objectives]
         start_local_time = now()
         end_local_time = now()
@@ -48,8 +46,8 @@ mutable struct KrotovResult{STST}
         message = "in progress"
         new{eltype(states)}(
             tlist, iter_start, iter_stop, iter, secs, tau_vals, J_T, J_T_prev,
-            guess_controls, optimized_controls, all_pulses, states,
-            start_local_time, end_local_time, records, converged, message)
+            guess_controls, optimized_controls, states, start_local_time,
+            end_local_time, records, converged, message)
     end
 end
 
