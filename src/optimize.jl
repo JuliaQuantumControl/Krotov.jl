@@ -213,23 +213,27 @@ end
 """Use Krotov's method to optimize the given optimization problem.
 
 ```julia
-result = optimize_pulses(problem)
+result = optimize_pulses(problem; kwargs...)
 ```
 
 optimizes the given control problem, see
 [`QuantumControlBase.ControlProblem`](@ref).
 
-Parameters are taken from the keyword arguments used in the instantiation of
-`problem`.
+Keyword arguments that control the optimization are taken from the keyword
+arguments used in the instantiation of `problem`. Any `kwargs` passed directly
+to `optimize_pulses` will update (overwrite) the parameters in `problem`.
 
 # Required problem keyword arguments
 
-The optimization functional is given implicitly via the mandatory `problem`
-keyword argument `chi`.
+* `J_T`: A function `J_T(ϕ, objectives)` that evaluates the final time
+  functional from a list `ϕ` of forward-propagated states and
+  `problem.objectives`.
+* `chi`: A function `chi!(χ, ϕ, objectives)` what receives a list `ϕ`
+  of the forward propagates state and must set ``χₖ=∂J_T/∂⟨ϕₖ|``.
 
 # Optional problem keyword arguments
 
-The following `problem` keyword arguments are supported (with default values):
+The following keyword arguments are supported (with default values):
 
 * `sigma=nothing`: Function that calculate the second-order contribution. If
    not given, the first-order Krotov method is used.
@@ -255,8 +259,8 @@ The following `problem` keyword arguments are supported (with default values):
   `update_hook` and `info_hook`.
 
 """
-function optimize_pulses(problem)
-    # TODO: merge!(problem.kwargs, kwargs)
+function optimize_pulses(problem; kwargs...)
+    merge!(problem.kwargs, kwargs)
     sigma = get(problem.kwargs, :sigma, nothing)
     iter_start = get(problem.kwargs, :iter_start, 0)
     update_hook! = get(problem.kwargs, :update_hook, (args...) -> nothing)
