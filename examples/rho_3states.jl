@@ -51,6 +51,7 @@ using QuantumPropagators
 using QuantumControlBase
 using Krotov
 using LinearAlgebra
+using Serialization
 using SparseArrays
 
 #jl using Test
@@ -286,18 +287,16 @@ opt_result = optimize_pulses(problem);
 #-
 opt_result
 
-# ## Debugging Continuation of Optimization
+# ## Continuation of Optimization
 
-using Serialization
 dumpdir = joinpath(@__DIR__, "dump"); mkpath(dumpdir)
-serialize(joinpath(dumpdir, "./opt_result.jls"), opt_result)
-opt_result_prev = deserialize(joinpath(dumpdir, "./opt_result.jls"))
-#-
-opt_result2 = optimize_pulses(problem, continue_from=opt_result_prev, iter_stop=5);
-#-
-opt_result2
-
+dumpfile = joinpath(dumpdir, "rho_3states_opt_result.jls")
+if isfile(dumpfile)
+    opt_result = deserialize(dumpfile)
+else
+    opt_result = optimize_pulses(problem, continue_from=opt_result,
+                                 iter_stop=3000)
+    serialize(dumpfile, opt_result)
+end
 
 # ## Optimization result
-
-# TODO

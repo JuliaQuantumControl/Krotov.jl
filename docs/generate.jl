@@ -13,13 +13,14 @@ for example in readdir(EXAMPLEDIR)
         code = strip(read(script, String))
         mdpost(str) = replace(str, "@__CODE__" => code)
         Literate.markdown(input, GENERATEDDIR, postprocess = mdpost)
-        Literate.notebook(input, GENERATEDDIR, execute = true)
+        Literate.notebook(input, GENERATEDDIR, execute = false)
     elseif any(endswith.(example, [".png", ".jpg", ".gif"]))
         cp(joinpath(EXAMPLEDIR, example), joinpath(GENERATEDDIR, example); force=true)
     else
         @warn "ignoring $example"
     end
 end
+cp(joinpath(EXAMPLEDIR, "dump"), joinpath(GENERATEDDIR, "dump"); force=true)
 
 # remove any .vtu files in the generated dir (should not be deployed)
 cd(GENERATEDDIR) do

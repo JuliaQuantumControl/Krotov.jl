@@ -18,6 +18,8 @@ Make sure you have Revise.jl installed in your standard Julia environment
 endef
 export PRINT_HELP_PYSCRIPT
 
+GITORIGIN := $(shell git config remote.origin.url)
+
 help:  ## show this help
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
@@ -47,7 +49,11 @@ Manifest.toml: Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGAT
 	julia --project=. -e "$$DEV_PACKAGES;Pkg.instantiate()"
 
 
-test:  Manifest.toml ## Run the test suite
+examples/dump/README.md:
+	git clone --branch data-dump $(GITORIGIN) examples/dump
+
+
+test:  Manifest.toml examples/dump/README.md ## Run the test suite
 	@rm -f test/Manifest.toml  # Pkg.test cannot handle existing test/Manifest.toml
 	julia --startup-file=yes -e 'using Pkg;Pkg.activate(".");Pkg.test(coverage=true)'
 	@echo "Done. Consider using 'make devrepl'"
@@ -57,7 +63,7 @@ test/Manifest.toml: test/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANT
 	julia --project=test -e "$$ENV_PACKAGES"
 
 
-devrepl: test/Manifest.toml ## Start an interactive REPL for testing and building documentation
+devrepl: test/Manifest.toml examples/dump/README.md ## Start an interactive REPL for testing and building documentation
 	@julia --threads auto --project=test --banner=no --startup-file=yes -e 'include("test/init.jl")' -i
 
 
@@ -65,7 +71,7 @@ docs/Manifest.toml: docs/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANT
 	julia --project=docs -e "$$ENV_PACKAGES"
 
 
-docs: docs/Manifest.toml ## Build the documentation
+docs: docs/Manifest.toml examples/dump/README.md ## Build the documentation
 	julia --project=docs docs/make.jl
 	@echo "Done. Consider using 'make devrepl'"
 
@@ -80,3 +86,4 @@ clean: ## Clean up build/doc/testing artifacts
 distclean: clean ## Restore to a clean checkout state
 	rm -f Manifest.toml docs/Manifest.toml test/Manifest.toml
 	rm -rf test/examples/dump docs/src/examples/dump
+	rm -rf examples/dump

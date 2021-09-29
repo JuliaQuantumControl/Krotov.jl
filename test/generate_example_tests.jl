@@ -11,5 +11,6 @@ for example in readdir(EXAMPLEDIR)
         script = Literate.script(input, GENERATEDDIR)
     end
 end
+cp(joinpath(EXAMPLEDIR, "dump"), joinpath(GENERATEDDIR, "dump"); force=true)
 
 println("Finished generating tests for Literate.jl examples")
