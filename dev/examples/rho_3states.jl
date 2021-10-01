@@ -1,6 +1,4 @@
-using QuantumPropagators
-using QuantumControlBase
-using Krotov
+using QuantumControl
 using LinearAlgebra
 using Serialization
 using SparseArrays
@@ -56,7 +54,7 @@ end
 
 const T = 400ns;
 
-Ωre = t -> 35MHz * flattop(t; T=T, t_rise=20ns);
+Ωre = t -> 35MHz * QuantumControl.shapes.flattop(t; T=T, t_rise=20ns);
 Ωim = t -> 0.0;
 
 L = transmon_liouvillian(Ωre, Ωim);
@@ -149,7 +147,7 @@ pop11 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₁₁));
 
 
 rho_00_expvals = propagate(
-    reshape(ρ̂₀₀, :), obj_genfunc(objectives[1], tlist), tlist; method=:newton,
+    objectives[1], tlist; initial_state=reshape(ρ̂₀₀, :), method=:newton,
     observables=(pop00, pop01, pop10, pop11), storage=true
 );
 
@@ -160,17 +158,17 @@ const problem = ControlProblem(
     pulse_options=IdDict(
         Ωre  => Dict(
             :lambda_a => 1.0,
-            :update_shape => t -> flattop(t, T=T, t_rise=20ns, func=:blackman),
+            :update_shape => t -> QuantumControl.shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
         ),
         Ωim  => Dict(
             :lambda_a => 1.0,
-            :update_shape => t -> flattop(t, T=T, t_rise=20ns, func=:blackman),
+            :update_shape => t -> QuantumControl.shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
         ),
     ),
     tlist=tlist,
     iter_stop=3,
-    chi=chi_re!,
-    J_T=J_T_re,
+    chi=QuantumControl.functionals.chi_re!,
+    J_T=QuantumControl.functionals.J_T_re,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -179,7 +177,7 @@ const problem = ControlProblem(
 );
 
 
-opt_result = optimize_pulses(problem);
+opt_result = optimize(problem, method=:krotov);
 
 opt_result
 
@@ -188,8 +186,8 @@ dumpfile = joinpath(dumpdir, "rho_3states_opt_result.jls")
 if isfile(dumpfile)
     opt_result = deserialize(dumpfile)
 else
-    opt_result = optimize_pulses(problem, continue_from=opt_result,
-                                 iter_stop=3000)
+    opt_result = optimize(problem, method=:krotov, continue_from=opt_result,
+                          iter_stop=3000)
     serialize(dumpfile, opt_result)
 end
 

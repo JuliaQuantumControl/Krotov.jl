@@ -1,6 +1,6 @@
-using QuantumPropagators
-using QuantumControlBase
-using Krotov
+using QuantumControl
+using QuantumControl.shapes: flattop
+using Krotov: SquareParametrization, TanhParametrization, TanhSqParametrization, LogisticParametrization, LogisticSqParametrization
 using LinearAlgebra
 
 using Test
@@ -139,8 +139,8 @@ problem = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=chi_ss!,
-    J_T=J_T_ss,
+    chi=QuantumControl.functionals.chi_ss!,
+    J_T=QuantumControl.functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -148,7 +148,7 @@ problem = ControlProblem(
         ) end
 );
 
-opt_result_positive = optimize_pulses(problem);
+opt_result_positive = optimize(problem, method=:krotov);
 
 opt_result_positive
 
@@ -167,8 +167,8 @@ problem_tanhsq = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=chi_ss!,
-    J_T=J_T_ss,
+    chi=QuantumControl.functionals.chi_ss!,
+    J_T=QuantumControl.functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -176,7 +176,7 @@ problem_tanhsq = ControlProblem(
         ) end
 );
 
-opt_result_tanhsq = optimize_pulses(problem_tanhsq);
+opt_result_tanhsq = optimize(problem_tanhsq, method=:krotov);
 
 opt_result_tanhsq
 
@@ -196,8 +196,8 @@ problem_logisticsq = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=chi_ss!,
-    J_T=J_T_ss,
+    chi=QuantumControl.functionals.chi_ss!,
+    J_T=QuantumControl.functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -205,7 +205,7 @@ problem_logisticsq = ControlProblem(
         ) end
 );
 
-opt_result_logisticsq = optimize_pulses(problem_logisticsq);
+opt_result_logisticsq = optimize(problem_logisticsq, method=:krotov);
 
 @test minimum(opt_result_logisticsq.optimized_controls[1]) ≥ 0.0
 @test minimum(opt_result_logisticsq.optimized_controls[1]) < 1e-16
@@ -223,8 +223,8 @@ problem_tanh = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=chi_ss!,
-    J_T=J_T_ss,
+    chi=QuantumControl.functionals.chi_ss!,
+    J_T=QuantumControl.functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -232,7 +232,7 @@ problem_tanh = ControlProblem(
         ) end
 );
 
-opt_result_tanh = optimize_pulses(problem_tanh);
+opt_result_tanh = optimize(problem_tanh, method=:krotov);
 
 @test minimum(opt_result_tanh.optimized_controls[1]) > -0.5
 @test maximum(opt_result_tanh.optimized_controls[1]) < 0.5
