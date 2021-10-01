@@ -191,7 +191,9 @@ struct KrotovWrk{
         fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
         bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
         prop_wrk = [
-            QuantumControlBase.initobjpropwrk(obj, tlist, prop_method; kwargs...)
+            QuantumControlBase.initobjpropwrk(obj, tlist, prop_method;
+                                              initial_state=obj.initial_state,
+                                              kwargs...)
             for obj in objectives
         ]
         # TODO: separate propwrk for backward propagation

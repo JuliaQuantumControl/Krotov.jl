@@ -43,9 +43,9 @@
 # This example illustrates the parametrization of control pulses as a
 # form of amplitude constraint.
 
-using QuantumPropagators
-using QuantumControlBase
-using Krotov
+using QuantumControl
+using QuantumControl.shapes: flattop
+using Krotov: SquareParametrization, TanhParametrization, TanhSqParametrization, LogisticParametrization, LogisticSqParametrization
 using LinearAlgebra
 
 #jl using Test
@@ -233,8 +233,8 @@ problem = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=chi_ss!,
-    J_T=J_T_ss,
+    chi=QuantumControl.functionals.chi_ss!,
+    J_T=QuantumControl.functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -242,7 +242,7 @@ problem = ControlProblem(
         ) end
 );
 #-
-opt_result_positive = optimize_pulses(problem);
+opt_result_positive = optimize(problem, method=:krotov);
 #-
 opt_result_positive
 
@@ -272,8 +272,8 @@ problem_tanhsq = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=chi_ss!,
-    J_T=J_T_ss,
+    chi=QuantumControl.functionals.chi_ss!,
+    J_T=QuantumControl.functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -281,7 +281,7 @@ problem_tanhsq = ControlProblem(
         ) end
 );
 #-
-opt_result_tanhsq = optimize_pulses(problem_tanhsq);
+opt_result_tanhsq = optimize(problem_tanhsq, method=:krotov);
 #-
 opt_result_tanhsq
 
@@ -311,8 +311,8 @@ problem_logisticsq = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=chi_ss!,
-    J_T=J_T_ss,
+    chi=QuantumControl.functionals.chi_ss!,
+    J_T=QuantumControl.functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -320,7 +320,7 @@ problem_logisticsq = ControlProblem(
         ) end
 );
 #-
-opt_result_logisticsq = optimize_pulses(problem_logisticsq);
+opt_result_logisticsq = optimize(problem_logisticsq, method=:krotov);
 # We can plot the optimized field:
 
 #-
@@ -346,8 +346,8 @@ problem_tanh = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=chi_ss!,
-    J_T=J_T_ss,
+    chi=QuantumControl.functionals.chi_ss!,
+    J_T=QuantumControl.functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -355,7 +355,7 @@ problem_tanh = ControlProblem(
         ) end
 );
 #-
-opt_result_tanh = optimize_pulses(problem_tanh);
+opt_result_tanh = optimize(problem_tanh, method=:krotov);
 #-
 #!jl plot_control(opt_result_tanh.optimized_controls[1], tlist)
 #-

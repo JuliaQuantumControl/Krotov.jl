@@ -48,6 +48,8 @@ jobs:
             Pkg.develop(url="https://github.com/QuantumControl-jl/QuantumControlBase.jl.git#master")
             println("Dev-install QuantumPropagators")
             Pkg.develop(url="https://github.com/QuantumControl-jl/QuantumPropagators.jl.git#master")
+            println("Dev-install QuantumControl")
+            Pkg.develop(url="https://github.com/QuantumControl-jl/QuantumControl.jl.git#master")
             println("Pkg.instantiate()")
             Pkg.instantiate()'
       - run: |
@@ -84,6 +86,8 @@ jobs:
             Pkg.develop(url="https://github.com/QuantumControl-jl/QuantumControlBase.jl.git#master")
             println("Dev-install QuantumPropagators")
             Pkg.develop(url="https://github.com/QuantumControl-jl/QuantumPropagators.jl.git#master")
+            println("Dev-install QuantumControl")
+            Pkg.develop(url="https://github.com/QuantumControl-jl/QuantumControl.jl.git#master")
             println("Dev-install package")
             Pkg.develop(PackageSpec(path=pwd()))
             println("Pkg.instantiate()")

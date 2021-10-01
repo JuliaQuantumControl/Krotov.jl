@@ -24,15 +24,17 @@ help:  ## show this help
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 
-# We want to test against checkouts of QuantumControlBase and QuantumPropagators
+# We want to test against checkouts of QuantumControl packages
 QUANTUMCONTROLBASE ?= ../QuantumControlBase.jl
 QUANTUMPROPAGATORS ?= ../QuantumPropagators.jl
+QUANTUMCONTROL ?= ../QuantumControl.jl
 
 
 define DEV_PACKAGES
 using Pkg;
 Pkg.develop(path="$(QUANTUMCONTROLBASE)");
 Pkg.develop(path="$(QUANTUMPROPAGATORS)");
+Pkg.develop(path="$(QUANTUMCONTROL)");
 endef
 export DEV_PACKAGES
 
@@ -45,7 +47,7 @@ endef
 export ENV_PACKAGES
 
 
-Manifest.toml: Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml
+Manifest.toml: Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml $(QUANTUMCONTROL)/Project.toml 
 	julia --project=. -e "$$DEV_PACKAGES;Pkg.instantiate()"
 
 
@@ -59,7 +61,7 @@ test:  Manifest.toml examples/dump/README.md ## Run the test suite
 	@echo "Done. Consider using 'make devrepl'"
 
 
-test/Manifest.toml: test/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml
+test/Manifest.toml: test/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml $(QUANTUMCONTROL)/Project.toml
 	julia --project=test -e "$$ENV_PACKAGES"
 
 
@@ -67,7 +69,7 @@ devrepl: test/Manifest.toml examples/dump/README.md ## Start an interactive REPL
 	@julia --threads auto --project=test --banner=no --startup-file=yes -e 'include("test/init.jl")' -i
 
 
-docs/Manifest.toml: docs/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml
+docs/Manifest.toml: docs/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml $(QUANTUMCONTROL)/Project.toml
 	julia --project=docs -e "$$ENV_PACKAGES"
 
 
@@ -78,7 +80,7 @@ docs: docs/Manifest.toml examples/dump/README.md ## Build the documentation
 
 clean: ## Clean up build/doc/testing artifacts
 	rm -f src/*.cov test/*.cov
-	rm -f test/examples/*
+	rm -f test/examples/*.*
 	for file in examples/*.jl; do rm -f docs/src/"$${file%.jl}".*; done
 	rm -rf docs/build
 

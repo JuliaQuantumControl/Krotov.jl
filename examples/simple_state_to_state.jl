@@ -47,9 +47,7 @@
 # simple canonical optimization problem: the transfer of population in a two
 # level system.
 
-using QuantumPropagators
-using QuantumControlBase
-using Krotov
+using QuantumControl
 using LinearAlgebra
 
 #jl using Test
@@ -65,7 +63,7 @@ using LinearAlgebra
 #
 # We we will use
 
-ϵ(t) = 0.2 * flattop(t, T=5, t_rise=0.3, func=:blackman);
+ϵ(t) = 0.2 * QuantumControl.shapes.flattop(t, T=5, t_rise=0.3, func=:blackman);
 
 
 #-
@@ -142,13 +140,15 @@ problem = ControlProblem(
     pulse_options=IdDict(
         ϵ  => Dict(
             :lambda_a => 5,
-            :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
+            :update_shape => t -> QuantumControl.shapes.flattop(
+                t, T=5, t_rise=0.3, func=:blackman
+            ),
         )
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=chi_ss!,
-    J_T=J_T_ss,
+    chi=QuantumControl.functionals.chi_ss!,
+    J_T=QuantumControl.functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -192,7 +192,7 @@ end
 # via `chi_constructor`, which calculates the states $\ket{\chi} =
 # \frac{J_T}{\bra{\Psi}}$).
 
-opt_result = optimize_pulses(problem);
+opt_result = optimize(problem, method=:krotov);
 #-
 opt_result
 #-
