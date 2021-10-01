@@ -11,11 +11,11 @@ println("Starting makedocs")
 makedocs(;
     modules=[Krotov],
     authors="Michael Goerz <mail@michaelgoerz.net> and contributors",
-    repo="https://github.com/QuantumControl-jl/Krotov.jl/blob/{commit}{path}#{line}",
+    repo="https://github.com/JuliaQuantumControl/Krotov.jl/blob/{commit}{path}#{line}",
     sitename="Krotov.jl",
     format=Documenter.HTML(;
         prettyurls=true,
-        canonical="https://QuantumControl-jl.github.io/Krotov.jl",
+        canonical="https://juliaquantumcontrol.github.io/Krotov.jl",
         assets=String[],
         mathengine=KaTeX(),
     ),
@@ -38,5 +38,5 @@ println("Finished makedocs")
 rm(joinpath(@__DIR__, "build", "examples", ".gitignore"))
 
 deploydocs(;
-    repo="github.com/QuantumControl-jl/Krotov.jl",
+    repo="github.com/JuliaQuantumControl/Krotov.jl",
 )
