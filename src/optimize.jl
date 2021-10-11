@@ -118,6 +118,8 @@ struct KrotovWrk{
     # dynamical generator at a particular point in time
     G :: Vector{GT}
 
+    control_derivs :: Vector{Vector{Union{Function, Nothing}}}
+
     vals_dict :: Vector{VDT}
 
     fw_storage :: Vector{STORT}  # forward storage array (per objective)
@@ -136,6 +138,9 @@ struct KrotovWrk{
         objectives = [obj for obj in problem.objectives]
         adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
         controls = getcontrols(objectives)
+        control_derivs = [
+            getcontrolderivs(obj.generator, controls) for obj in objectives
+        ]
         tlist = problem.tlist
         kwargs = Dict(problem.kwargs)
         # TODO: check that kwargs has all the required parameters
@@ -203,9 +208,10 @@ struct KrotovWrk{
             eltype(fw_storage), eltype(prop_wrk), eltype(G)
         }(
             objectives, adjoint_objectives, kwargs, controls, pulses0, pulses1,
-            g_a_int, update_shapes, lambda_vals, is_parametrized, parametrization, pulse_options, result,
-            bw_states, G, vals_dict, fw_storage, fw_storage2, bw_storage,
-            prop_wrk, use_threads
+            g_a_int, update_shapes, lambda_vals, is_parametrized,
+            parametrization, pulse_options, result, bw_states, G,
+            control_derivs, vals_dict, fw_storage, fw_storage2,
+            bw_storage, prop_wrk, use_threads
         )
     end
 
@@ -338,7 +344,6 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     L = length(wrk.controls)
     X = wrk.bw_storage
     Φ = wrk.fw_storage  # TODO: pass in Φ₁, Φ₀ as parameters
-    mu = get(wrk.kwargs, :mu, derivative_wrt_pulse)
     ∫gₐdt = wrk.g_a_int
     Im = imag
     # TODO: re-initialize wrk.prop_wrk?
@@ -372,16 +377,19 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         for l = 1:L  # `l` is the index for the different controls
             Sₗ = wrk.update_shapes[l]
             λₐ = wrk.lambda_vals[l]
-            ∂ϵₗ╱∂u = wrk.parametrization[l].de_du_derivative
+            ∂ϵₗ╱∂u :: Function = wrk.parametrization[l].de_du_derivative
             uₗ = wrk.parametrization[l].u_of_epsilon
-            for k = 1:N
-                μₗₖₙ = mu(wrk, l, k, n; control_value=ϵₙ⁽ⁱ⁺¹⁾[l])
-                αₗ = (Sₗ[n]/λₐ)  # Krotov step size
-                if wrk.is_parametrized[l]
-                    ∂ϵₗ╱∂uₗ = (∂ϵₗ╱∂u)(uₗ(ϵₙ⁽ⁱ⁺¹⁾[l]))
-                    Δuₙ[l] += αₗ * ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
-                else
-                    Δuₙ[l] += αₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
+            for k = 1:N  # k is the index over the objectives
+                ∂Hₖ╱∂ϵₗ :: Union{Function, Nothing} = wrk.control_derivs[k][l]
+                if !isnothing(∂Hₖ╱∂ϵₗ)
+                    μₗₖₙ = (∂Hₖ╱∂ϵₗ)(ϵₙ⁽ⁱ⁺¹⁾[l])
+                    αₗ = (Sₗ[n]/λₐ)  # Krotov step size
+                    if wrk.is_parametrized[l]
+                        ∂ϵₗ╱∂uₗ = (∂ϵₗ╱∂u)(uₗ(ϵₙ⁽ⁱ⁺¹⁾[l]))
+                        Δuₙ[l] += αₗ * ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
+                    else
+                        Δuₙ[l] += αₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
+                    end
                 end
             end
         end
@@ -431,25 +439,6 @@ function _bw_gen(ϵ, k, n, wrk)
     dt = t[n+1] - t[n]
     setcontrolvals!(wrk.G[k], wrk.adjoint_objectives[k].generator, vals_dict)
     return wrk.G[k], -dt
-end
-
-
-function derivative_wrt_pulse(wrk::KrotovWrk, l::Int64, k::Int64, n::Int64; control_value::Float64=0.0)
-    # l: control index; k: objectives index, n: time grid interval index
-    G = wrk.objectives[k].generator
-    control = wrk.controls[l]
-    return derivate_wrt_pulse(wrk, G, control, n; control_value=control_value)
-end
-
-function derivate_wrt_pulse(wrk::KrotovWrk, G::Tuple, control, n::Int64; control_value::Float64=0.0)
-    # assume G to be a nested tuple, and that `control` only occurs once
-    for part in G
-        if isa(part, Tuple)
-            if part[2] === control
-                return part[1]
-            end
-        end
-    end
 end
 
 
