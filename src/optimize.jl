@@ -188,7 +188,7 @@ struct KrotovWrk{
         g_a_int = zeros(length(pulses0))
         bw_states = [similar(obj.initial_state) for obj in objectives]
         zero_vals = IdDict(control => zero(pulses0[i][1]) for (i, control) in enumerate(controls))
-        G = [setcontrolvals(obj.generator, zero_vals) for obj in objectives]
+        G = [evalcontrols(obj.generator, zero_vals) for obj in objectives]
         vals_dict = [copy(zero_vals) for _ in objectives]
         # TODO: forward_storage only if g_b != 0
         fw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
@@ -424,7 +424,7 @@ function _fw_gen(ϵ, k, n, wrk)
         vals_dict[control] = ϵ[l][n]
     end
     dt = t[n+1] - t[n]
-    setcontrolvals!(wrk.G[k], wrk.objectives[k].generator, vals_dict)
+    evalcontrols!(wrk.G[k], wrk.objectives[k].generator, vals_dict)
     return wrk.G[k], dt
 end
 
@@ -437,7 +437,7 @@ function _bw_gen(ϵ, k, n, wrk)
         vals_dict[control] = ϵ[l][n]
     end
     dt = t[n+1] - t[n]
-    setcontrolvals!(wrk.G[k], wrk.adjoint_objectives[k].generator, vals_dict)
+    evalcontrols!(wrk.G[k], wrk.adjoint_objectives[k].generator, vals_dict)
     return wrk.G[k], -dt
 end
 

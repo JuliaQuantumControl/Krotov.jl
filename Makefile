@@ -47,7 +47,7 @@ endef
 export ENV_PACKAGES
 
 
-Manifest.toml: Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml $(QUANTUMCONTROL)/Project.toml 
+Manifest.toml: Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml $(QUANTUMCONTROL)/Project.toml
 	julia --project=. -e "$$DEV_PACKAGES;Pkg.instantiate()"
 
 
