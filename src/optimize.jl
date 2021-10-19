@@ -58,6 +58,7 @@ Krotov Optimization Result
 - Started at $(r.start_local_time)
 - Number of objectives: $(length(r.states))
 - Number of iterations: $(max(r.iter - r.iter_start, 0))
+- Value of functional: $(r.J_T)
 - Reason for termination: $(r.message)
 - Ended at $(r.end_local_time) ($(r.end_local_time - r.start_local_time))""")
 
@@ -470,7 +471,11 @@ function finalize_result!(ϵ_opt, wrk::KrotovWrk)
 end
 
 
-"""Default info_hook"""
+"""Print optimization progress as a table.
+
+This functions serves as the default `info_hook` for an optimization with
+Krotov's method.
+"""
 function print_table(wrk, iteration, args...)
     J_T = wrk.result.J_T
     g_a_int = sum(wrk.g_a_int)
