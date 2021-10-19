@@ -4,3 +4,5 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaquantumcontrol.github.io/Krotov.jl/dev)
 [![Build Status](https://github.com/JuliaQuantumControl/Krotov.jl/workflows/CI/badge.svg)](https://github.com/JuliaQuantumControl/Krotov.jl/actions)
 [![Coverage](https://codecov.io/gh/JuliaQuantumControl/Krotov.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaQuantumControl/Krotov.jl)
+
+Implementation of Krotov's method of optimal control, part of [QuantumControl.jl](https://juliaquantumcontrol.github.io/QuantumControl.jl/).
