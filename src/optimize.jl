@@ -60,7 +60,8 @@ Krotov Optimization Result
 - Number of iterations: $(max(r.iter - r.iter_start, 0))
 - Value of functional: $(r.J_T)
 - Reason for termination: $(r.message)
-- Ended at $(r.end_local_time) ($(r.end_local_time - r.start_local_time))""")
+- Ended at $(r.end_local_time) ($(Dates.canonicalize(Dates.CompoundPeriod(r.end_local_time - r.start_local_time))))
+""")
 
 
 # Krotov workspace (for internal use)
