@@ -375,39 +375,40 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         end
         ϵₙ⁽ⁱ⁺¹⁾ = [ϵ⁽ⁱ⁾[l][n]  for l ∈ 1:L]  # ϵₙ⁽ⁱ⁺¹⁾ ≈ ϵₙ⁽ⁱ⁾ for non-linear controls
         # TODO: we could add a self-consistent loop here for ϵₙ⁽ⁱ⁺¹⁾
-        Δuₙ = zeros(L)
+        Δuₙ′ = zeros(L)  # for step size 1
         for l = 1:L  # `l` is the index for the different controls
-            Sₗ = wrk.update_shapes[l]
-            λₐ = wrk.lambda_vals[l]
             ∂ϵₗ╱∂u :: Function = wrk.parametrization[l].de_du_derivative
             uₗ = wrk.parametrization[l].u_of_epsilon
             for k = 1:N  # k is the index over the objectives
                 ∂Hₖ╱∂ϵₗ :: Union{Function, Nothing} = wrk.control_derivs[k][l]
                 if !isnothing(∂Hₖ╱∂ϵₗ)
                     μₗₖₙ = (∂Hₖ╱∂ϵₗ)(ϵₙ⁽ⁱ⁺¹⁾[l])
-                    αₗ = (Sₗ[n]/λₐ)  # Krotov step size
                     if wrk.is_parametrized[l]
                         ∂ϵₗ╱∂uₗ = (∂ϵₗ╱∂u)(uₗ(ϵₙ⁽ⁱ⁺¹⁾[l]))
-                        Δuₙ[l] += αₗ * ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
+                        Δuₙ′[l] += ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
                     else
-                        Δuₙ[l] += αₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
+                        Δuₙ′[l] += Im(dot(χ[k], μₗₖₙ, ϕ[k]))
                     end
                 end
             end
         end
         # TODO: second order update
         for l = 1:L
+            Sₗ = wrk.update_shapes[l]
+            λₐ = wrk.lambda_vals[l]
+            αₗ = (Sₗ[n]/λₐ)  # Krotov step size
+            Δuₗₙ = αₗ * Δuₙ′[l]
             if wrk.is_parametrized[l]
                 uₗ = wrk.parametrization[l].u_of_epsilon
                 ϵₗ = wrk.parametrization[l].epsilon_of_u
-                ϵ⁽ⁱ⁺¹⁾[l][n] = ϵₗ(uₗ(ϵ⁽ⁱ⁾[l][n]) + Δuₙ[l])
+                ϵ⁽ⁱ⁺¹⁾[l][n] = ϵₗ(uₗ(ϵ⁽ⁱ⁾[l][n]) + Δuₗₙ)
             else
-                Δϵₗₙ = Δuₙ[l]
+                Δϵₗₙ = Δuₗₙ
                 ϵ⁽ⁱ⁺¹⁾[l][n] = ϵ⁽ⁱ⁾[l][n] + Δϵₗₙ
             end
+            (∫gₐdt)[l] += αₗ * abs(Δuₙ′[l])^2 * dt
         end
         # TODO: end of self-consistent loop
-        @. ∫gₐdt += abs(Δuₙ)^2 * dt
         @threadsif wrk.use_threads for k = 1:N
             local (G, dt) = _fw_gen(ϵ⁽ⁱ⁺¹⁾, k, n, wrk)
             propstep!(ϕ[k], G, dt, wrk.prop_wrk[k])
