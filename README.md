@@ -23,7 +23,7 @@ For development usage, see the [organization development notes](https://github.c
 
 A minimal standalone documentation of `Krotov.jl` is available at <https://juliaquantumcontrol.github.io/Krotov.jl>.
 
-For a broader perspective, see the [documentation of the `QuantumControl.jl` package](https://juliaquantumcontrol.github.io/QuantumControl.jl/).
+For a broader perspective, see the [documentation of the `QuantumControl.jl` meta-package](https://juliaquantumcontrol.github.io/QuantumControl.jl/).
 
 See also the [documentation of the `krotov` Python package](https://qucontrol.github.io/krotov) for an in-depth overview of the core method.
 
