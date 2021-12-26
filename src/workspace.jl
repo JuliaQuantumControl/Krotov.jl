@@ -6,7 +6,8 @@ using QuantumPropagators: init_storage
 struct KrotovWrk{
         OT<:QuantumControlBase.AbstractControlObjective,
         AOT<:QuantumControlBase.AbstractControlObjective,
-        KWT, CTRST<:Tuple, POT<:AbstractDict, STST, VDT, STORT, PRWT, GT
+        KWT, CTRST<:Tuple, POT<:AbstractDict, STST, VDT, STORT, FWPRWT, BWPRWT,
+        GT
     }
 
     # a copy of the objectives
@@ -68,7 +69,9 @@ struct KrotovWrk{
 
     bw_storage :: Vector{STORT}  # backward storage array (per objective)
 
-    prop_wrk :: Vector{PRWT}
+    fw_prop_wrk :: Vector{FWPRWT}
+
+    bw_prop_wrk :: Vector{BWPRWT}
 
     use_threads :: Bool
 
@@ -135,23 +138,29 @@ struct KrotovWrk{
         # TODO: second forward storage only if second order
         fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
         bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
-        prop_wrk = [
+        fw_prop_wrk = [
             QuantumControlBase.initobjpropwrk(obj, tlist, prop_method;
                                               initial_state=obj.initial_state,
                                               kwargs...)
             for obj in objectives
         ]
-        # TODO: separate propwrk for backward propagation
+        bw_prop_wrk = [
+            QuantumControlBase.initobjpropwrk(obj, tlist, prop_method;
+                                              initial_state=obj.initial_state,
+                                              kwargs...)
+            for obj in objectives
+        ]
         new{eltype(objectives),eltype(adjoint_objectives), typeof(kwargs),
             typeof(controls), typeof(pulse_options),
             typeof(objectives[1].initial_state), eltype(vals_dict),
-            eltype(fw_storage), eltype(prop_wrk), eltype(G)
+            eltype(fw_storage), eltype(fw_prop_wrk), eltype(bw_prop_wrk),
+            eltype(G)
         }(
             objectives, adjoint_objectives, kwargs, controls, pulses0, pulses1,
             g_a_int, update_shapes, lambda_vals, is_parametrized,
             parametrization, pulse_options, result, bw_states, G,
             control_derivs, vals_dict, fw_storage, fw_storage2,
-            bw_storage, prop_wrk, use_threads
+            bw_storage, fw_prop_wrk, bw_prop_wrk, use_threads
         )
     end
 

@@ -114,7 +114,7 @@ function krotov_initial_fw_prop!(ϵ⁽⁰⁾, ϕₖ, ϕₖⁱⁿ, k, wrk)
     N_T = length(wrk.result.tlist) - 1
     for n = 1:N_T
         G, dt = _fw_gen(ϵ⁽⁰⁾, k, n, wrk)
-        propstep!(ϕₖ, G, dt, wrk.prop_wrk[k])
+        propstep!(ϕₖ, G, dt, wrk.fw_prop_wrk[k])
         (Φ₀ !== nothing) && write_to_storage!(Φ₀, n+1, ϕₖ)
     end
     # TODO: allow a custom propstep! routine
@@ -133,7 +133,6 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     Φ = wrk.fw_storage  # TODO: pass in Φ₁, Φ₀ as parameters
     ∫gₐdt = wrk.g_a_int
     Im = imag
-    # TODO: re-initialize wrk.prop_wrk?
 
     # backward propagation
     chi!(χ, ϕ, wrk.objectives)
@@ -141,7 +140,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         write_to_storage!(X[k], N_T+1, χ[k])
         for n = N_T:-1:1
             local (G, dt) = _bw_gen(ϵ⁽ⁱ⁾, k, n, wrk)
-            propstep!(χ[k], G, dt, wrk.prop_wrk[k])
+            propstep!(χ[k], G, dt, wrk.bw_prop_wrk[k])
             write_to_storage!(X[k], n, χ[k])
         end
     end
@@ -196,7 +195,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         # TODO: end of self-consistent loop
         @threadsif wrk.use_threads for k = 1:N
             local (G, dt) = _fw_gen(ϵ⁽ⁱ⁺¹⁾, k, n, wrk)
-            propstep!(ϕ[k], G, dt, wrk.prop_wrk[k])
+            propstep!(ϕ[k], G, dt, wrk.fw_prop_wrk[k])
             write_to_storage!(Φ[k], n, ϕ[k])
         end
         # TODO: update sigma
