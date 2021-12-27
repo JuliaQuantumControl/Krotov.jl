@@ -31,21 +31,22 @@ to `optimize_pulses` will update (overwrite) the parameters in `problem`.
 The following keyword arguments are supported (with default values):
 
 * `sigma=nothing`: Function that calculate the second-order contribution. If
-   not given, the first-order Krotov method is used.
+  not given, the first-order Krotov method is used.
 * `iter_start=0`: the initial iteration number
 * `iter_stop=5000`: the maximum iteration number
-* `prop_method=:auto`: The propagation method to use
+* `prop_method`/`fw_prop_method`/`bw_prop_method`: The propagation method to
+  use for each objective, see below.
 * `update_hook`: A function that receives the Krotov workspace, the iteration
-   number, the list of updated pulses and the list of guess pulses as
-   positional arguments. The function may mutate any of its arguments. This may
-   be used e.g. to apply a spectral filter to the updated pulses, or to update
-   propagation workspaces inside the Krotov workspace.
+  number, the list of updated pulses and the list of guess pulses as
+  positional arguments. The function may mutate any of its arguments. This may
+  be used e.g. to apply a spectral filter to the updated pulses, or to update
+  propagation workspaces inside the Krotov workspace.
 * `info_hook`: A function that receives the same argumens as `update_hook`, in
-   order to write information about the current iteration to the screen or to a
-   file. The default `info_hook` prints a table with convergence information to
-   the screen. Runs after `update_hook`. The `info_hook` function may return a
-   tuple, which is stored in the list of `records` inside the
-   [`KrotovResult`](@ref) object.
+  order to write information about the current iteration to the screen or to a
+  file. The default `info_hook` prints a table with convergence information to
+  the screen. Runs after `update_hook`. The `info_hook` function may return a
+  tuple, which is stored in the list of `records` inside the
+  [`KrotovResult`](@ref) object.
 * `check_convergence`: a function to check whether convergence has been
   reached. Receives a [`KrotovResult`](@ref) object `result`, and should set
   `result.converged` to `true` and `result.message` to an appropriate string in
@@ -53,6 +54,17 @@ The following keyword arguments are supported (with default values):
   functions with `∘`. The convergence check is performed after any calls to
   `update_hook` and `info_hook`.
 
+The propagation method for the forward propagation of each objective is
+determined by the first available item of the following:
+
+* a `fw_prop_method` keyword argument
+* a `prop_method` keyword argument
+* a property `fw_prop_method` of the objective
+* a property `prop_method` of the objective
+* the value `:auto`
+
+The propagation method for the backword propagation is determined similarly,
+but with `bw_prop_method` instead of `fw_prop_method`.
 """
 function optimize_pulses(problem; kwargs...)
     merge!(problem.kwargs, kwargs)

@@ -75,7 +75,6 @@ end
 
 
 function KrotovWrk(problem::QuantumControlBase.ControlProblem)
-    prop_method = get(problem.kwargs, :prop_method, Val(:auto))
     use_threads = get(problem.kwargs, :use_threads, false)
     objectives = [obj for obj in problem.objectives]
     adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
@@ -138,17 +137,34 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem)
     # TODO: second forward storage only if second order
     fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
     bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
-    fw_prop_wrk = [
-        QuantumControlBase.initobjpropwrk(obj, tlist, prop_method;
-                                            initial_state=obj.initial_state,
-                                            kwargs...)
+    fw_prop_method = [
+        Val(
+            QuantumControlBase.get_objective_prop_method(
+                obj, :fw_prop_method, :prop_method; problem.kwargs...
+            )
+        )
         for obj in objectives
     ]
-    bw_prop_wrk = [
-        QuantumControlBase.initobjpropwrk(obj, tlist, prop_method;
+    bw_prop_method = [
+        Val(
+            QuantumControlBase.get_objective_prop_method(
+                obj, :bw_prop_method, :prop_method; problem.kwargs...
+            )
+        )
+        for obj in objectives
+    ]
+
+    fw_prop_wrk = [
+        QuantumControlBase.initobjpropwrk(obj, tlist, fw_prop_method[k];
                                             initial_state=obj.initial_state,
                                             kwargs...)
-        for obj in objectives
+        for (k, obj) in enumerate(objectives)
+    ]
+    bw_prop_wrk = [
+        QuantumControlBase.initobjpropwrk(obj, tlist, bw_prop_method[k];
+                                            initial_state=obj.initial_state,
+                                            kwargs...)
+        for (k, obj) in enumerate(objectives)
     ]
     return KrotovWrk(
         objectives, adjoint_objectives, kwargs, controls, pulses0, pulses1,
