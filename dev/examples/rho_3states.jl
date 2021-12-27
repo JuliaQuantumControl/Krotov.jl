@@ -146,7 +146,7 @@ pop10 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₁₀));
 pop11 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₁₁));
 
 
-rho_00_expvals = propagate(
+rho_00_expvals = propagate_objective(
     objectives[1], tlist; initial_state=reshape(ρ̂₀₀, :), method=:newton,
     observables=(pop00, pop01, pop10, pop11), storage=true
 );

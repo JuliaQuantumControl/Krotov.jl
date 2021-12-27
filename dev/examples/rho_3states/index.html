@@ -119,7 +119,7 @@ const objectives = [
         target_state=reshape(ρ̂₃_tgt,:),
         weight=weights[3]
     )
-];</code></pre><h2 id="Dynamics-under-the-Guess-Pulse"><a class="docs-heading-anchor" href="#Dynamics-under-the-Guess-Pulse">Dynamics under the Guess Pulse</a><a id="Dynamics-under-the-Guess-Pulse-1"></a><a class="docs-heading-anchor-permalink" href="#Dynamics-under-the-Guess-Pulse" title="Permalink"></a></h2><pre><code class="language-julia hljs">ρ̂₀₀ = ket(0, 0) * adjoint(ket(0, 0));
+];</code></pre><h2 id="Dynamics-under-the-Guess-Pulse"><a class="docs-heading-anchor" href="#Dynamics-under-the-Guess-Pulse">Dynamics under the Guess Pulse</a><a id="Dynamics-under-the-Guess-Pulse-1"></a><a class="docs-heading-anchor-permalink" href="#Dynamics-under-the-Guess-Pulse" title="Permalink"></a></h2><pre><code class="language- hljs">ρ̂₀₀ = ket(0, 0) * adjoint(ket(0, 0));
 ρ̂₀₁ = ket(0, 1) * adjoint(ket(0, 1));
 ρ̂₁₀ = ket(1, 0) * adjoint(ket(1, 0));
 ρ̂₁₁ = ket(1, 1) * adjoint(ket(1, 1));
@@ -135,10 +135,11 @@ pop10 = ρ⃗ -&gt; real(tr(as_matrix(ρ⃗) * ρ̂₁₀));
 pop11 = ρ⃗ -&gt; real(tr(as_matrix(ρ⃗) * ρ̂₁₁));
 
 
-rho_00_expvals = propagate(
+rho_00_expvals = propagate_objective(
     objectives[1], tlist; initial_state=reshape(ρ̂₀₀, :), method=:newton,
     observables=(pop00, pop01, pop10, pop11), storage=true
-);</code></pre><h2 id="Optimization"><a class="docs-heading-anchor" href="#Optimization">Optimization</a><a id="Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Optimization" title="Permalink"></a></h2><pre><code class="language-julia hljs">const problem = ControlProblem(
+);
+nothing #hide</code></pre><h2 id="Optimization"><a class="docs-heading-anchor" href="#Optimization">Optimization</a><a id="Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Optimization" title="Permalink"></a></h2><pre><code class="language- hljs">const problem = ControlProblem(
     objectives=objectives,
     prop_method=:newton,
     use_threads=true,
@@ -164,19 +165,8 @@ rho_00_expvals = propagate(
 );
 
 
-opt_result = optimize(problem, method=:krotov);</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> iter.        J_T   ∫gₐ(t)dt          J       ΔJ_T         ΔJ    secs
-     0   1.06e-01   0.00e+00   1.06e-01        n/a        n/a    11.7
-     1   7.44e-02   1.58e-02   9.01e-02  -3.15e-02  -1.57e-02    21.6
-     2   7.37e-02   3.52e-04   7.40e-02  -7.03e-04  -3.52e-04    19.7
-     3   7.30e-02   3.33e-04   7.33e-02  -6.65e-04  -3.32e-04    20.0</code></pre><pre><code class="language-julia hljs">opt_result</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Krotov Optimization Result
---------------------------
-- Started at 2021-12-26T21:29:05.758
-- Number of objectives: 3
-- Number of iterations: 3
-- Value of functional: 0.0730129289396273
-- Reason for termination: Reached maximum number of iterations
-- Ended at 2021-12-26T21:30:18.781 (1 minute, 13 seconds, 23 milliseconds)
-</code></pre><h2 id="Continuation-of-Optimization"><a class="docs-heading-anchor" href="#Continuation-of-Optimization">Continuation of Optimization</a><a id="Continuation-of-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Continuation-of-Optimization" title="Permalink"></a></h2><pre><code class="language-julia hljs">dumpdir = joinpath(@__DIR__, &quot;dump&quot;); mkpath(dumpdir)
+opt_result = optimize(problem, method=:krotov);
+nothing #hide</code></pre><pre><code class="language- hljs">opt_result</code></pre><h2 id="Continuation-of-Optimization"><a class="docs-heading-anchor" href="#Continuation-of-Optimization">Continuation of Optimization</a><a id="Continuation-of-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Continuation-of-Optimization" title="Permalink"></a></h2><pre><code class="language-julia hljs">dumpdir = joinpath(@__DIR__, &quot;dump&quot;); mkpath(dumpdir)
 dumpfile = joinpath(dumpdir, &quot;rho_3states_opt_result.jls&quot;)
 if isfile(dumpfile)
     opt_result = deserialize(dumpfile)
@@ -189,7 +179,7 @@ end</code></pre><pre class="documenter-example-output"><code class="nohighlight 
 - Started at 2021-09-29T00:38:08.440
 - Number of objectives: 3
 - Number of iterations: 3000
-- Value of functional: 0.0028479989662009153
+- Value of functional: 2.84800e-03
 - Reason for termination: Reached maximum number of iterations
 - Ended at 2021-09-29T05:12:21.179 (4 hours, 34 minutes, 12 seconds, 739 milliseconds)
-</code></pre><h2 id="Optimization-result"><a class="docs-heading-anchor" href="#Optimization-result">Optimization result</a><a id="Optimization-result-1"></a><a class="docs-heading-anchor-permalink" href="#Optimization-result" title="Permalink"></a></h2><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../state_to_state_rwa/">« Example 2 (RWA)</a><a class="docs-footer-nextpage" href="../state_to_state_parametrizations/">Example 4 (Parametrization) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Sunday 26 December 2021 21:30">Sunday 26 December 2021</span>. Using Julia version 1.7.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</code></pre><h2 id="Optimization-result"><a class="docs-heading-anchor" href="#Optimization-result">Optimization result</a><a id="Optimization-result-1"></a><a class="docs-heading-anchor-permalink" href="#Optimization-result" title="Permalink"></a></h2><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../state_to_state_rwa/">« Example 2 (RWA)</a><a class="docs-footer-nextpage" href="../state_to_state_parametrizations/">Example 4 (Parametrization) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Monday 27 December 2021 20:44">Monday 27 December 2021</span>. Using Julia version 1.7.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
