@@ -5,22 +5,20 @@ export SquareParametrization, TanhParametrization, TanhSqParametrization, Logist
 
 include("result.jl")
 include("workspace.jl")
-
 include("optimize.jl")
-export optimize_pulses
 
-
-import QuantumControlBase: optimize
+import QuantumControlBase
 
 """
 ```julia
 opt_result = optimize(problem; method=:krotov, kwargs...)
 ```
 
-optimizes `problem` using Krotov's method, see
-[`Krotov.optimize_pulses`](@ref).
+optimizes [`problem`](@ref QuantumControlBase.ControlProblem) using Krotov's
+method, see [`Krotov.optimize_krotov`](@ref).
 """
-optimize(problem, method::Val{:krotov}; kwargs...) = Krotov.optimize_pulses(problem, kwargs...)
+QuantumControlBase.optimize(problem, method::Val{:krotov}; kwargs...) = optimize_krotov(problem, kwargs...)
+QuantumControlBase.optimize(problem, method::Val{:Krotov}; kwargs...) = optimize_krotov(problem, kwargs...)
 
 
 end

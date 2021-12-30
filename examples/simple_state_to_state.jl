@@ -186,8 +186,8 @@ end
 
 # In the following we optimize the guess field $\epsilon_{0}(t)$ such
 # that the intended state-to-state transfer $\ket{\Psi_{\init}} \rightarrow
-# \ket{\Psi_{\tgt}}$ is solved, via the `krotov` package's central
-# `optimize_pulses` routine.  It requires, besides the previously defined
+# \ket{\Psi_{\tgt}}$ is solved, via `optimize` routine.
+# It requires, besides the previously defined
 # `objectives`, information about the optimization functional $J_T$ (implicitly,
 # via `chi_constructor`, which calculates the states $\ket{\chi} =
 # \frac{J_T}{\bra{\Psi}}$).

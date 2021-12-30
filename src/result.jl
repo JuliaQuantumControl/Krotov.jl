@@ -3,7 +3,7 @@ using Printf
 using Dates
 
 
-"""Result object returned by [`optimize_pulses`](@ref)."""
+"""Result object returned by [`optimize_krotov`](@ref)."""
 mutable struct KrotovResult{STST}
     tlist :: Vector{Float64}
     iter_start :: Int64  # the starting iteration number

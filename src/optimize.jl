@@ -5,18 +5,24 @@ using LinearAlgebra
 using Printf
 
 
-"""Use Krotov's method to optimize the given optimization problem.
+"""Optimize a control problem using Krotov's method.
 
 ```julia
-result = optimize_pulses(problem; kwargs...)
+result = optimize_krotov(problem; kwargs...)
 ```
 
-optimizes the given control problem, see
-[`QuantumControlBase.ControlProblem`](@ref).
+optimizes the given
+control [`problem`](@ref QuantumControlBase.ControlProblem),
+returning a [`KrotovResult`](@ref).
+
+!!! note
+
+    It is recommended to call [`optimize`](@ref QuantumControlBase.optimize)
+    with `method=:krotov` instead of calling `optimize_krotov` directly.
 
 Keyword arguments that control the optimization are taken from the keyword
 arguments used in the instantiation of `problem`. Any `kwargs` passed directly
-to `optimize_pulses` will update (overwrite) the parameters in `problem`.
+to `optimize_krotov` will update (overwrite) the parameters in `problem`.
 
 # Required problem keyword arguments
 
@@ -66,7 +72,7 @@ determined by the first available item of the following:
 The propagation method for the backword propagation is determined similarly,
 but with `bw_prop_method` instead of `fw_prop_method`.
 """
-function optimize_pulses(problem; kwargs...)
+function optimize_krotov(problem; kwargs...)
     merge!(problem.kwargs, kwargs)
     sigma = get(problem.kwargs, :sigma, nothing)
     iter_start = get(problem.kwargs, :iter_start, 0)
