@@ -63,7 +63,7 @@ using LinearAlgebra
 #
 # We we will use
 
-ϵ(t) = 0.2 * QuantumControl.shapes.flattop(t, T=5, t_rise=0.3, func=:blackman);
+ϵ(t) = 0.2 * QuantumControl.Shapes.flattop(t, T=5, t_rise=0.3, func=:blackman);
 
 
 #-
@@ -140,15 +140,15 @@ problem = ControlProblem(
     pulse_options=IdDict(
         ϵ  => Dict(
             :lambda_a => 5,
-            :update_shape => t -> QuantumControl.shapes.flattop(
+            :update_shape => t -> QuantumControl.Shapes.flattop(
                 t, T=5, t_rise=0.3, func=:blackman
             ),
         )
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.functionals.chi_ss!,
-    J_T=QuantumControl.functionals.J_T_ss,
+    chi=QuantumControl.Functionals.chi_ss!,
+    J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)

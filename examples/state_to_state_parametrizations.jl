@@ -44,7 +44,7 @@
 # form of amplitude constraint.
 
 using QuantumControl
-using QuantumControl.shapes: flattop
+using QuantumControl.Shapes: flattop
 using Krotov: SquareParametrization, TanhParametrization, TanhSqParametrization, LogisticParametrization, LogisticSqParametrization
 using LinearAlgebra
 
@@ -233,8 +233,8 @@ problem = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.functionals.chi_ss!,
-    J_T=QuantumControl.functionals.J_T_ss,
+    chi=QuantumControl.Functionals.chi_ss!,
+    J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -272,8 +272,8 @@ problem_tanhsq = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.functionals.chi_ss!,
-    J_T=QuantumControl.functionals.J_T_ss,
+    chi=QuantumControl.Functionals.chi_ss!,
+    J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -311,8 +311,8 @@ problem_logisticsq = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.functionals.chi_ss!,
-    J_T=QuantumControl.functionals.J_T_ss,
+    chi=QuantumControl.Functionals.chi_ss!,
+    J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
@@ -346,8 +346,8 @@ problem_tanh = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.functionals.chi_ss!,
-    J_T=QuantumControl.functionals.J_T_ss,
+    chi=QuantumControl.Functionals.chi_ss!,
+    J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
