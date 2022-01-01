@@ -54,7 +54,7 @@ end
 
 const T = 400ns;
 
-Ωre = t -> 35MHz * QuantumControl.shapes.flattop(t; T=T, t_rise=20ns);
+Ωre = t -> 35MHz * QuantumControl.Shapes.flattop(t; T=T, t_rise=20ns);
 Ωim = t -> 0.0;
 
 L = transmon_liouvillian(Ωre, Ωim);
@@ -158,17 +158,17 @@ const problem = ControlProblem(
     pulse_options=IdDict(
         Ωre  => Dict(
             :lambda_a => 1.0,
-            :update_shape => t -> QuantumControl.shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
+            :update_shape => t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
         ),
         Ωim  => Dict(
             :lambda_a => 1.0,
-            :update_shape => t -> QuantumControl.shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
+            :update_shape => t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
         ),
     ),
     tlist=tlist,
     iter_stop=3,
-    chi=QuantumControl.functionals.chi_re!,
-    J_T=QuantumControl.functionals.J_T_re,
+    chi=QuantumControl.Functionals.chi_re!,
+    J_T=QuantumControl.Functionals.J_T_re,
     check_convergence= res -> begin (
             (res.J_T < 1e-3)
             && (res.converged = true)
