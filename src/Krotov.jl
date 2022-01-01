@@ -17,8 +17,8 @@ opt_result = optimize(problem; method=:krotov, kwargs...)
 optimizes [`problem`](@ref QuantumControlBase.ControlProblem) using Krotov's
 method, see [`Krotov.optimize_krotov`](@ref).
 """
-QuantumControlBase.optimize(problem, method::Val{:krotov}; kwargs...) = optimize_krotov(problem, kwargs...)
-QuantumControlBase.optimize(problem, method::Val{:Krotov}; kwargs...) = optimize_krotov(problem, kwargs...)
+QuantumControlBase.optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
+QuantumControlBase.optimize(problem, method::Val{:Krotov}) = optimize_krotov(problem)
 
 
 end

@@ -8,7 +8,7 @@ using Printf
 """Optimize a control problem using Krotov's method.
 
 ```julia
-result = optimize_krotov(problem; kwargs...)
+result = optimize_krotov(problem)
 ```
 
 optimizes the given
@@ -21,8 +21,7 @@ returning a [`KrotovResult`](@ref).
     with `method=:krotov` instead of calling `optimize_krotov` directly.
 
 Keyword arguments that control the optimization are taken from the keyword
-arguments used in the instantiation of `problem`. Any `kwargs` passed directly
-to `optimize_krotov` will update (overwrite) the parameters in `problem`.
+arguments used in the instantiation of `problem`.
 
 # Required problem keyword arguments
 
@@ -72,8 +71,7 @@ determined by the first available item of the following:
 The propagation method for the backword propagation is determined similarly,
 but with `bw_prop_method` instead of `fw_prop_method`.
 """
-function optimize_krotov(problem; kwargs...)
-    merge!(problem.kwargs, kwargs)
+function optimize_krotov(problem)
     sigma = get(problem.kwargs, :sigma, nothing)
     iter_start = get(problem.kwargs, :iter_start, 0)
     update_hook! = get(problem.kwargs, :update_hook, (args...) -> nothing)
