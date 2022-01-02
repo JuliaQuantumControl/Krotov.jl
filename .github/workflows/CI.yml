@@ -72,6 +72,7 @@ jobs:
         with:
           ref: data-dump
           path: examples/dump
+      - run: rm -rf examples/dump/.git
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
