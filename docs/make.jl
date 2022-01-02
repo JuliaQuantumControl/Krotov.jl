@@ -30,6 +30,7 @@ makedocs(;
             "Example 4 (Parametrization)" => "examples/state_to_state_parametrizations.md",
         ],
         "API" => "api.md",
+        "History" => "history.md",
     ],
 )
 
