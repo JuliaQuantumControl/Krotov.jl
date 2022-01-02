@@ -81,7 +81,7 @@ jobs:
           /usr/bin/python3 -m pip install matplotlib
       - run: |
           # Instantiate Pkg
-          julia --project=docs -e '
+          julia --project=test -e '
             using Pkg
             println("Dev-install QuantumControlBase")
             Pkg.develop(url="https://github.com/JuliaQuantumControl/QuantumControlBase.jl.git#master")
@@ -97,14 +97,14 @@ jobs:
             Pkg.instantiate()'
       - run: |
           # Run doctests
-          julia  --threads auto --project=docs -e '
+          julia  --threads auto --project=test -e '
             using Documenter: DocMeta, doctest
             using Krotov
             DocMeta.setdocmeta!(Krotov, :DocTestSetup, :(using Krotov); recursive=true)
             doctest(Krotov)'
       - run: |
           # Make documentation
-          julia  --threads auto --project=docs docs/make.jl
+          julia  --threads auto --project=test docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
