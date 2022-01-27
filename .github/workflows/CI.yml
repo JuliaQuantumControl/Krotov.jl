@@ -96,6 +96,7 @@ jobs:
             Pkg.develop(PackageSpec(path=pwd()))
             println("Pkg.instantiate()")
             Pkg.instantiate()'
+      - run: cp test/*.toml docs/  # Prepare DrWatson
       - run: |
           # Run doctests
           julia  --threads auto --project=test -e '

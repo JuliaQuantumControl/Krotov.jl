@@ -47,6 +47,9 @@
 # simple canonical optimization problem: the transfer of population in a two
 # level system.
 
+using DrWatson
+@quickactivate "KrotovTests"
+#-
 using QuantumControl
 using LinearAlgebra
 

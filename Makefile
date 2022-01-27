@@ -68,11 +68,15 @@ test/Manifest.toml: test/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANT
 	$(JULIA) --project=test -e "$$ENV_PACKAGES"
 
 
+docs/Manifest.toml: test/Manifest.toml
+	cp test/*.toml docs/
+
+
 devrepl: test/Manifest.toml examples/dump/README.md ## Start an interactive REPL for testing and building documentation
 	@$(JULIA) --threads auto --project=test --banner=no --startup-file=yes -e 'include("test/init.jl")' -i
 
 
-docs: test/Manifest.toml examples/dump/README.md ## Build the documentation
+docs: docs/Manifest.toml examples/dump/README.md ## Build the documentation
 	$(JULIA) --project=test docs/make.jl
 	@echo "Done. Consider using 'make devrepl'"
 
@@ -86,5 +90,6 @@ clean: ## Clean up build/doc/testing artifacts
 
 distclean: clean ## Restore to a clean checkout state
 	rm -f Manifest.toml test/Manifest.toml
+	rm -f docs/Manifest docs/Project.toml
 	rm -rf test/examples/dump docs/src/examples/dump
 	rm -rf examples/dump

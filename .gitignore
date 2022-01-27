@@ -6,6 +6,7 @@
 /test/Manifest.toml
 /test/examples/dump/
 /docs/Manifest.toml
+/docs/Project.toml
 /docs/build/
 /docs/src/examples/dump/
 /gh-pages/

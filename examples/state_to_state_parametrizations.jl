@@ -43,6 +43,9 @@
 # This example illustrates the parametrization of control pulses as a
 # form of amplitude constraint.
 
+using DrWatson
+@quickactivate "KrotovTests"
+#-
 using QuantumControl
 using QuantumControl.Shapes: flattop
 using Krotov: SquareParametrization, TanhParametrization, TanhSqParametrization, LogisticParametrization, LogisticSqParametrization

@@ -47,6 +47,9 @@
 # quantum system, where the dynamics is governed by the Liouville-von Neumann
 # equation.
 
+using DrWatson
+@quickactivate "KrotovTests"
+#-
 using QuantumControl
 using LinearAlgebra
 using Serialization

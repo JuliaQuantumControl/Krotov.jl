@@ -9,6 +9,9 @@
 # controls (real and imaginary parts). We consider a 3-level system in a
 # $\Lambda$ configuration.
 
+using DrWatson
+@quickactivate "KrotovTests"
+#-
 const σ̂_z = ComplexF64[1 0; 0 -1]
 const σ̂_x = ComplexF64[0 1; 1  0]
 
