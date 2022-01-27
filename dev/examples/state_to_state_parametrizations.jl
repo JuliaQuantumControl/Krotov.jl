@@ -1,3 +1,6 @@
+using DrWatson
+@quickactivate "KrotovTests"
+
 using QuantumControl
 using QuantumControl.Shapes: flattop
 using Krotov: SquareParametrization, TanhParametrization, TanhSqParametrization, LogisticParametrization, LogisticSqParametrization

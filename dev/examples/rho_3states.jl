@@ -1,3 +1,6 @@
+using DrWatson
+@quickactivate "KrotovTests"
+
 using QuantumControl
 using LinearAlgebra
 using Serialization

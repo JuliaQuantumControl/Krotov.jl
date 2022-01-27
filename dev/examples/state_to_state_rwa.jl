@@ -1,3 +1,6 @@
+using DrWatson
+@quickactivate "KrotovTests"
+
 const σ̂_z = ComplexF64[1 0; 0 -1]
 const σ̂_x = ComplexF64[0 1; 1  0]
 
