@@ -6,7 +6,7 @@ using LinearAlgebra
 using Serialization
 using SparseArrays
 
-using Test
+using Test; println("")
 
 const GHz = 2π;
 const MHz = 0.001GHz;
@@ -64,19 +64,17 @@ L = transmon_liouvillian(Ωre, Ωim);
 
 tlist = collect(range(0, 400ns, length=2000));
 
-using PyPlot
-matplotlib.use("Agg")
+using Plots
 
 function plot_control(pulse::Vector, tlist)
-    fig, ax = matplotlib.pyplot.subplots(figsize=(6, 3))
-    ax.plot(tlist, pulse)
-    ax.set_xlabel("time")
-    ax.set_ylabel("amplitude")
-    return fig
+    plot(tlist, pulse, xlabel="time", ylabel="amplitude", legend=false)
 end
 
 plot_control(ϵ::T, tlist) where T<:Function =
-    plot_control([ϵ(t) for t in tlist], tlist)
+    plot_control([ϵ(t) for t in tlist], tlist);
+
+fig = plot_control(Ωre, tlist)
+display(fig)
 
 SQRTISWAP = [1  0    0   0;
              0 1/√2 𝕚/√2 0;
