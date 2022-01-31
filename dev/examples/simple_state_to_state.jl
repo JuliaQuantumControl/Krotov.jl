@@ -87,7 +87,7 @@ end;
 fig = plot_population(guess_dynamics[1,:], guess_dynamics[2,:], tlist)
 display(fig)
 
-opt_result = optimize(problem, method=:krotov);
+opt_result, file = @optimize_or_load(datadir("TLS"), problem, method=:krotov);
 
 opt_result
 
