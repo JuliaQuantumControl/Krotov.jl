@@ -1,5 +1,8 @@
 using Test
 using SafeTestsets
+using Plots
+
+unicodeplots()
 
 include("generate_example_tests.jl")
 

@@ -55,8 +55,7 @@ using LinearAlgebra
 using Serialization
 using SparseArrays
 
-#jl using Test
-
+#jl using Test; println("")
 
 # ## The two-transmon system
 
@@ -126,21 +125,18 @@ tlist = collect(range(0, 400ns, length=2000));
 
 # The guess pulse looks as follows:
 
-using PyPlot
-matplotlib.use("Agg")
-
+#-
+using Plots
+#-
 function plot_control(pulse::Vector, tlist)
-    fig, ax = matplotlib.pyplot.subplots(figsize=(6, 3))
-    ax.plot(tlist, pulse)
-    ax.set_xlabel("time")
-    ax.set_ylabel("amplitude")
-    return fig
+    plot(tlist, pulse, xlabel="time", ylabel="amplitude", legend=false)
 end
 
 plot_control(ϵ::T, tlist) where T<:Function =
-    plot_control([ϵ(t) for t in tlist], tlist)
-
-#!jl plot_control(Ωre, tlist)
+    plot_control([ϵ(t) for t in tlist], tlist);
+#-
+fig = plot_control(Ωre, tlist)
+#jl display(fig)
 
 
 # ## Optimization objectives

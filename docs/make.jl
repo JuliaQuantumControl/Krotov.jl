@@ -1,5 +1,9 @@
 using Krotov
 using Documenter
+using Plots
+
+gr()
+ENV["GKSwstype"] = "100"
 
 # Generate examples
 include("generate.jl")

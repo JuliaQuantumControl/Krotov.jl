@@ -52,8 +52,10 @@ using DrWatson
 #-
 using QuantumControl
 using LinearAlgebra
+using Plots
+#-
 
-#jl using Test
+#jl using Test; println("")
 
 # ## Two-level Hamiltonian
 
@@ -92,22 +94,15 @@ H = hamiltonian();
 tlist = collect(range(0, 5, length=500));
 
 #-
-
-using PyPlot
-matplotlib.use("Agg")
-
 function plot_control(pulse::Vector, tlist)
-    fig, ax = matplotlib.pyplot.subplots(figsize=(6, 3))
-    ax.plot(tlist, pulse)
-    ax.set_xlabel("time")
-    ax.set_ylabel("amplitude")
-    return fig
+    plot(tlist, pulse, xlabel="time", ylabel="amplitude", legend=false)
 end
 
 plot_control(ϵ::T, tlist) where T<:Function =
-    plot_control([ϵ(t) for t in tlist], tlist)
-
-#!jl plot_control(H[2][2], tlist)
+    plot_control([ϵ(t) for t in tlist], tlist);
+#-
+fig = plot_control(H[2][2], tlist)
+#jl display(fig)
 
 # ## Optimization target
 
@@ -172,18 +167,15 @@ guess_dynamics = propagate_objective(
 )
 
 #-
-
 function plot_population(pop0::Vector, pop1::Vector, tlist)
-    fig, ax = matplotlib.pyplot.subplots(figsize=(6, 3))
-    ax.plot(tlist, pop0, label="0")
-    ax.plot(tlist, pop1, label="1")
-    ax.legend()
-    ax.set_xlabel("time")
-    ax.set_ylabel("population")
-    return fig
-end
-
-#!jl plot_population(guess_dynamics[1,:], guess_dynamics[2,:], tlist)
+    legend_args = Dict(:legend => :right, :foreground_color_legend => nothing,
+                       :background_color_legend => RGBA(1, 1, 1, 0.8))
+    fig = plot(tlist, pop0, label="0", xlabel="time", ylabel="population")
+    plot!(fig, tlist, pop1; label="1", legend_args...)
+end;
+#-
+fig = plot_population(guess_dynamics[1,:], guess_dynamics[2,:], tlist)
+#jl display(fig)
 
 # ## Optimize
 
@@ -205,7 +197,8 @@ opt_result
 # We can plot the optimized field:
 
 #-
-#!jl plot_control(opt_result.optimized_controls[1], tlist)
+fig = plot_control(opt_result.optimized_controls[1], tlist)
+#jl display(fig)
 #-
 
 # ## Simulate the dynamics under the optimized field
@@ -222,7 +215,8 @@ opt_dynamics = propagate_objective(
 )
 
 #-
-#!jl plot_population(opt_dynamics[1,:], opt_dynamics[2,:], tlist)
+fig = plot_population(opt_dynamics[1,:], opt_dynamics[2,:], tlist)
+#jl display(fig)
 #-
 
 #-

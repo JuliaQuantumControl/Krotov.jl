@@ -72,7 +72,7 @@ docs/Manifest.toml: test/Manifest.toml
 	cp test/*.toml docs/
 
 
-devrepl: test/Manifest.toml examples/dump/README.md ## Start an interactive REPL for testing and building documentation
+devrepl: test/Manifest.toml docs/Manifest.toml examples/dump/README.md ## Start an interactive REPL for testing and building documentation
 	@$(JULIA) --threads auto --project=test --banner=no --startup-file=yes -e 'include("test/init.jl")' -i
 
 
