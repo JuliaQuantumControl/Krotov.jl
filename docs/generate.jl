@@ -20,7 +20,6 @@ for example in readdir(EXAMPLEDIR)
         @warn "ignoring $example"
     end
 end
-cp(joinpath(EXAMPLEDIR, "dump"), joinpath(GENERATEDDIR, "dump"); force=true)
 
 # remove any .vtu files in the generated dir (should not be deployed)
 cd(GENERATEDDIR) do

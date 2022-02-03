@@ -55,12 +55,8 @@ Manifest.toml: Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGAT
 	$(JULIA) --project=. -e "$$DEV_PACKAGES;Pkg.instantiate()"
 
 
-examples/dump/README.md:
-	git clone --branch data-dump $(GITORIGIN) examples/dump
-
-
-test:  test/Manifest.toml examples/dump/README.md ## Run the test suite
-	$(JULIA) --project=test --threads auto --color=auto --startup-file=yes --code-coverage="user" --depwarn="yes" --check-bounds="yes" -e 'include("test/runtests.jl")'
+test:  test/Manifest.toml ## Run the test suite
+	$(JULIA) --project=test --color=auto --startup-file=yes --code-coverage="user" --depwarn="yes" --check-bounds="yes" -e 'include("test/runtests.jl")'
 	@echo "Done. Consider using 'make devrepl'"
 
 
@@ -72,17 +68,17 @@ docs/Manifest.toml: test/Manifest.toml
 	cp test/*.toml docs/
 
 
-devrepl: test/Manifest.toml docs/Manifest.toml examples/dump/README.md ## Start an interactive REPL for testing and building documentation
-	@$(JULIA) --threads auto --project=test --banner=no --startup-file=yes -e 'include("test/init.jl")' -i
+devrepl: test/Manifest.toml docs/Manifest.toml ## Start an interactive REPL for testing and building documentation
+	@$(JULIA) --project=test --banner=no --startup-file=yes -e 'include("test/init.jl")' -i
 
 
-docs: docs/Manifest.toml examples/dump/README.md ## Build the documentation
+docs: docs/Manifest.toml  ## Build the documentation
 	$(JULIA) --project=test docs/make.jl
 	@echo "Done. Consider using 'make devrepl'"
 
 
 clean: ## Clean up build/doc/testing artifacts
-	rm -f src/*.cov test/*.cov
+	rm -f src/*.cov test/*.cov examples/*.cov
 	rm -f test/examples/*.*
 	for file in examples/*.jl; do rm -f docs/src/"$${file%.jl}".*; done
 	rm -rf docs/build
@@ -91,5 +87,4 @@ clean: ## Clean up build/doc/testing artifacts
 distclean: clean ## Restore to a clean checkout state
 	rm -f Manifest.toml test/Manifest.toml
 	rm -f docs/Manifest docs/Project.toml
-	rm -rf test/examples/dump docs/src/examples/dump
-	rm -rf examples/dump
+	rm -f test/data/*.jld2 docs/data/*.jld2

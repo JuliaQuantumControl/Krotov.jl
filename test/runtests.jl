@@ -6,6 +6,8 @@ unicodeplots()
 
 include("generate_example_tests.jl")
 
+include(joinpath(@__DIR__, "download_dumps.jl"))
+
 # Note: comment outer @testset to stop after first @safetestset failure
 @time @testset verbose=true "Krotov.jl Package" begin
 
