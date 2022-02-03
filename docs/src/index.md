@@ -22,7 +22,6 @@ Depth = 1
 ```@contents
 Pages = [
     "examples/simple_state_to_state.md",
-    "examples/state_to_state_rwa.md",
     "examples/rho_3states.md",
     "examples/state_to_state_parametrizations.md",
 ]

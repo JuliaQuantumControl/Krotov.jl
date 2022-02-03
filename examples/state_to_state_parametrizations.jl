@@ -1,4 +1,4 @@
-# # Example 4: Pulse Parametrization
+# # Example 3: Pulse Parametrization
 
 #md # !!! tip
 #md #     This example is also available as a Jupyter notebook:

@@ -1,4 +1,4 @@
-# # Example 3: Optimization of a Dissipative Quantum Gate
+# # Example 2: Optimization of a Dissipative Quantum Gate
 
 #md # !!! tip
 #md #     This example is also available as a Jupyter notebook:
