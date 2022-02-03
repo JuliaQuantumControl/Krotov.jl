@@ -6,6 +6,11 @@ using LinearAlgebra
 using Serialization
 using SparseArrays
 
+default_optimization_savename_kwargs(
+    ignores=["chi", "prop_method", "use_threads"],
+    connector="#"
+);
+
 using Test; println("")
 
 const GHz = 2π;
@@ -167,7 +172,7 @@ const problem = ControlProblem(
         ),
     ),
     tlist=tlist,
-    iter_stop=3,
+    iter_stop=3000,
     chi=QuantumControl.Functionals.chi_re!,
     J_T=QuantumControl.Functionals.J_T_re,
     check_convergence= res -> begin (
@@ -178,19 +183,12 @@ const problem = ControlProblem(
 );
 
 
-opt_result = optimize(problem, method=:krotov);
+test_result = optimize(problem, method=:krotov, iter_stop=1);
+opt_result, file = @optimize_or_load(
+    datadir(), problem, method=:krotov, prefix="DissGateOCT"
+)
 
 opt_result
-
-dumpdir = joinpath(@__DIR__, "dump"); mkpath(dumpdir)
-dumpfile = joinpath(dumpdir, "rho_3states_opt_result.jls")
-if isfile(dumpfile)
-    opt_result = deserialize(dumpfile)
-else
-    opt_result = optimize(problem, method=:krotov, continue_from=opt_result,
-                          iter_stop=3000)
-    serialize(dumpfile, opt_result)
-end
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 
