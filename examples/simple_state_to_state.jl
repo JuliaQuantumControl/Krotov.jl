@@ -187,7 +187,10 @@ fig = plot_population(guess_dynamics[1,:], guess_dynamics[2,:], tlist)
 # via `chi_constructor`, which calculates the states $\ket{\chi} =
 # \frac{J_T}{\bra{\Psi}}$).
 
-opt_result, file = @optimize_or_load(datadir("TLS"), problem, method=:krotov);
+opt_result, file = @optimize_or_load(
+    datadir(), problem, method=:krotov, prefix="TLSOCT",
+    savename_kwargs=Dict(:ignores => ["chi"], :connector => "#")
+);
 #-
 opt_result
 #-
