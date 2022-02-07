@@ -1,7 +1,7 @@
 name = "Krotov"
 uuid = "b05dcdc7-62f6-4360-bf2c-0898bba419de"
 authors = ["Michael Goerz <mail@michaelgoerz.net> and contributors"]
-version = "0.0.3+dev"
+version = "0.1.0"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -13,7 +13,7 @@ QuantumPropagators = "7bf12567-5742-4b91-a078-644e72a65fc1"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-QuantumControlBase = ">=0.0.1"
-QuantumPropagators = ">=0.0.1"
+QuantumControlBase = "0.1.0"
+QuantumPropagators = "0.1.0"
 ConcreteStructs = "^0.2"
 julia = "1.6"
