@@ -17,12 +17,8 @@ include(joinpath(@__DIR__, "download_dumps.jl"))
     end
 
     print("\n* Example 2 (examples/rho_3states.jl):")
-    if Sys.isapple()
-        println("\nSkipped (macOS)")
-    else
-        @time @safetestset "Example 2" begin
-            include(joinpath("examples", "rho_3states.jl"))
-        end
+    @time @safetestset "Example 2" begin
+        include(joinpath("examples", "rho_3states.jl"))
     end
 
     print("\n* Example 3 (examples/state_to_state_parametrizations.jl):")
