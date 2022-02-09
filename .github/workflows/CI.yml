@@ -41,7 +41,7 @@ jobs:
           /usr/bin/python3 -m pip install matplotlib
       - run: |
           # Instantiate Pkg
-          julia --project=@. -e '
+          julia --project=test -e '
             using Pkg
             println("Dev-install QuantumControlBase")
             Pkg.develop(url="https://github.com/JuliaQuantumControl/QuantumControlBase.jl.git#master")
@@ -51,14 +51,13 @@ jobs:
             Pkg.develop(url="https://github.com/JuliaQuantumControl/GRAPE.jl.git#master")
             println("Dev-install QuantumControl")
             Pkg.develop(url="https://github.com/JuliaQuantumControl/QuantumControl.jl.git#master")
+            println("Dev-install .")
+            Pkg.develop(PackageSpec(path=pwd()));
             println("Pkg.instantiate()")
             Pkg.instantiate()'
       - run: |
           # Run tests
-          julia --threads auto --project=@. -e '
-            using Pkg
-            Pkg.activate(".")
-            Pkg.test(coverage=true)'
+          julia --project=test --color=auto --startup-file=yes --code-coverage="user" --depwarn="yes" --check-bounds="yes" -e 'include("test/runtests.jl")'
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v1
         with:
