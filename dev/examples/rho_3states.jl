@@ -19,38 +19,46 @@ const ns = 1.0;
 const μs = 1000ns;
 const 𝕚 = 1im;
 
-function transmon_liouvillian(Ωre, Ωim;
-        N=5,             # number of qubit levels
-        ω₁=4.3796GHz,    # qubit frequency 1
-        ω₂=4.6137GHz,    # qubit frequency 2
-        ωd=4.4985GHz,    # drive frequency
-        δ₁=-239.3MHz,    # anharmonicity 1
-        δ₂=-242.8MHz,    # anharmonicity 2
-        J=-2.3MHz,       # effective qubit-qubit coupling
-        γ₁₁=(1/38.0μs),  # decay rate for qubit 1
-        γ₁₂=(1/32.0μs),  # decay rate for qubit 2
-        γ₂₁=(1/29.5μs),  # dephasing rate for qubit 1
-        γ₂₂=(1/16.0μs),  # dephasing time for qubit 2
-    )
+function transmon_liouvillian(
+    Ωre,
+    Ωim;
+    N=5,             # number of qubit levels
+    ω₁=4.3796GHz,    # qubit frequency 1
+    ω₂=4.6137GHz,    # qubit frequency 2
+    ωd=4.4985GHz,    # drive frequency
+    δ₁=-239.3MHz,    # anharmonicity 1
+    δ₂=-242.8MHz,    # anharmonicity 2
+    J=-2.3MHz,       # effective qubit-qubit coupling
+    γ₁₁=(1 / 38.0μs),  # decay rate for qubit 1
+    γ₁₂=(1 / 32.0μs),  # decay rate for qubit 2
+    γ₂₁=(1 / 29.5μs),  # dephasing rate for qubit 1
+    γ₂₂=(1 / 16.0μs)  # dephasing time for qubit 2
+)
 
     ⊗(A, B) = kron(A, B)
-    𝟙 = SparseMatrixCSC{ComplexF64, Int64}(sparse(I, N, N))
+    𝟙 = SparseMatrixCSC{ComplexF64,Int64}(sparse(I, N, N))
 
     b̂₁ = spdiagm(1 => complex.(sqrt.(collect(1:N-1)))) ⊗ 𝟙
     b̂₂ = 𝟙 ⊗ spdiagm(1 => complex.(sqrt.(collect(1:N-1))))
-    b̂₁⁺ = sparse(b̂₁'); b̂₂⁺ = sparse(b̂₂')
-    n̂₁ = sparse(b̂₁' * b̂₁); n̂₂ = sparse(b̂₂' * b̂₂)
-    n̂₁² = sparse(n̂₁ * n̂₁); n̂₂² = sparse(n̂₂ * n̂₂)
-    b̂₁⁺_b̂₂ = sparse(b̂₁' * b̂₂); b̂₁_b̂₂⁺ = sparse(b̂₁ * b̂₂')
+    b̂₁⁺ = sparse(b̂₁')
+    b̂₂⁺ = sparse(b̂₂')
+    n̂₁ = sparse(b̂₁' * b̂₁)
+    n̂₂ = sparse(b̂₂' * b̂₂)
+    n̂₁² = sparse(n̂₁ * n̂₁)
+    n̂₂² = sparse(n̂₂ * n̂₂)
+    b̂₁⁺_b̂₂ = sparse(b̂₁' * b̂₂)
+    b̂₁_b̂₂⁺ = sparse(b̂₁ * b̂₂')
 
     Ĥ₀ = sparse(
-        (ω₁ - ωd - δ₁/2) * n̂₁ + (δ₁/2) * n̂₁²
-        + (ω₂ - ωd - δ₂/2) * n̂₂ + (δ₂/2) * n̂₂²
-        + J * (b̂₁⁺_b̂₂ + b̂₁_b̂₂⁺)
+        (ω₁ - ωd - δ₁ / 2) * n̂₁ +
+        (δ₁ / 2) * n̂₁² +
+        (ω₂ - ωd - δ₂ / 2) * n̂₂ +
+        (δ₂ / 2) * n̂₂² +
+        J * (b̂₁⁺_b̂₂ + b̂₁_b̂₂⁺)
     )
 
-    Ĥ₁re = (1/2) * (b̂₁ + b̂₁⁺ + b̂₂ + b̂₂⁺)
-    Ĥ₁im = (𝕚/2) * (b̂₁⁺ - b̂₁ + b̂₂⁺ - b̂₂)
+    Ĥ₁re = (1 / 2) * (b̂₁ + b̂₁⁺ + b̂₂ + b̂₂⁺)
+    Ĥ₁im = (𝕚 / 2) * (b̂₁⁺ - b̂₁ + b̂₂⁺ - b̂₂)
 
     H = (Ĥ₀, (Ĥ₁re, Ωre), (Ĥ₁im, Ωim))
 
@@ -70,21 +78,23 @@ L = transmon_liouvillian(Ωre, Ωim);
 tlist = collect(range(0, 400ns, length=2000));
 
 using Plots
+Plots.default(linewidth=3, size=(550, 300))
 
 function plot_control(pulse::Vector, tlist)
     plot(tlist, pulse, xlabel="time", ylabel="amplitude", legend=false)
 end
 
-plot_control(ϵ::T, tlist) where T<:Function =
-    plot_control([ϵ(t) for t in tlist], tlist);
+plot_control(ϵ::T, tlist) where {T<:Function} = plot_control([ϵ(t) for t in tlist], tlist);
 
 fig = plot_control(Ωre, tlist)
 display(fig)
 
-SQRTISWAP = [1  0    0   0;
-             0 1/√2 𝕚/√2 0;
-             0 𝕚/√2 1/√2 0;
-             0  0    0   1];
+SQRTISWAP = [
+    1  0    0   0
+    0 1/√2 𝕚/√2 0
+    0 𝕚/√2 1/√2 0
+    0  0    0   1
+];
 
 function ket(i::Int64; N=5)
     Ψ = zeros(ComplexF64, N)
@@ -100,16 +110,20 @@ const basis_labels = [(0, 0), (0, 1), (1, 0), (1, 1)];
 const basis = [ket(labels...) for labels in basis_labels];
 const d = length(basis);
 
-const basis_tgt = [sum([SQRTISWAP[i,j] * basis[i] for i ∈ 1:d]) for j ∈ 1:d];
+const basis_tgt = [sum([SQRTISWAP[i, j] * basis[i] for i ∈ 1:d]) for j ∈ 1:d];
 
 
-const ρ̂₁ = sum([(2*(d-i+1)/(d*(d+1))) * basis[i] * adjoint(basis[i]) for i ∈ 1:d]);
-const ρ̂₂ = sum([(1/d) * basis[i] * adjoint(basis[j]) for i ∈ 1:d for j ∈ 1:d]);
-const ρ̂₃ = sum([(1/d) * basis[i] * adjoint(basis[i]) for i ∈ 1:d]);
+const ρ̂₁ =
+    sum([(2 * (d - i + 1) / (d * (d + 1))) * basis[i] * adjoint(basis[i]) for i ∈ 1:d]);
+const ρ̂₂ = sum([(1 / d) * basis[i] * adjoint(basis[j]) for i ∈ 1:d for j ∈ 1:d]);
+const ρ̂₃ = sum([(1 / d) * basis[i] * adjoint(basis[i]) for i ∈ 1:d]);
 
-const ρ̂₁_tgt = sum([(2*(d-i+1)/(d*(d+1))) * basis_tgt[i] * adjoint(basis_tgt[i]) for i ∈ 1:d]);
-const ρ̂₂_tgt = sum([(1/d) * basis_tgt[i] * adjoint(basis_tgt[j]) for i ∈ 1:d for j ∈ 1:d]);
-const ρ̂₃_tgt = sum([(1/d) * basis_tgt[i] * adjoint(basis_tgt[i]) for i ∈ 1:d]);
+const ρ̂₁_tgt = sum([
+    (2 * (d - i + 1) / (d * (d + 1))) * basis_tgt[i] * adjoint(basis_tgt[i]) for i ∈ 1:d
+]);
+const ρ̂₂_tgt =
+    sum([(1 / d) * basis_tgt[i] * adjoint(basis_tgt[j]) for i ∈ 1:d for j ∈ 1:d]);
+const ρ̂₃_tgt = sum([(1 / d) * basis_tgt[i] * adjoint(basis_tgt[i]) for i ∈ 1:d]);
 
 weights = Float64[20, 1, 1];
 weights *= length(weights) / sum(weights); # manual normalization
@@ -117,21 +131,21 @@ weights ./= [0.3, 1.0, 0.25]; # purities
 
 const objectives = [
     WeightedObjective(
-        initial_state=reshape(ρ̂₁,:),
+        initial_state=reshape(ρ̂₁, :),
         generator=L,
-        target_state=reshape(ρ̂₁_tgt,:),
+        target_state=reshape(ρ̂₁_tgt, :),
         weight=weights[1]
     ),
     WeightedObjective(
-        initial_state=reshape(ρ̂₂,:),
+        initial_state=reshape(ρ̂₂, :),
         generator=L,
-        target_state=reshape(ρ̂₂_tgt,:),
+        target_state=reshape(ρ̂₂_tgt, :),
         weight=weights[2]
     ),
     WeightedObjective(
-        initial_state=reshape(ρ̂₃,:),
+        initial_state=reshape(ρ̂₃, :),
         generator=L,
-        target_state=reshape(ρ̂₃_tgt,:),
+        target_state=reshape(ρ̂₃_tgt, :),
         weight=weights[3]
     )
 ];
@@ -153,8 +167,12 @@ pop11 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₁₁));
 
 
 rho_00_expvals = propagate_objective(
-    objectives[1], tlist; initial_state=reshape(ρ̂₀₀, :), method=:newton,
-    observables=(pop00, pop01, pop10, pop11), storage=true
+    objectives[1],
+    tlist;
+    initial_state=reshape(ρ̂₀₀, :),
+    method=:newton,
+    observables=(pop00, pop01, pop10, pop11),
+    storage=true
 );
 
 const problem = ControlProblem(
@@ -162,31 +180,30 @@ const problem = ControlProblem(
     prop_method=:newton,
     use_threads=true,
     pulse_options=IdDict(
-        Ωre  => Dict(
+        Ωre => Dict(
             :lambda_a => 1.0,
-            :update_shape => t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
+            :update_shape =>
+                t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
         ),
-        Ωim  => Dict(
+        Ωim => Dict(
             :lambda_a => 1.0,
-            :update_shape => t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
+            :update_shape =>
+                t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
         ),
     ),
     tlist=tlist,
     iter_stop=3000,
     chi=QuantumControl.Functionals.chi_re!,
     J_T=QuantumControl.Functionals.J_T_re,
-    check_convergence= res -> begin (
-            (res.J_T < 1e-3)
-            && (res.converged = true)
-            && (res.message="J_T < 10⁻³")
-        ) end
+    check_convergence=res -> begin
+        ((res.J_T < 1e-3) && (res.converged = true) && (res.message = "J_T < 10⁻³"))
+    end
 );
 
 
 test_result = optimize(problem, method=:krotov, iter_stop=1);
-opt_result, file = @optimize_or_load(
-    datadir(), problem, method=:krotov, prefix="DissGateOCT"
-)
+opt_result, file =
+    @optimize_or_load(datadir(), problem, method = :krotov, prefix = "DissGateOCT")
 
 opt_result
 
