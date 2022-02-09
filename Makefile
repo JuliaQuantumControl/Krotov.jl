@@ -93,3 +93,4 @@ distclean: clean ## Restore to a clean checkout state
 	rm -f Manifest.toml test/Manifest.toml
 	rm -f docs/Manifest docs/Project.toml
 	rm -f test/data/*.jld2 docs/data/*.jld2
+	rm -rf test/examples/plots docs/src/examples/plots

@@ -54,7 +54,13 @@ using QuantumControl
 using LinearAlgebra
 #-
 using Plots
-Plots.default(linewidth=3, size=(550, 300))
+Plots.default(
+    linewidth               = 3,
+    size                    = (550, 300),
+    legend                  = :right,
+    foreground_color_legend = nothing,
+    background_color_legend = RGBA(1, 1, 1, 0.8),
+)
 #-
 
 #jl using Test; println("")
@@ -167,13 +173,8 @@ guess_dynamics = propagate_objective(
 
 #-
 function plot_population(pop0::Vector, pop1::Vector, tlist)
-    legend_args = Dict(
-        :legend => :right,
-        :foreground_color_legend => nothing,
-        :background_color_legend => RGBA(1, 1, 1, 0.8)
-    )
     fig = plot(tlist, pop0, label="0", xlabel="time", ylabel="population")
-    plot!(fig, tlist, pop1; label="1", legend_args...)
+    plot!(fig, tlist, pop1; label="1")
 end;
 #-
 fig = plot_population(guess_dynamics[1, :], guess_dynamics[2, :], tlist)

@@ -1,23 +1,29 @@
 # generate examples
 import Literate
+using Base.Filesystem: cp, basename
 
 println("Start generating Literate.jl examples")
 
 EXAMPLEDIR = joinpath(@__DIR__, "..", "examples")
 GENERATEDDIR = joinpath(@__DIR__, "src", "examples")
 mkpath(GENERATEDDIR)
-for example in readdir(EXAMPLEDIR)
-    if endswith(example, ".jl")
-        input = abspath(joinpath(EXAMPLEDIR, example))
-        script = Literate.script(input, GENERATEDDIR)
+for name in readdir(EXAMPLEDIR)
+    path = abspath(joinpath(EXAMPLEDIR, name))
+    if endswith(path, ".jl")
+        example = path
+        script = Literate.script(example, GENERATEDDIR)
         code = strip(read(script, String))
         mdpost(str) = replace(str, "@__CODE__" => code)
-        Literate.markdown(input, GENERATEDDIR, postprocess=mdpost)
-        Literate.notebook(input, GENERATEDDIR, execute=false)
-    elseif any(endswith.(example, [".png", ".jpg", ".gif"]))
-        cp(joinpath(EXAMPLEDIR, example), joinpath(GENERATEDDIR, example); force=true)
+        Literate.markdown(example, GENERATEDDIR, postprocess=mdpost)
+        Literate.notebook(example, GENERATEDDIR, execute=true)
+    elseif any(endswith.(path, [".png", ".jpg", ".gif"]))
+        cp(path, joinpath(GENERATEDDIR, name); force=true)
+    elseif isdir(path)
+        folder = path
+        target = joinpath(GENERATEDDIR, basename(folder))
+        cp(folder, target, force=true)
     else
-        @warn "ignoring $example"
+        @warn "ignoring $name"
     end
 end
 
