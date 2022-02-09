@@ -248,8 +248,14 @@ display(fig)
 
 """Two-level-system Hamiltonian."""
 function hamiltonian(Ω=1.0, ϵ=ϵ)
-    σ̂_z = ComplexF64[1 0;                0 -1]
-    σ̂_x = ComplexF64[0 1;                1  0]
+    σ̂_z = ComplexF64[
+        1  0
+        0 -1
+    ]
+    σ̂_x = ComplexF64[
+        0  1
+        1  0
+    ]
     Ĥ₀ = -0.5 * Ω * σ̂_z
     Ĥ₁ = σ̂_x
     return (Ĥ₀, (Ĥ₁, ϵ))
