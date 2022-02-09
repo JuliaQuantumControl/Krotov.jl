@@ -6,6 +6,15 @@ using LinearAlgebra
 using Serialization
 using SparseArrays
 
+using Plots
+Plots.default(
+    linewidth               = 3,
+    size                    = (550, 300),
+    legend                  = :right,
+    foreground_color_legend = nothing,
+    background_color_legend = RGBA(1, 1, 1, 0.8),
+)
+
 default_optimization_savename_kwargs(
     ignores=["chi", "prop_method", "use_threads"],
     connector="#"
@@ -76,9 +85,6 @@ const T = 400ns;
 L = transmon_liouvillian(Ωre, Ωim);
 
 tlist = collect(range(0, 400ns, length=2000));
-
-using Plots
-Plots.default(linewidth=3, size=(550, 300))
 
 function plot_control(pulse::Vector, tlist)
     plot(tlist, pulse, xlabel="time", ylabel="amplitude", legend=false)
