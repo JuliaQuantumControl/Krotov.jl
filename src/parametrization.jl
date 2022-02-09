@@ -1,3 +1,5 @@
+#! format: off
+
 """Specification for a "time-local" pulse parametrization.
 
 The parametrization is given as a collection of three functions:
@@ -7,15 +9,14 @@ The parametrization is given as a collection of three functions:
 * ``∂ϵ/∂u`` as a function of ``u(t)``.
 """
 struct PulseParametrization
-    epsilon_of_u :: Function
-    u_of_epsilon :: Function
-    de_du_derivative :: Function
+    epsilon_of_u::Function
+    u_of_epsilon::Function
+    de_du_derivative::Function
 end
 
 
 """Parametrization where ``ϵ(t) ≡ u(t)``."""
-NoParametrization() = PulseParametrization(u->u, ϵ->ϵ, u->1.0)
-
+NoParametrization() = PulseParametrization(u -> u, ϵ -> ϵ, u -> 1.0)
 
 """Parametrization ϵ(t) = u²(t), enforcing pulse values ≥ 0."""
 SquareParametrization() = PulseParametrization(
@@ -46,7 +47,7 @@ function TanhParametrization(ϵ_min, ϵ_max)
             ϵ = tanh(u) * Δ / 2 + Σ / 2
         end,
         ϵ -> begin # u_of_epsilon
-            a = clamp(2ϵ/Δ -  Σ/Δ, -1+εₚ, 1-εₚ)
+            a = clamp(2ϵ / Δ - Σ / Δ, -1 + εₚ, 1 - εₚ)
             u = atanh(a)  # -18.4 < u < 18.4
         end,
         u -> begin # de_du_derivative
@@ -69,7 +70,7 @@ function TanhSqParametrization(ϵ_max)
             ϵ = ϵ_max * tanh(u)^2
         end,
         ϵ -> begin # u_of_epsilon
-            a = clamp(ϵ / ϵ_max, 0, 1-εₚ)
+            a = clamp(ϵ / ϵ_max, 0, 1 - εₚ)
             u = atanh(√a)
         end,
         u -> begin # de_du_derivative
@@ -94,7 +95,7 @@ function LogisticParametrization(ϵ_min, ϵ_max; k=1.0)
         end,
         ϵ -> begin # u_of_epsilon
             ϵ′ = ϵ - ϵ_min
-            a = max(ϵ′/(Δ - ϵ′), ε₀)
+            a = max(ϵ′ / (Δ - ϵ′), ε₀)
             u = log(a) / k
         end,
         u -> begin # de_du_derivative
@@ -124,7 +125,7 @@ function LogisticSqParametrization(ϵ_max; k=1.0)
         end,
         u -> begin # de_du_derivative
             eᵏᵘ = exp(k * u)
-            ∂ϵ╱∂u = 4k * ϵ_max * eᵏᵘ * (eᵏᵘ  - 1) / (eᵏᵘ + 1)^3
+            ∂ϵ╱∂u = 4k * ϵ_max * eᵏᵘ * (eᵏᵘ - 1) / (eᵏᵘ + 1)^3
         end
     )
 

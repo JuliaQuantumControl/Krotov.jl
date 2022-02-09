@@ -1,4 +1,4 @@
-.PHONY: help test docs clean distclean devrepl
+.PHONY: help test docs clean distclean devrepl codestyle
 .DEFAULT_GOAL := help
 
 define PRINT_HELP_PYSCRIPT
@@ -82,6 +82,11 @@ clean: ## Clean up build/doc/testing artifacts
 	rm -f test/examples/*.*
 	for file in examples/*.jl; do rm -f docs/src/"$${file%.jl}".*; done
 	rm -rf docs/build
+
+
+codestyle: test/Manifest.toml ../.JuliaFormatter.toml ## Apply the codestyle to the entire project
+	$(JULIA) --project=test -e 'using JuliaFormatter; format(".", verbose=true)'
+	@echo "Done. Consider using 'make devrepl'"
 
 
 distclean: clean ## Restore to a clean checkout state

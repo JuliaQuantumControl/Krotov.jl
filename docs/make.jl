@@ -23,7 +23,7 @@ makedocs(;
         prettyurls=true,
         canonical="https://juliaquantumcontrol.github.io/Krotov.jl",
         assets=String[],
-        mathengine=KaTeX(),
+        mathengine=KaTeX()
     ),
     pages=[
         "Home" => "index.md",
@@ -36,13 +36,11 @@ makedocs(;
         ],
         "API" => "api.md",
         "History" => "history.md",
-    ],
+    ]
 )
 
 println("Finished makedocs")
 
 rm(joinpath(@__DIR__, "build", "examples", ".gitignore"))
 
-deploydocs(;
-    repo="github.com/JuliaQuantumControl/Krotov.jl",
-)
+deploydocs(; repo="github.com/JuliaQuantumControl/Krotov.jl")

@@ -1,7 +1,11 @@
 module Krotov
 
 include("parametrization.jl")
-export SquareParametrization, TanhParametrization, TanhSqParametrization, LogisticParametrization, LogisticSqParametrization
+export SquareParametrization,
+    TanhParametrization,
+    TanhSqParametrization,
+    LogisticParametrization,
+    LogisticSqParametrization
 
 include("result.jl")
 include("workspace.jl")

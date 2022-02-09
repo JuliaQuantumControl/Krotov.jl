@@ -79,9 +79,8 @@ function optimize_krotov(problem)
     check_convergence! = get(problem.kwargs, :check_convergence, res -> res)
     # note: the default `check_convergence!` is a no-op. We still always check
     # for "Reached maximum number of iterations" in `update_result!`
-    skip_initial_forward_propagation = get(
-        problem.kwargs, :skip_initial_forward_propagation, false
-    )
+    skip_initial_forward_propagation =
+        get(problem.kwargs, :skip_initial_forward_propagation, false)
 
     wrk = KrotovWrk(problem)
 
@@ -92,9 +91,7 @@ function optimize_krotov(problem)
         @info "Skipping initial forward propagation"
     else
         @threadsif wrk.use_threads for (k, obj) in collect(enumerate(wrk.objectives))
-            krotov_initial_fw_prop!(
-                ϵ⁽ⁱ⁾, wrk.result.states[k], obj.initial_state, k, wrk
-            )
+            krotov_initial_fw_prop!(ϵ⁽ⁱ⁾, wrk.result.states[k], obj.initial_state, k, wrk)
         end
     end
 
@@ -125,13 +122,13 @@ end
 
 function krotov_initial_fw_prop!(ϵ⁽⁰⁾, ϕₖ, ϕₖⁱⁿ, k, wrk)
     Φ₀ = wrk.fw_storage[k]
-    copyto!(ϕₖ,  ϕₖⁱⁿ)
-    (Φ₀ !== nothing) && write_to_storage!(Φ₀, 1,  ϕₖⁱⁿ)
+    copyto!(ϕₖ, ϕₖⁱⁿ)
+    (Φ₀ !== nothing) && write_to_storage!(Φ₀, 1, ϕₖⁱⁿ)
     N_T = length(wrk.result.tlist) - 1
     for n = 1:N_T
         G, dt = _fw_gen(ϵ⁽⁰⁾, k, n, wrk)
         propstep!(ϕₖ, G, dt, wrk.fw_prop_wrk[k])
-        (Φ₀ !== nothing) && write_to_storage!(Φ₀, n+1, ϕₖ)
+        (Φ₀ !== nothing) && write_to_storage!(Φ₀, n + 1, ϕₖ)
     end
     # TODO: allow a custom propstep! routine
 end
@@ -153,7 +150,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     # backward propagation
     chi!(χ, ϕ, wrk.objectives)
     @threadsif wrk.use_threads for k = 1:N
-        write_to_storage!(X[k], N_T+1, χ[k])
+        write_to_storage!(X[k], N_T + 1, χ[k])
         for n = N_T:-1:1
             local (G, dt) = _bw_gen(ϵ⁽ⁱ⁾, k, n, wrk)
             propstep!(χ[k], G, dt, wrk.bw_prop_wrk[k])
@@ -173,14 +170,14 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         for k = 1:N
             get_from_storage!(χ[k], X[k], n)
         end
-        ϵₙ⁽ⁱ⁺¹⁾ = [ϵ⁽ⁱ⁾[l][n]  for l ∈ 1:L]  # ϵₙ⁽ⁱ⁺¹⁾ ≈ ϵₙ⁽ⁱ⁾ for non-linear controls
+        ϵₙ⁽ⁱ⁺¹⁾ = [ϵ⁽ⁱ⁾[l][n] for l ∈ 1:L]  # ϵₙ⁽ⁱ⁺¹⁾ ≈ ϵₙ⁽ⁱ⁾ for non-linear controls
         # TODO: we could add a self-consistent loop here for ϵₙ⁽ⁱ⁺¹⁾
         Δuₙ′ = zeros(L)  # for step size 1
         for l = 1:L  # `l` is the index for the different controls
-            ∂ϵₗ╱∂u :: Function = wrk.parametrization[l].de_du_derivative
+            ∂ϵₗ╱∂u::Function = wrk.parametrization[l].de_du_derivative
             uₗ = wrk.parametrization[l].u_of_epsilon
             for k = 1:N  # k is the index over the objectives
-                ∂Hₖ╱∂ϵₗ :: Union{Function, Nothing} = wrk.control_derivs[k][l]
+                ∂Hₖ╱∂ϵₗ::Union{Function,Nothing} = wrk.control_derivs[k][l]
                 if !isnothing(∂Hₖ╱∂ϵₗ)
                     μₗₖₙ = (∂Hₖ╱∂ϵₗ)(ϵₙ⁽ⁱ⁺¹⁾[l])
                     if wrk.is_parametrized[l]
@@ -196,7 +193,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         for l = 1:L
             Sₗ = wrk.update_shapes[l]
             λₐ = wrk.lambda_vals[l]
-            αₗ = (Sₗ[n]/λₐ)  # Krotov step size
+            αₗ = (Sₗ[n] / λₐ)  # Krotov step size
             Δuₗₙ = αₗ * Δuₙ′[l]
             if wrk.is_parametrized[l]
                 uₗ = wrk.parametrization[l].u_of_epsilon
@@ -267,7 +264,7 @@ end
 function finalize_result!(ϵ_opt, wrk::KrotovWrk)
     res = wrk.result
     res.end_local_time = now()
-    for l in 1:length(ϵ_opt)
+    for l = 1:length(ϵ_opt)
         res.optimized_controls[l] = discretize(ϵ_opt[l], res.tlist)
     end
 end
