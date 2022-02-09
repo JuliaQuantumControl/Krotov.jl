@@ -59,7 +59,7 @@ function plot_symmetric_parametrization_comparison()
         color="black",
         label="",
         xlabel="ϵ",
-        ylabel="u",
+        ylabel="u"
     )
     plot!(
         pnl2,

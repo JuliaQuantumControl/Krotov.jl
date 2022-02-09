@@ -53,7 +53,7 @@ function plot_positive_parametrization_comparison()
         color="black",
         label="",
         xlabel="ϵ",
-        ylabel="u",
+        ylabel="u"
     )
     plot!(pnl2, ϵ_vals, TanhSqParametrization(ϵ_max).u_of_epsilon.(ϵ_vals), label="TanhSq")
     plot!(
