@@ -1,5 +1,6 @@
 using Krotov
 using Documenter
+using Pkg
 using Plots
 
 gr()
@@ -12,17 +13,23 @@ include("generate.jl")
 
 DocMeta.setdocmeta!(Krotov, :DocTestSetup, :(using Krotov); recursive=true)
 
+PROJECT_TOML = Pkg.TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
+VERSION = PROJECT_TOML["version"]
+NAME = PROJECT_TOML["name"]
+AUTHORS = join(PROJECT_TOML["authors"], ", ") * " and contributors"
+GITHUB = "https://github.com/JuliaQuantumControl/Krotov.jl"
+
 println("Starting makedocs")
 
 makedocs(;
-    modules=[Krotov],
-    authors="Michael Goerz <mail@michaelgoerz.net> and contributors",
-    repo="https://github.com/JuliaQuantumControl/Krotov.jl/blob/{commit}{path}#{line}",
+    authors=AUTHORS,
     sitename="Krotov.jl",
+    modules=[Krotov],
     format=Documenter.HTML(;
         prettyurls=true,
         canonical="https://juliaquantumcontrol.github.io/Krotov.jl",
         assets=String[],
+        footer="[$NAME.jl]($GITHUB) v$VERSION docs powered by [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl).",
         mathengine=KaTeX()
     ),
     pages=[

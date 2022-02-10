@@ -1,6 +1,6 @@
 name = "Krotov"
 uuid = "b05dcdc7-62f6-4360-bf2c-0898bba419de"
-authors = ["Michael Goerz <mail@michaelgoerz.net> and contributors"]
+authors = ["Michael Goerz <mail@michaelgoerz.net>"]
 version = "0.1.0+dev"
 
 [deps]
