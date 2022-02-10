@@ -73,15 +73,15 @@ Plots.default(
 # ## Symmetric Bounded Controls
 
 #-
-include(joinpath(@__DIR__, "plots", "symmetric_parametrization_comparison.jl"))
-fig = plot_symmetric_parametrization_comparison()
+include(joinpath(@__DIR__, "plots", "symmetric_parametrization_comparison.jl"))  # hide
+fig = plot_symmetric_parametrization_comparison()  # hide
 #jl display(fig)
 
 # ## Positive (Bounded) Controls
 
 #-
-include(joinpath(@__DIR__, "plots", "positive_parametrization_comparison.jl"))
-fig = plot_positive_parametrization_comparison()
+include(joinpath(@__DIR__, "plots", "positive_parametrization_comparison.jl"))  # hide
+fig = plot_positive_parametrization_comparison()  # hide
 #jl display(fig)
 
 # ## Two-level Hamiltonian
@@ -179,7 +179,12 @@ problem = ControlProblem(
     end
 );
 #-
-opt_result_positive = optimize(problem, method=:krotov);
+opt_result_positive, file = @optimize_or_load(
+    datadir(),
+    problem;
+    method=:krotov,
+    filename="parametrization#opt_result_positive.jld2"
+);
 #-
 opt_result_positive
 
@@ -216,7 +221,12 @@ problem_tanhsq = ControlProblem(
     end
 );
 #-
-opt_result_tanhsq = optimize(problem_tanhsq, method=:krotov);
+opt_result_tanhsq, file = @optimize_or_load(
+    datadir(),
+    problem_tanhsq;
+    method=:krotov,
+    filename="parametrization#opt_result_tanhsq.jld2"
+);
 #-
 opt_result_tanhsq
 
@@ -253,7 +263,12 @@ problem_logisticsq = ControlProblem(
     end
 );
 #-
-opt_result_logisticsq = optimize(problem_logisticsq, method=:krotov);
+opt_result_logisticsq, file = @optimize_or_load(
+    datadir(),
+    problem_logisticsq;
+    method=:krotov,
+    filename="parametrization#opt_result_logisticsq.jld2"
+);
 # We can plot the optimized field:
 
 #-
@@ -286,7 +301,12 @@ problem_tanh = ControlProblem(
     end
 );
 #-
-opt_result_tanh = optimize(problem_tanh, method=:krotov);
+opt_result_tanh, file = @optimize_or_load(
+    datadir(),
+    problem_tanh;
+    method=:krotov,
+    filename="parametrization#opt_result_tanh.jld2"
+);
 #-
 #!jl plot_control(opt_result_tanh.optimized_controls[1], tlist)
 #-
