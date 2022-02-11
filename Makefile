@@ -23,36 +23,7 @@ GITORIGIN := $(shell git config remote.origin.url)
 help:  ## show this help
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-
-# We want to test against checkouts of QuantumControl packages
-QUANTUMCONTROLBASE ?= ../QuantumControlBase.jl
-QUANTUMPROPAGATORS ?= ../QuantumPropagators.jl
-GRAPE ?= ../GRAPE.jl
-QUANTUMCONTROL ?= ../QuantumControl.jl
-
-
-define DEV_PACKAGES
-using Pkg;
-Pkg.develop(path="$(QUANTUMCONTROLBASE)");
-Pkg.develop(path="$(QUANTUMPROPAGATORS)");
-endef
-export DEV_PACKAGES
-
-define ENV_PACKAGES
-$(DEV_PACKAGES)
-Pkg.develop(path="$(GRAPE)");
-Pkg.develop(path="$(QUANTUMCONTROL)");
-Pkg.develop(PackageSpec(path=pwd()));
-Pkg.instantiate()
-endef
-export ENV_PACKAGES
-
-
 JULIA ?= julia
-
-
-Manifest.toml: Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml $(QUANTUMCONTROL)/Project.toml
-	$(JULIA) --project=. -e "$$DEV_PACKAGES;Pkg.instantiate()"
 
 
 test:  test/Manifest.toml ## Run the test suite
@@ -60,8 +31,8 @@ test:  test/Manifest.toml ## Run the test suite
 	@echo "Done. Consider using 'make devrepl'"
 
 
-test/Manifest.toml: test/Project.toml $(QUANTUMCONTROLBASE)/Project.toml $(QUANTUMPROPAGATORS)/Project.toml $(QUANTUMCONTROL)/Project.toml
-	$(JULIA) --project=test -e "$$ENV_PACKAGES"
+test/Manifest.toml: test/Project.toml ../scripts/installorg.jl
+	$(JULIA) --project=test ../scripts/installorg.jl
 
 
 docs/Manifest.toml: test/Manifest.toml
