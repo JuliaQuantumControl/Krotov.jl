@@ -19,10 +19,6 @@ jobs:
           - x64
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/checkout@v2
-        with:
-          ref: data-dump
-          path: examples/dump
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
@@ -47,7 +43,4 @@ jobs:
           julia --project=test installorg.jl
       - run: |
           # Run tests
-          julia --threads auto --project=@. -e '
-            using Pkg
-            Pkg.activate(".")
-            Pkg.test()'
+          julia --project=test --color=auto --startup-file=yes --code-coverage="user" --depwarn="yes" --check-bounds="yes" -e 'include("test/runtests.jl")'
