@@ -10,3 +10,4 @@
 /docs/build/
 /docs/src/examples/dump/
 /gh-pages/
+/.JuliaFormatter.toml
