@@ -11,3 +11,5 @@
 /docs/src/examples/dump/
 /gh-pages/
 /.JuliaFormatter.toml
+/lcov.info
+/coverage
