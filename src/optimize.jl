@@ -1,4 +1,4 @@
-using QuantumPropagators: propstep!, write_to_storage!, get_from_storage!
+using QuantumControlBase.QuantumPropagators: propstep!, write_to_storage!, get_from_storage!
 using QuantumControlBase: evalcontrols!
 using QuantumControlBase.ConditionalThreads: @threadsif
 using LinearAlgebra
