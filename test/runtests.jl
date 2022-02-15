@@ -4,7 +4,7 @@ using Plots
 
 unicodeplots()
 
-include("generate_example_tests.jl")
+include(joinpath(@__DIR__, "generate_example_tests.jl"))
 
 include(joinpath(@__DIR__, "download_dumps.jl"))
 
