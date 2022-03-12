@@ -150,7 +150,6 @@ problem = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.Functionals.chi_ss!,
     J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence=res -> begin
         ((res.J_T < 1e-3) && (res.converged = true) && (res.message = "J_T < 10⁻³"))
@@ -186,16 +185,14 @@ fig = plot_population(guess_dynamics[1, :], guess_dynamics[2, :], tlist)
 # that the intended state-to-state transfer $\ket{\Psi_{\init}} \rightarrow
 # \ket{\Psi_{\tgt}}$ is solved, via `optimize` routine.
 # It requires, besides the previously defined
-# `objectives`, information about the optimization functional $J_T$ (implicitly,
-# via `chi_constructor`, which calculates the states $\ket{\chi} =
-# \frac{J_T}{\bra{\Psi}}$).
+# `objectives`, information about the optimization functional $J_T$.
 
 opt_result, file = @optimize_or_load(
     datadir(),
     problem,
     method = :krotov,
     prefix = "TLSOCT",
-    savename_kwargs = Dict(:ignores => ["chi"], :connector => "#")
+    savename_kwargs = Dict(:connector => "#")
 );
 #-
 opt_result

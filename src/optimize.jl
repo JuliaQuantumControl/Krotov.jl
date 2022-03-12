@@ -1,5 +1,6 @@
 using QuantumControlBase.QuantumPropagators: propstep!, write_to_storage!, get_from_storage!
 using QuantumControlBase: evalcontrols!
+using QuantumControlBase.Functionals: make_chi
 using QuantumControlBase.ConditionalThreads: @threadsif
 using LinearAlgebra
 using Printf
@@ -28,13 +29,16 @@ arguments used in the instantiation of `problem`.
 * `J_T`: A function `J_T(ϕ, objectives)` that evaluates the final time
   functional from a list `ϕ` of forward-propagated states and
   `problem.objectives`.
-* `chi`: A function `chi!(χ, ϕ, objectives)` what receives a list `ϕ`
-  of the forward propagates state and must set ``χₖ=∂J_T/∂⟨ϕₖ|``.
 
 # Optional problem keyword arguments
 
 The following keyword arguments are supported (with default values):
 
+* `chi`: A function `chi!(χ, ϕ, objectives)` what receives a list `ϕ`
+  of the forward propagates state and must set ``-χₖ=∂J_T/∂⟨ϕₖ|``. If not
+  given, it will be automatically determined from `J_T` via [`make_chi`](@ref)
+* `force_zygote=false`: Whether to force the use of automatic differentiation
+  when calling [`make_chi`](@ref).
 * `sigma=nothing`: Function that calculate the second-order contribution. If
   not given, the first-order Krotov method is used.
 * `iter_start=0`: the initial iteration number
@@ -138,7 +142,9 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
 
     ϕ = wrk.result.states  # assumed to contain the results of forward propagation
     χ = wrk.bw_states
-    chi! = wrk.kwargs[:chi]
+    J_T_func = wrk.kwargs[:J_T]
+    force_zygote = get(wrk.kwargs, :get_zygote, false)
+    chi! = get(wrk.kwargs, :chi, make_chi(J_T_func, wrk.objectives; force_zygote))
     N_T = length(wrk.result.tlist) - 1
     N = length(wrk.objectives)
     L = length(wrk.controls)
