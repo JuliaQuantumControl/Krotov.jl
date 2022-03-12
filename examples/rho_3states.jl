@@ -65,10 +65,7 @@ Plots.default(
 )
 #-
 #-
-default_optimization_savename_kwargs(
-    ignores=["chi", "prop_method", "use_threads"],
-    connector="#"
-);
+default_optimization_savename_kwargs(ignores=["prop_method", "use_threads"], connector="#");
 
 #jl using Test; println("")
 
@@ -301,7 +298,6 @@ const problem = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=3000,
-    chi=QuantumControl.Functionals.chi_re!,
     J_T=QuantumControl.Functionals.J_T_re,
     check_convergence=res -> begin
         ((res.J_T < 1e-3) && (res.converged = true) && (res.message = "J_T < 10⁻³"))

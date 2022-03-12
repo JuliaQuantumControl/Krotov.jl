@@ -172,7 +172,6 @@ problem = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.Functionals.chi_ss!,
     J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence=res -> begin
         ((res.J_T < 1e-3) && (res.converged = true) && (res.message = "J_T < 10⁻³"))
@@ -214,7 +213,6 @@ problem_tanhsq = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.Functionals.chi_ss!,
     J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence=res -> begin
         ((res.J_T < 1e-3) && (res.converged = true) && (res.message = "J_T < 10⁻³"))
@@ -256,7 +254,6 @@ problem_logisticsq = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.Functionals.chi_ss!,
     J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence=res -> begin
         ((res.J_T < 1e-3) && (res.converged = true) && (res.message = "J_T < 10⁻³"))
@@ -294,7 +291,6 @@ problem_tanh = ControlProblem(
     ),
     tlist=tlist,
     iter_stop=50,
-    chi=QuantumControl.Functionals.chi_ss!,
     J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence=res -> begin
         ((res.J_T < 1e-3) && (res.converged = true) && (res.message = "J_T < 10⁻³"))
