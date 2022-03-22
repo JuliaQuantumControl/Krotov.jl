@@ -40,6 +40,7 @@ makedocs(;
             "Example 1 (TLS)" => "examples/simple_state_to_state.md",
             "Example 2 (Diss. Gate)" => "examples/rho_3states.md",
             "Example 3 (Parametrization)" => "examples/state_to_state_parametrizations.md",
+            "Example 4 (PE)" => "examples/perfect_entanglers.md",
         ],
         "API" => "api.md",
         "History" => "history.md",

@@ -25,6 +25,7 @@ Pages = [
     "examples/simple_state_to_state.md",
     "examples/rho_3states.md",
     "examples/state_to_state_parametrizations.md",
+    "examples/perfect_entanglers.md",
 ]
 Depth = 1
 ```

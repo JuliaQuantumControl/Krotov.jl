@@ -26,6 +26,11 @@ include(joinpath(@__DIR__, "download_dumps.jl"))
         include(joinpath("examples", "state_to_state_parametrizations.jl"))
     end
 
+    print("\n* Example 4 (examples/perfect_entanglers.jl):")
+    @time @safetestset "Example 4" begin
+        include(joinpath("examples", "perfect_entanglers.jl"))
+    end
+
     println("")
 
 end
