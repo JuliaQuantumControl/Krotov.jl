@@ -6,7 +6,9 @@
 [![Build Status](https://github.com/JuliaQuantumControl/Krotov.jl/workflows/CI/badge.svg)](https://github.com/JuliaQuantumControl/Krotov.jl/actions)
 [![Coverage](https://codecov.io/gh/JuliaQuantumControl/Krotov.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaQuantumControl/Krotov.jl)
 
-Implementation of [Krotov's method of optimal control](https://arxiv.org/abs/1008.5126), part of [`QuantumControl.jl`][QuantumControl] and the [JuliaQuantumControl][] organization.
+Implementation of [Krotov's method of optimal control](https://arxiv.org/abs/1008.5126) enhanced with automatic differentiation.
+
+Part of [`QuantumControl.jl`][QuantumControl] and the [JuliaQuantumControl][] organization.
 
 This package is a port of the [`krotov` Python package](https://github.com/qucontrol/krotov#readme), adapted to the API  of [`QuantumControl.jl`][QuantumControl].
 
