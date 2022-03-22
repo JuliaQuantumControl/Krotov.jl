@@ -13,6 +13,10 @@ DOWNLOADS = Dict(
         joinpath(datadir(), "parametrization#opt_result_tanh.jld2"),
     "https://github.com/JuliaQuantumControl/Krotov.jl/raw/data-dump/parametrization%23opt_result_tanhsq.jld2" =>
         joinpath(datadir(), "parametrization#opt_result_tanhsq.jld2"),
+    "https://github.com/JuliaQuantumControl/Krotov.jl/raw/data-dump/PE_OCT.jld2" =>
+        joinpath(datadir(), "PE_OCT.jld2"),
+    "https://github.com/JuliaQuantumControl/Krotov.jl/raw/data-dump/PE_OCT_direct.jld2" =>
+        joinpath(datadir(), "PE_OCT_direct.jld2"),
 )
 
 function download_dump(url, destination; force=false, verbose=true)

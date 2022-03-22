@@ -334,12 +334,8 @@ problem = ControlProblem(
 # which can evaluate that derivative).
 
 
-opt_result, file = @optimize_or_load(
-    datadir(),
-    problem;
-    method=:Krotov,
-    filename = "PE_OCT.jld2",
-);
+opt_result, file =
+    @optimize_or_load(datadir(), problem; method=:Krotov, filename="PE_OCT.jld2");
 #-
 opt_result
 
@@ -417,7 +413,7 @@ opt_result_direct, file = @optimize_or_load(
     method=:Krotov,
     J_T=gate_functional(J_T_C),
     chi=chi_C,
-    filename="PE_OCT_direct.jld2",
+    filename="PE_OCT_direct.jld2"
 );
 #-
 opt_result_direct
