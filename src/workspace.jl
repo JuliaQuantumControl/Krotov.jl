@@ -75,7 +75,7 @@ using ConcreteStructs
 end
 
 
-function KrotovWrk(problem::QuantumControlBase.ControlProblem)
+function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     use_threads = get(problem.kwargs, :use_threads, false)
     objectives = [obj for obj in problem.objectives]
     adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
@@ -154,6 +154,8 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem)
             tlist,
             fw_prop_method[k];
             initial_state=obj.initial_state,
+            info_msg="Initializing fw-prop of objective $k",
+            verbose=verbose,
             kwargs...
         ) for (k, obj) in enumerate(objectives)
     ]
@@ -163,6 +165,8 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem)
             tlist,
             bw_prop_method[k];
             initial_state=obj.initial_state,
+            info_msg="Initializing bw-prop of objective $k",
+            verbose=verbose,
             kwargs...
         ) for (k, obj) in enumerate(objectives)
     ]

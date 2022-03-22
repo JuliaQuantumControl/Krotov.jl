@@ -62,6 +62,7 @@ The following keyword arguments are supported (with default values):
   case of convergence. Multiple convergence checks can be performed by chaining
   functions with `∘`. The convergence check is performed after any calls to
   `update_hook` and `info_hook`.
+* `verbose=false`: If `true`, print information during initialization
 
 The propagation method for the forward propagation of each objective is
 determined by the first available item of the following:
@@ -83,10 +84,11 @@ function optimize_krotov(problem)
     check_convergence! = get(problem.kwargs, :check_convergence, res -> res)
     # note: the default `check_convergence!` is a no-op. We still always check
     # for "Reached maximum number of iterations" in `update_result!`
+    verbose = get(problem.kwargs, :verbose, false)
     skip_initial_forward_propagation =
         get(problem.kwargs, :skip_initial_forward_propagation, false)
 
-    wrk = KrotovWrk(problem)
+    wrk = KrotovWrk(problem; verbose)
 
     ϵ⁽ⁱ⁾ = wrk.pulses0
     ϵ⁽ⁱ⁺¹⁾ = wrk.pulses1
