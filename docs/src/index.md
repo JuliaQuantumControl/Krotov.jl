@@ -11,6 +11,8 @@ Part of [`QuantumControl.jl`](https://github.com/JuliaQuantumControl/QuantumCont
 [Krotov.jl](https://github.com/JuliaQuantumControl/Krotov.jl) is a port of the [`krotov` Python package](https://github.com/qucontrol/krotov#readme), adapted to the API  of [`QuantumControl.jl`](https://github.com/JuliaQuantumControl/QuantumControl.jl#readme).
 
 
+## Contents
+
 ### Overview
 
 ```@contents
@@ -41,11 +43,6 @@ Pages = [
 Depth = 1
 ```
 
-### History
+## History
 
-```@contents
-Pages = [
-    "history.md",
-]
-Depth = 1
-```
+See the [Releases](https://github.com/JuliaQuantumControl/Krotov.jl/releases) on Github.
