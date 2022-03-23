@@ -1,4 +1,9 @@
 # # Example 4: Optimization for a perfect entangler
+#md # !!! tip
+#md #     This example is also available as a Jupyter notebook:
+#md #     [`perfect_entanglers.ipynb`](@__NBVIEWER_ROOT_URL__/examples/perfect_entanglers.ipynb).
+#md #
+#md #     Compare this example against the [same example using GRAPE](https://juliaquantumcontrol.github.io/GRAPE.jl/stable/examples/perfect_entanglers/).
 
 #md # ``\gdef\op#1{\hat{#1}}``
 #md # ``\gdef\init{\text{init}}``
@@ -114,7 +119,7 @@ function hamiltonian(;
 
 end;
 
-# We choose a pulse duration of 400 ns. The guess pulse amplitude of 35 MHz,
+# We choose a pulse duration of 400 ns. The guess pulse amplitude is 35 MHz,
 # with a 15 ns switch-on/-off time. The Hamiltonian is written in a rotating
 # frame, so in general, the control field is allowed to be complex-valued. We
 # separate this into two control fields, one for the real part and one for the
@@ -349,7 +354,7 @@ opt_result
 
 plot_complex_pulse(tlist, Ω_opt)
 
-# We than propagate the optimized control field to analyze the resulting
+# We then propagate the optimized control field to analyze the resulting
 # quantum gate:
 
 opt_states = propagate_objectives(
@@ -382,7 +387,7 @@ gate_concurrence(U_opt)
 # indirectly via a geometric function in the Weyl chamber. The entire reason
 # that perfect entangler functional was formulated is because calculating the
 # gate concurrence directly involves the eigenvalues of the unitary, see
-# Kraus, # Cirac, Phys. Rev. A 63, 062309 (2001) and
+# Kraus, Cirac, Phys. Rev. A 63, 062309 (2001) and
 # Childs et al., PRA 68, 052311 (2003), which are inherently non-analytic.
 
 # However, since Krotov.jl can use automatic differentiation, this is no longer
