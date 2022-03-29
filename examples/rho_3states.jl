@@ -303,9 +303,7 @@ const problem = ControlProblem(
         ((res.J_T < 1e-3) && (res.converged = true) && (res.message = "J_T < 10⁻³"))
     end
 );
-
-
-#jl test_result = optimize(problem, method=:krotov, iter_stop=1);
+#-
 opt_result, file =
     @optimize_or_load(datadir(), problem, method = :krotov, prefix = "DissGateOCT")
 #-
