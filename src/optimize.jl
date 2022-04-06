@@ -315,4 +315,5 @@ function print_table(wrk, iteration, args...)
         print(lpad(str, w))
     end
     print("\n")
+    flush(stdout)
 end
