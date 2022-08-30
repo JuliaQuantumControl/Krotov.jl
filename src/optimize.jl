@@ -1,5 +1,5 @@
-using QuantumControlBase.QuantumPropagators: propstep!, write_to_storage!, get_from_storage!
-using QuantumControlBase: evalcontrols!
+using QuantumControlBase.QuantumPropagators.Controls: discretize, evalcontrols!
+using QuantumControlBase.QuantumPropagators: propstep!, reinitprop!, write_to_storage!, get_from_storage!
 using QuantumControlBase.Functionals: make_chi
 using QuantumControlBase.ConditionalThreads: @threadsif
 using LinearAlgebra
@@ -97,7 +97,7 @@ function optimize_krotov(problem)
         @info "Skipping initial forward propagation"
     else
         @threadsif wrk.use_threads for (k, obj) in collect(enumerate(wrk.objectives))
-            krotov_initial_fw_prop!(ϵ⁽ⁱ⁾, wrk.result.states[k], obj.initial_state, k, wrk)
+            krotov_initial_fw_prop!(ϵ⁽ⁱ⁾, obj.initial_state, k, wrk)
         end
     end
 
@@ -105,7 +105,7 @@ function optimize_krotov(problem)
     update_result!(wrk, 0)
     update_hook!(wrk, 0, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
     info_tuple = info_hook(wrk, 0, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
-    (info_tuple !== nothing) && push!(wrk.records, info_tuple)
+    (info_tuple !== nothing) && push!(wrk.result.records, info_tuple)
 
     i = wrk.result.iter  # = 0, unless continuing from previous optimization
     while !wrk.result.converged
@@ -114,7 +114,7 @@ function optimize_krotov(problem)
         update_result!(wrk, i)
         update_hook!(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
         info_tuple = info_hook(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
-        (info_tuple !== nothing) && push!(wrk.records, info_tuple)
+        (info_tuple !== nothing) && push!(wrk.result.records, info_tuple)
         check_convergence!(wrk.result)
         ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾ = ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾
     end
@@ -126,14 +126,26 @@ function optimize_krotov(problem)
 end
 
 
-function krotov_initial_fw_prop!(ϵ⁽⁰⁾, ϕₖ, ϕₖⁱⁿ, k, wrk)
+function transform_control_ranges(c, ϵ_min, ϵ_max, check)
+    if check
+        return (min(ϵ_min, 2 * ϵ_min), max(ϵ_max, 2 * ϵ_max))
+    else
+        return (min(ϵ_min, 5 * ϵ_min), max(ϵ_max, 5 * ϵ_max))
+    end
+end
+
+
+function krotov_initial_fw_prop!(ϵ⁽⁰⁾, ϕₖⁱⁿ, k, wrk)
+    for propagator in wrk.fw_propagators
+        propagator.parameters = IdDict(zip(wrk.controls, ϵ⁽⁰⁾))
+    end
+    reinitprop!(wrk.fw_propagators[k], ϕₖⁱⁿ; transform_control_ranges)
+
     Φ₀ = wrk.fw_storage[k]
-    copyto!(ϕₖ, ϕₖⁱⁿ)
     (Φ₀ !== nothing) && write_to_storage!(Φ₀, 1, ϕₖⁱⁿ)
     N_T = length(wrk.result.tlist) - 1
     for n = 1:N_T
-        G, dt = _fw_gen(ϵ⁽⁰⁾, k, n, wrk)
-        propstep!(ϕₖ, G, dt, wrk.fw_prop_wrk[k])
+        ϕₖ = propstep!(wrk.fw_propagators[k])
         (Φ₀ !== nothing) && write_to_storage!(Φ₀, n + 1, ϕₖ)
     end
     # TODO: allow a custom propstep! routine
@@ -142,8 +154,7 @@ end
 
 function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
 
-    ϕ = wrk.result.states  # assumed to contain the results of forward propagation
-    χ = wrk.bw_states
+    χ = [propagator.state for propagator in wrk.bw_propagators]
     J_T_func = wrk.kwargs[:J_T]
     force_zygote = get(wrk.kwargs, :get_zygote, false)
     chi! = get(wrk.kwargs, :chi, make_chi(J_T_func, wrk.objectives; force_zygote))
@@ -155,21 +166,28 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     ∫gₐdt = wrk.g_a_int
     Im = imag
 
+    guess_parameters = IdDict(zip(wrk.controls, ϵ⁽ⁱ⁾))
+    updated_parameters = IdDict(zip(wrk.controls, ϵ⁽ⁱ⁺¹⁾))
+
     # backward propagation
+    ϕ = [propagator.state for propagator in wrk.fw_propagators]
     chi!(χ, ϕ, wrk.objectives)
     @threadsif wrk.use_threads for k = 1:N
+        wrk.bw_propagators[k].parameters = guess_parameters
+        reinitprop!(wrk.bw_propagators[k], χ[k]; transform_control_ranges)
         write_to_storage!(X[k], N_T + 1, χ[k])
         for n = N_T:-1:1
-            local (G, dt) = _bw_gen(ϵ⁽ⁱ⁾, k, n, wrk)
-            propstep!(χ[k], G, dt, wrk.bw_prop_wrk[k])
-            write_to_storage!(X[k], n, χ[k])
+            local χₖ = propstep!(wrk.bw_propagators[k])
+            write_to_storage!(X[k], n, χₖ)
         end
     end
 
     # pulse update and forward propagation
 
     @threadsif wrk.use_threads for k = 1:N
-        copyto!(ϕ[k], wrk.objectives[k].initial_state)
+        wrk.fw_propagators[k].parameters = updated_parameters
+        local ϕₖ = wrk.objectives[k].initial_state
+        reinitprop!(wrk.fw_propagators[k], ϕₖ; transform_control_ranges)
     end
 
     ∫gₐdt .= 0.0
@@ -180,19 +198,20 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         end
         ϵₙ⁽ⁱ⁺¹⁾ = [ϵ⁽ⁱ⁾[l][n] for l ∈ 1:L]  # ϵₙ⁽ⁱ⁺¹⁾ ≈ ϵₙ⁽ⁱ⁾ for non-linear controls
         # TODO: we could add a self-consistent loop here for ϵₙ⁽ⁱ⁺¹⁾
-        Δuₙ′ = zeros(L)  # for step size 1
+        Δuₙ′ = zeros(L)  # "′" indicates update without (Sₗₙ/λₐ) factor
         for l = 1:L  # `l` is the index for the different controls
             ∂ϵₗ╱∂u::Function = wrk.parametrization[l].de_du_derivative
             uₗ = wrk.parametrization[l].u_of_epsilon
             for k = 1:N  # k is the index over the objectives
+                ϕₖ = wrk.fw_propagators[k].state
                 ∂Hₖ╱∂ϵₗ::Union{Function,Nothing} = wrk.control_derivs[k][l]
                 if !isnothing(∂Hₖ╱∂ϵₗ)
                     μₗₖₙ = (∂Hₖ╱∂ϵₗ)(ϵₙ⁽ⁱ⁺¹⁾[l])
                     if wrk.is_parametrized[l]
                         ∂ϵₗ╱∂uₗ = (∂ϵₗ╱∂u)(uₗ(ϵₙ⁽ⁱ⁺¹⁾[l]))
-                        Δuₙ′[l] += ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕ[k]))
+                        Δuₙ′[l] += ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕₖ))
                     else
-                        Δuₙ′[l] += Im(dot(χ[k], μₗₖₙ, ϕ[k]))
+                        Δuₙ′[l] += Im(dot(χ[k], μₗₖₙ, ϕₖ))
                     end
                 end
             end
@@ -215,38 +234,11 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         end
         # TODO: end of self-consistent loop
         @threadsif wrk.use_threads for k = 1:N
-            local (G, dt) = _fw_gen(ϵ⁽ⁱ⁺¹⁾, k, n, wrk)
-            propstep!(ϕ[k], G, dt, wrk.fw_prop_wrk[k])
-            write_to_storage!(Φ[k], n, ϕ[k])
+            local ϕₖ = propstep!(wrk.fw_propagators[k])
+            write_to_storage!(Φ[k], n, ϕₖ)
         end
         # TODO: update sigma
     end  # time loop
-end
-
-
-# The dynamical generator for the forward propagation
-function _fw_gen(ϵ, k, n, wrk)
-    vals_dict = wrk.vals_dict[k]
-    t = wrk.result.tlist
-    for (l, control) in enumerate(wrk.controls)
-        vals_dict[control] = ϵ[l][n]
-    end
-    dt = t[n+1] - t[n]
-    evalcontrols!(wrk.G[k], wrk.objectives[k].generator, vals_dict)
-    return wrk.G[k], dt
-end
-
-
-# The dynamical generator for the backward propagation
-function _bw_gen(ϵ, k, n, wrk)
-    vals_dict = wrk.vals_dict[k]
-    t = wrk.result.tlist
-    for (l, control) in enumerate(wrk.controls)
-        vals_dict[control] = ϵ[l][n]
-    end
-    dt = t[n+1] - t[n]
-    evalcontrols!(wrk.G[k], wrk.adjoint_objectives[k].generator, vals_dict)
-    return wrk.G[k], -dt
 end
 
 
@@ -254,6 +246,9 @@ function update_result!(wrk::KrotovWrk, i::Int64)
     res = wrk.result
     J_T_func = wrk.kwargs[:J_T]
     res.J_T_prev = res.J_T
+    for k in eachindex(wrk.fw_propagators)
+        res.states[k] = wrk.fw_propagators[k].state
+    end
     res.J_T = J_T_func(res.states, wrk.objectives)
     (i > 0) && (res.iter = i)
     if i >= res.iter_stop
@@ -272,7 +267,7 @@ end
 function finalize_result!(ϵ_opt, wrk::KrotovWrk)
     res = wrk.result
     res.end_local_time = now()
-    for l = 1:length(ϵ_opt)
+    for l in eachindex(ϵ_opt)
         res.optimized_controls[l] = discretize(ϵ_opt[l], res.tlist)
     end
 end
