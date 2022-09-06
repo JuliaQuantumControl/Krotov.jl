@@ -137,7 +137,8 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
 
     fw_propagators = [
         begin
-            verbose && @info "Initializing fw-prop of objective $k with method $(fw_prop_method[k])"
+            verbose &&
+                @info "Initializing fw-prop of objective $k with method $(fw_prop_method[k])"
             initprop(
                 obj.initial_state,
                 obj.generator,
@@ -145,12 +146,12 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
                 method=fw_prop_method[k],
                 kwargs...
             )
-        end
-        for (k, obj) in enumerate(objectives)
+        end for (k, obj) in enumerate(objectives)
     ]
     bw_propagators = [
         begin
-            verbose && @info "Initializing bw-prop of objective $k with method $(bw_prop_method[k])"
+            verbose &&
+                @info "Initializing bw-prop of objective $k with method $(bw_prop_method[k])"
             initprop(
                 obj.initial_state,
                 obj.generator,
@@ -159,8 +160,7 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
                 backward=true,
                 kwargs...
             )
-        end
-        for (k, obj) in enumerate(adjoint_objectives)
+        end for (k, obj) in enumerate(adjoint_objectives)
     ]
     return KrotovWrk(
         objectives,

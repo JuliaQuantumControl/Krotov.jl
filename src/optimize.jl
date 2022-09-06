@@ -1,5 +1,6 @@
 using QuantumControlBase.QuantumPropagators.Controls: discretize, evalcontrols!
-using QuantumControlBase.QuantumPropagators: propstep!, reinitprop!, write_to_storage!, get_from_storage!
+using QuantumControlBase.QuantumPropagators:
+    propstep!, reinitprop!, write_to_storage!, get_from_storage!
 using QuantumControlBase.Functionals: make_chi
 using QuantumControlBase.ConditionalThreads: @threadsif
 using LinearAlgebra
