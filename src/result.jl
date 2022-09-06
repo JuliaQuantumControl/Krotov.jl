@@ -1,4 +1,4 @@
-using QuantumControlBase: getcontrols, discretize
+using QuantumControlBase.QuantumPropagators.Controls: getcontrols, discretize
 using Printf
 using Dates
 
@@ -15,7 +15,7 @@ mutable struct KrotovResult{STST}
     J_T_prev::Float64  # previous value of J_T
     guess_controls::Vector{Vector{Float64}}
     optimized_controls::Vector{Vector{Float64}}
-    states::Vector{STST}
+    states::Vector{STST} # the forward-propagated states after each iteration
     start_local_time::DateTime
     end_local_time::DateTime
     records::Vector{Tuple}  # storage for info_hook to write data into at each iteration

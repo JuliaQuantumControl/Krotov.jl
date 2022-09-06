@@ -1,7 +1,7 @@
 import QuantumControlBase
-using QuantumControlBase:
+using QuantumControlBase.QuantumPropagators.Controls:
     getcontrols, getcontrolderivs, discretize_on_midpoints, evalcontrols
-using QuantumControlBase.QuantumPropagators: init_storage
+using QuantumControlBase.QuantumPropagators: init_storage, initprop
 using ConcreteStructs
 
 # Krotov workspace (for internal use)
@@ -49,16 +49,7 @@ using ConcreteStructs
     #################################
     # scratch objects, per objective:
 
-    # backward-propagated states
-    # note: storage for fw-propagated states is in result.states
-    bw_states
-
-    # dynamical generator at a particular point in time
-    G
-
     control_derivs::Vector{Vector{Union{Function,Nothing}}}
-
-    vals_dict
 
     fw_storage # forward storage array (per objective)
 
@@ -66,9 +57,9 @@ using ConcreteStructs
 
     bw_storage # backward storage array (per objective)
 
-    fw_prop_wrk
+    fw_propagators
 
-    bw_prop_wrk
+    bw_propagators
 
     use_threads::Bool
 
@@ -82,7 +73,7 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     controls = getcontrols(objectives)
     control_derivs = [getcontrolderivs(obj.generator, controls) for obj in objectives]
     tlist = problem.tlist
-    kwargs = Dict(problem.kwargs)
+    kwargs = Dict(problem.kwargs)  # creates a shallow copy; ok to modify
     # TODO: check that kwargs has all the required parameters
     pulse_options = problem.pulse_options
     update_shapes = [
@@ -104,7 +95,7 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
             # account for continuing from a different optimization method
             result = convert(KrotovResult, result)
         end
-        result.iter_stop = get(problem.kwargs, :iter_stop, 5000)
+        result.iter_stop = get(kwargs, :iter_stop, 5000)
         result.converged = false
         result.start_local_time = now()
         result.message = "in progress"
@@ -117,23 +108,19 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     end
     pulses1 = [copy(pulse) for pulse in pulses0]
     g_a_int = zeros(length(pulses0))
-    bw_states = [similar(obj.initial_state) for obj in objectives]
-    zero_vals =
-        IdDict(control => zero(pulses0[i][1]) for (i, control) in enumerate(controls))
-    G = [evalcontrols(obj.generator, zero_vals) for obj in objectives]
-    vals_dict = [copy(zero_vals) for _ in objectives]
     # TODO: forward_storage only if g_b != 0
     fw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
     # TODO: second forward storage only if second order
     fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
     bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
+    kwargs[:piecewise] = true  # only accept piecewise propagators
     fw_prop_method = [
         Val(
             QuantumControlBase.get_objective_prop_method(
                 obj,
                 :fw_prop_method,
                 :prop_method;
-                problem.kwargs...
+                kwargs...
             )
         ) for obj in objectives
     ]
@@ -143,32 +130,37 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
                 obj,
                 :bw_prop_method,
                 :prop_method;
-                problem.kwargs...
+                kwargs...
             )
         ) for obj in objectives
     ]
 
-    fw_prop_wrk = [
-        QuantumControlBase.initobjpropwrk(
-            obj,
-            tlist,
-            fw_prop_method[k];
-            initial_state=obj.initial_state,
-            info_msg="Initializing fw-prop of objective $k",
-            verbose=verbose,
-            kwargs...
-        ) for (k, obj) in enumerate(objectives)
+    fw_propagators = [
+        begin
+            verbose && @info "Initializing fw-prop of objective $k with method $(fw_prop_method[k])"
+            initprop(
+                obj.initial_state,
+                obj.generator,
+                tlist;
+                method=fw_prop_method[k],
+                kwargs...
+            )
+        end
+        for (k, obj) in enumerate(objectives)
     ]
-    bw_prop_wrk = [
-        QuantumControlBase.initobjpropwrk(
-            obj,
-            tlist,
-            bw_prop_method[k];
-            initial_state=obj.initial_state,
-            info_msg="Initializing bw-prop of objective $k",
-            verbose=verbose,
-            kwargs...
-        ) for (k, obj) in enumerate(objectives)
+    bw_propagators = [
+        begin
+            verbose && @info "Initializing bw-prop of objective $k with method $(bw_prop_method[k])"
+            initprop(
+                obj.initial_state,
+                obj.generator,
+                tlist;
+                method=bw_prop_method[k],
+                backward=true,
+                kwargs...
+            )
+        end
+        for (k, obj) in enumerate(adjoint_objectives)
     ]
     return KrotovWrk(
         objectives,
@@ -184,15 +176,12 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
         parametrization,
         pulse_options,
         result,
-        bw_states,
-        G,
         control_derivs,
-        vals_dict,
         fw_storage,
         fw_storage2,
         bw_storage,
-        fw_prop_wrk,
-        bw_prop_wrk,
+        fw_propagators,
+        bw_propagators,
         use_threads
     )
 end
