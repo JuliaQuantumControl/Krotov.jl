@@ -31,6 +31,19 @@ arguments used in the instantiation of `problem`.
   functional from a list `ϕ` of forward-propagated states and
   `problem.objectives`.
 
+# Recommended problem keyword arguments
+
+* `pulse_options`: A dictionary that maps every control (as obtained by
+  [`getcontrols`](@ref QuantumPropagators.Controls.getcontrols) from the
+  `problem.objectives`) to the following dict:
+
+  - `:lambda_a`:  The value for inverse Krotov step width λₐ
+  - `:update_shape`: A function `t -> S(t)` for the "update shape" that scaled
+    the Krotov pulse update.
+
+  If `pulse_options` is not given, ``λₐ = 1`` and ``S(t) ≡ 1`` are used for all
+  controls.
+
 # Optional problem keyword arguments
 
 The following keyword arguments are supported (with default values):

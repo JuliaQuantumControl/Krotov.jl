@@ -74,8 +74,17 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     control_derivs = [getcontrolderivs(obj.generator, controls) for obj in objectives]
     tlist = problem.tlist
     kwargs = Dict(problem.kwargs)  # creates a shallow copy; ok to modify
-    # TODO: check that kwargs has all the required parameters
-    pulse_options = problem.pulse_options
+    if :pulse_options ∉ keys(kwargs)
+        @warn "Using default pulse_options: (:lambda_a => 1.0, :update_shape => (t -> 1.0))"
+    end
+    default_pulse_options =
+        IdDict(c => Dict(:lambda_a => 1.0, :update_shape => (t -> 1.0)) for c ∈ controls)
+    pulse_options = get(kwargs, :pulse_options, default_pulse_options)
+    for c ∈ controls
+        if c ∉ keys(pulse_options)
+            error("pulse_options must be defined for all controls")
+        end
+    end
     update_shapes = [
         discretize_on_midpoints(pulse_options[control][:update_shape], tlist) for
         control in controls
