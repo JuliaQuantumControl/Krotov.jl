@@ -211,11 +211,12 @@ using QuantumControl
 
 H = hamiltonian(Ωre=Ωre_guess, Ωim=Ωim_guess);
 
-objectives = [MinimalObjective(; initial_state=Ψ, generator=H) for Ψ ∈ basis];
+objectives = [Objective(; initial_state=Ψ, generator=H) for Ψ ∈ basis];
 
-# Note the use of `MinimalObjective` which does not have a `target_state`. This
-# is because we will be optimizing for an arbitrary perfect entangler, not for
-# a specific quantum gate.
+# Note that we omit the `target_state` here. This is because we will be
+# optimizing for an arbitrary perfect entangler, not for a specific quantum
+# gate. Thus, there is no a-priori known target state to which the initial
+# state must evolve.
 
 # The optimization is steered by the perfect entanglers distance measure
 # $D_{PE}$, that is, the geometric distance of the quantum gate obtained from
