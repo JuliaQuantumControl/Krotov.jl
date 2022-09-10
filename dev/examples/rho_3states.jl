@@ -133,19 +133,19 @@ weights *= length(weights) / sum(weights); # manual normalization
 weights ./= [0.3, 1.0, 0.25]; # purities
 
 const objectives = [
-    WeightedObjective(
+    Objective(
         initial_state=reshape(ρ̂₁, :),
         generator=L,
         target_state=reshape(ρ̂₁_tgt, :),
         weight=weights[1]
     ),
-    WeightedObjective(
+    Objective(
         initial_state=reshape(ρ̂₂, :),
         generator=L,
         target_state=reshape(ρ̂₂_tgt, :),
         weight=weights[2]
     ),
-    WeightedObjective(
+    Objective(
         initial_state=reshape(ρ̂₃, :),
         generator=L,
         target_state=reshape(ρ̂₃_tgt, :),

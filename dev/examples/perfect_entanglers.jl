@@ -135,7 +135,7 @@ using QuantumControl
 
 H = hamiltonian(Ωre=Ωre_guess, Ωim=Ωim_guess);
 
-objectives = [MinimalObjective(; initial_state=Ψ, generator=H) for Ψ ∈ basis];
+objectives = [Objective(; initial_state=Ψ, generator=H) for Ψ ∈ basis];
 
 using QuantumControl.WeylChamber: D_PE, gate_concurrence, unitarity
 using QuantumControl.Functionals: gate_functional
