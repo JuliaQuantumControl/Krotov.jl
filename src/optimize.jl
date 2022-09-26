@@ -1,4 +1,4 @@
-using QuantumControlBase.QuantumPropagators.Controls: discretize, evalcontrols!
+using QuantumControlBase.QuantumPropagators.Controls: discretize
 using QuantumControlBase.QuantumPropagators:
     propstep!, reinitprop!, write_to_storage!, get_from_storage!
 using QuantumControlBase.Functionals: make_chi
@@ -172,7 +172,8 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     J_T_func = wrk.kwargs[:J_T]
     force_zygote = get(wrk.kwargs, :get_zygote, false)
     chi! = get(wrk.kwargs, :chi, make_chi(J_T_func, wrk.objectives; force_zygote))
-    N_T = length(wrk.result.tlist) - 1
+    tlist = wrk.result.tlist
+    N_T = length(tlist) - 1
     N = length(wrk.objectives)
     L = length(wrk.controls)
     X = wrk.bw_storage
@@ -206,7 +207,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
 
     ∫gₐdt .= 0.0
     for n = 1:N_T  # `n` is the index for the time interval
-        dt = wrk.result.tlist[n+1] - wrk.result.tlist[n]
+        dt = tlist[n+1] - tlist[n]
         for k = 1:N
             get_from_storage!(χ[k], X[k], n)
         end
@@ -220,7 +221,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
                 ϕₖ = wrk.fw_propagators[k].state
                 ∂Hₖ╱∂ϵₗ::Union{Function,Nothing} = wrk.control_derivs[k][l]
                 if !isnothing(∂Hₖ╱∂ϵₗ)
-                    μₗₖₙ = (∂Hₖ╱∂ϵₗ)(ϵₙ⁽ⁱ⁺¹⁾[l])
+                    μₗₖₙ = (∂Hₖ╱∂ϵₗ)(ϵₙ⁽ⁱ⁺¹⁾[l], tlist, n)
                     if wrk.is_parametrized[l]
                         ∂ϵₗ╱∂uₗ = (∂ϵₗ╱∂u)(uₗ(ϵₙ⁽ⁱ⁺¹⁾[l]))
                         Δuₙ′[l] += ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕₖ))
