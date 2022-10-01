@@ -64,8 +64,6 @@ Plots.default(
     background_color_legend = RGBA(1, 1, 1, 0.8),
 )
 #-
-#-
-default_optimization_savename_kwargs(ignores=["prop_method", "use_threads"], connector="#");
 
 #jl using Test; println("")
 
@@ -304,8 +302,11 @@ const problem = ControlProblem(
     end
 );
 #-
-opt_result, file =
-    @optimize_or_load(datadir(), problem, method = :krotov, prefix = "DissGateOCT")
+opt_result = @optimize_or_load(
+    datadir("DissGateOCT#J_T=J_T_re#iter_stop=3000#method=krotov.jld2"),
+    problem,
+    method = :krotov
+)
 #-
 opt_result
 

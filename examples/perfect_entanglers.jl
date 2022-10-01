@@ -340,8 +340,7 @@ problem = ControlProblem(
 # which can evaluate that derivative).
 
 
-opt_result, file =
-    @optimize_or_load(datadir(), problem; method=:Krotov, filename="PE_OCT.jld2");
+opt_result = @optimize_or_load(datadir("PE_OCT.jld2"), problem; method=:Krotov);
 #-
 opt_result
 
@@ -413,13 +412,12 @@ chi_C = make_gate_chi(J_T_C, objectives);
 
 # Running this, we again are able to find a perfect entangler.
 
-opt_result_direct, file = @optimize_or_load(
-    datadir(),
+opt_result_direct = @optimize_or_load(
+    datadir("PE_OCT_direct.jld2"),
     problem;
     method=:Krotov,
     J_T=gate_functional(J_T_C),
-    chi=chi_C,
-    filename="PE_OCT_direct.jld2"
+    chi=chi_C
 );
 #-
 opt_result_direct
