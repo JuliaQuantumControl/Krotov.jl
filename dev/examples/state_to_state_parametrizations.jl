@@ -87,11 +87,10 @@ problem = ControlProblem(
     end
 );
 
-opt_result_positive, file = @optimize_or_load(
-    datadir(),
+opt_result_positive = @optimize_or_load(
+    datadir("parametrization#opt_result_positive.jld2"),
     problem;
     method=:krotov,
-    filename="parametrization#opt_result_positive.jld2"
 );
 
 opt_result_positive
@@ -117,11 +116,10 @@ problem_tanhsq = ControlProblem(
     end
 );
 
-opt_result_tanhsq, file = @optimize_or_load(
-    datadir(),
+opt_result_tanhsq = @optimize_or_load(
+    datadir("parametrization#opt_result_tanhsq.jld2"),
     problem_tanhsq;
-    method=:krotov,
-    filename="parametrization#opt_result_tanhsq.jld2"
+    method=:krotov
 );
 
 opt_result_tanhsq
@@ -148,11 +146,10 @@ problem_logisticsq = ControlProblem(
     end
 );
 
-opt_result_logisticsq, file = @optimize_or_load(
-    datadir(),
+opt_result_logisticsq = @optimize_or_load(
+    datadir("parametrization#opt_result_logisticsq.jld2"),
     problem_logisticsq;
-    method=:krotov,
-    filename="parametrization#opt_result_logisticsq.jld2"
+    method=:krotov
 );
 
 @test minimum(opt_result_logisticsq.optimized_controls[1]) ≥ 0.0
@@ -177,11 +174,10 @@ problem_tanh = ControlProblem(
     end
 );
 
-opt_result_tanh, file = @optimize_or_load(
-    datadir(),
+opt_result_tanh = @optimize_or_load(
+    datadir("parametrization#opt_result_tanh.jld2"),
     problem_tanh;
-    method=:krotov,
-    filename="parametrization#opt_result_tanh.jld2"
+    method=:krotov
 );
 
 @test minimum(opt_result_tanh.optimized_controls[1]) > -0.5

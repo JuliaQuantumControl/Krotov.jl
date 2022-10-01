@@ -89,12 +89,10 @@ end;
 fig = plot_population(guess_dynamics[1, :], guess_dynamics[2, :], tlist)
 display(fig)
 
-opt_result, file = @optimize_or_load(
-    datadir(),
+opt_result = @optimize_or_load(
+    datadir("TLSOCT#J_T=J_T_ss#iter_stop=50#method=krotov.jld2"),
     problem,
     method = :krotov,
-    prefix = "TLSOCT",
-    savename_kwargs = Dict(:connector => "#")
 );
 
 opt_result

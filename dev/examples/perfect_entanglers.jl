@@ -200,8 +200,7 @@ problem = ControlProblem(
     use_threads=true,
 );
 
-opt_result, file =
-    @optimize_or_load(datadir(), problem; method=:Krotov, filename="PE_OCT.jld2");
+opt_result = @optimize_or_load(datadir("PE_OCT.jld2"), problem; method=:Krotov);
 
 opt_result
 
@@ -234,13 +233,12 @@ using QuantumControl.Functionals: make_gate_chi
 
 chi_C = make_gate_chi(J_T_C, objectives);
 
-opt_result_direct, file = @optimize_or_load(
-    datadir(),
+opt_result_direct = @optimize_or_load(
+    datadir("PE_OCT_direct.jld2"),
     problem;
     method=:Krotov,
     J_T=gate_functional(J_T_C),
     chi=chi_C,
-    filename="PE_OCT_direct.jld2"
 );
 
 opt_result_direct
