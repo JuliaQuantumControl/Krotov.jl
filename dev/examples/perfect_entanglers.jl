@@ -238,7 +238,7 @@ opt_result_direct = @optimize_or_load(
     problem;
     method=:Krotov,
     J_T=gate_functional(J_T_C),
-    chi=chi_C,
+    chi=chi_C
 );
 
 opt_result_direct

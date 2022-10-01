@@ -90,7 +90,7 @@ problem = ControlProblem(
 opt_result_positive = @optimize_or_load(
     datadir("parametrization#opt_result_positive.jld2"),
     problem;
-    method=:krotov,
+    method=:krotov
 );
 
 opt_result_positive
