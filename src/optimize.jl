@@ -34,7 +34,8 @@ arguments used in the instantiation of `problem`.
 # Recommended problem keyword arguments
 
 * `pulse_options`: A dictionary that maps every control (as obtained by
-  [`getcontrols`](@ref QuantumPropagators.Controls.getcontrols) from the
+  [`getcontrols`](@ref
+  QuantumControlBase.QuantumPropagators.Controls.getcontrols) from the
   `problem.objectives`) to the following dict:
 
   - `:lambda_a`:  The value for inverse Krotov step width λₐ
@@ -49,10 +50,9 @@ arguments used in the instantiation of `problem`.
 The following keyword arguments are supported (with default values):
 
 * `chi`: A function `chi!(χ, ϕ, objectives)` what receives a list `ϕ`
-  of the forward propagates state and must set ``-χₖ=∂J_T/∂⟨ϕₖ|``. If not
-  given, it will be automatically determined from `J_T` via [`make_chi`](@ref)
-* `force_zygote=false`: Whether to force the use of automatic differentiation
-  when calling [`make_chi`](@ref).
+  of the forward propagated states and must set ``|χₖ⟩ = -∂J_T/∂⟨ϕₖ|``. If not
+  given, it will be automatically determined from `J_T` via [`make_chi`](@ref
+  QuantumControlBase.Functionals.make_chi) with the default parameters.
 * `sigma=nothing`: Function that calculate the second-order contribution. If
   not given, the first-order Krotov method is used.
 * `iter_start=0`: the initial iteration number
@@ -170,8 +170,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
 
     χ = [propagator.state for propagator in wrk.bw_propagators]
     J_T_func = wrk.kwargs[:J_T]
-    force_zygote = get(wrk.kwargs, :get_zygote, false)
-    chi! = get(wrk.kwargs, :chi, make_chi(J_T_func, wrk.objectives; force_zygote))
+    chi! = get(wrk.kwargs, :chi, make_chi(J_T_func, wrk.objectives))
     tlist = wrk.result.tlist
     N_T = length(tlist) - 1
     N = length(wrk.objectives)
