@@ -1,5 +1,5 @@
 import QuantumControlBase
-using QuantumControlBase.QuantumPropagators.Controls:
+using QuantumControlBase.QuantumPropagators.Generators:
     getcontrols, getcontrolderivs, discretize_on_midpoints
 using QuantumControlBase.QuantumPropagators: init_storage, initprop
 using ConcreteStructs
@@ -49,7 +49,7 @@ using ConcreteStructs
     #################################
     # scratch objects, per objective:
 
-    control_derivs::Vector{Vector{Union{Function,Nothing}}}
+    control_derivs
 
     fw_storage # forward storage array (per objective)
 

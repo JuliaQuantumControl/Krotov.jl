@@ -1,4 +1,4 @@
-using QuantumControlBase.QuantumPropagators.Controls: discretize
+using QuantumControlBase.QuantumPropagators.Generators: discretize, Operator, evalcontrols
 using QuantumControlBase.QuantumPropagators:
     propstep!, reinitprop!, write_to_storage!, get_from_storage!
 using QuantumControlBase.Functionals: make_chi
@@ -35,7 +35,7 @@ arguments used in the instantiation of `problem`.
 
 * `pulse_options`: A dictionary that maps every control (as obtained by
   [`getcontrols`](@ref
-  QuantumControlBase.QuantumPropagators.Controls.getcontrols) from the
+  QuantumControlBase.QuantumPropagators.Generators.getcontrols) from the
   `problem.objectives`) to the following dict:
 
   - `:lambda_a`:  The value for inverse Krotov step width λₐ
@@ -166,6 +166,17 @@ function krotov_initial_fw_prop!(ϵ⁽⁰⁾, ϕₖⁱⁿ, k, wrk)
 end
 
 
+function _eval_mu(μ, wrk, ϵₙ, tlist, n)
+    # Implementation for non-linear control terms
+    vals_dict = IdDict(control => val for (control, val) ∈ zip(wrk.controls, ϵₙ))
+    evalcontrols(μ, vals_dict, tlist, n)
+end
+
+# Linear control terms (static derivatives)
+_eval_mu(μ::Operator, _...) = μ
+_eval_mu(μ::AbstractMatrix, _...) = μ
+
+
 function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
 
     χ = [propagator.state for propagator in wrk.bw_propagators]
@@ -218,9 +229,9 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
             uₗ = wrk.parametrization[l].u_of_epsilon
             for k = 1:N  # k is the index over the objectives
                 ϕₖ = wrk.fw_propagators[k].state
-                ∂Hₖ╱∂ϵₗ::Union{Function,Nothing} = wrk.control_derivs[k][l]
-                if !isnothing(∂Hₖ╱∂ϵₗ)
-                    μₗₖₙ = (∂Hₖ╱∂ϵₗ)(ϵₙ⁽ⁱ⁺¹⁾[l], tlist, n)
+                μₖₗ = wrk.control_derivs[k][l]
+                if !isnothing(μₖₗ)
+                    μₗₖₙ = _eval_mu(μₖₗ, wrk, ϵₙ⁽ⁱ⁺¹⁾, tlist, n)
                     if wrk.is_parametrized[l]
                         ∂ϵₗ╱∂uₗ = (∂ϵₗ╱∂u)(uₗ(ϵₙ⁽ⁱ⁺¹⁾[l]))
                         Δuₙ′[l] += ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕₖ))

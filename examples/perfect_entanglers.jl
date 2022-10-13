@@ -70,8 +70,10 @@ const N = 6  # levels per transmon
 
 using LinearAlgebra
 using SparseArrays
+using QuantumControl
 
-function hamiltonian(;
+
+function transmon_hamiltonian(;
     Ωre,
     Ωim,
     N=N,  # levels per transmon
@@ -111,9 +113,9 @@ function hamiltonian(;
     Ĥ₁im = (𝕚 / 2) * (b̂₁⁺ - b̂₁ + λ * b̂₂⁺ - λ * b̂₂)
 
     if ((N < 5) && (use_sparse ≢ true)) || use_sparse ≡ false
-        H = (Array(Ĥ₀), (Array(Ĥ₁re), Ωre), (Array(Ĥ₁im), Ωim))
+        H = hamiltonian(Array(Ĥ₀), (Array(Ĥ₁re), Ωre), (Array(Ĥ₁im), Ωim))
     else
-        H = (Ĥ₀, (Ĥ₁re, Ωre), (Ĥ₁im, Ωim))
+        H = hamiltonian(Ĥ₀, (Ĥ₁re, Ωre), (Ĥ₁im, Ωim))
     end
     return H
 
@@ -207,9 +209,7 @@ basis = [ket("00"), ket("01"), ket("10"), ket("11")];
 # We define the optimization with one objective for each of the four basis
 # states:
 
-using QuantumControl
-
-H = hamiltonian(Ωre=Ωre_guess, Ωim=Ωim_guess);
+H = transmon_hamiltonian(Ωre=Ωre_guess, Ωim=Ωim_guess);
 
 objectives = [Objective(; initial_state=Ψ, generator=H) for Ψ ∈ basis];
 
