@@ -32,7 +32,7 @@ display(fig)
 ϵ(t) = 0.2 * flattop(t, T=5, t_rise=0.3, func=:blackman);
 
 """Two-level-system Hamiltonian."""
-function hamiltonian(Ω=1.0, ϵ=ϵ)
+function tls_hamiltonian(Ω=1.0, ϵ=ϵ)
     σ̂_z = ComplexF64[
         1  0
         0 -1
@@ -43,11 +43,11 @@ function hamiltonian(Ω=1.0, ϵ=ϵ)
     ]
     Ĥ₀ = -0.5 * Ω * σ̂_z
     Ĥ₁ = σ̂_x
-    return (Ĥ₀, (Ĥ₁, ϵ))
+    return hamiltonian(Ĥ₀, (Ĥ₁, ϵ))
 end;
 
-H = hamiltonian();
-@test length(H) == 2
+H = tls_hamiltonian();
+@test length(H.ops) == 2
 
 tlist = collect(range(0, 5, length=500));
 
@@ -57,7 +57,7 @@ end
 
 plot_control(ϵ::T, tlist) where {T<:Function} = plot_control([ϵ(t) for t in tlist], tlist)
 
-plot_control(H[2][2], tlist)
+plot_control(ϵ, tlist)
 
 function ket(label)
     result = Dict("0" => Vector{ComplexF64}([1, 0]), "1" => Vector{ComplexF64}([0, 1]),)
