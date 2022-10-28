@@ -35,10 +35,6 @@ using ConcreteStructs
 
     lambda_vals::Vector{Float64}
 
-    is_parametrized::Vector{Bool}
-
-    parametrization
-
     # map of controls to options
     pulse_options
 
@@ -91,12 +87,6 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     ]
     lambda_vals =
         [convert(Float64, pulse_options[control][:lambda_a]) for control in controls]
-    is_parametrized =
-        [haskey(pulse_options[control], :parametrization) for control in controls]
-    parametrization = [
-        get(pulse_options[control], :parametrization, NoParametrization()) for
-        control in controls
-    ]
     if haskey(kwargs, :continue_from)
         @info "Continuing previous optimization"
         result = kwargs[:continue_from]
@@ -181,8 +171,6 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
         g_a_int,
         update_shapes,
         lambda_vals,
-        is_parametrized,
-        parametrization,
         pulse_options,
         result,
         control_derivs,

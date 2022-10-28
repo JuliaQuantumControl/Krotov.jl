@@ -223,21 +223,14 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         end
         ϵₙ⁽ⁱ⁺¹⁾ = [ϵ⁽ⁱ⁾[l][n] for l ∈ 1:L]  # ϵₙ⁽ⁱ⁺¹⁾ ≈ ϵₙ⁽ⁱ⁾ for non-linear controls
         # TODO: we could add a self-consistent loop here for ϵₙ⁽ⁱ⁺¹⁾
-        Δuₙ′ = zeros(L)  # "′" indicates update without (Sₗₙ/λₐ) factor
+        Δuₙ = zeros(L)  # Δu is Δϵ without (Sₗₙ/λₐ) factor
         for l = 1:L  # `l` is the index for the different controls
-            ∂ϵₗ╱∂u::Function = wrk.parametrization[l].de_du_derivative
-            uₗ = wrk.parametrization[l].u_of_epsilon
             for k = 1:N  # k is the index over the objectives
                 ϕₖ = wrk.fw_propagators[k].state
                 μₖₗ = wrk.control_derivs[k][l]
                 if !isnothing(μₖₗ)
                     μₗₖₙ = _eval_mu(μₖₗ, wrk, ϵₙ⁽ⁱ⁺¹⁾, tlist, n)
-                    if wrk.is_parametrized[l]
-                        ∂ϵₗ╱∂uₗ = (∂ϵₗ╱∂u)(uₗ(ϵₙ⁽ⁱ⁺¹⁾[l]))
-                        Δuₙ′[l] += ∂ϵₗ╱∂uₗ * Im(dot(χ[k], μₗₖₙ, ϕₖ))
-                    else
-                        Δuₙ′[l] += Im(dot(χ[k], μₗₖₙ, ϕₖ))
-                    end
+                    Δuₙ[l] += Im(dot(χ[k], μₗₖₙ, ϕₖ))
                 end
             end
         end
@@ -246,16 +239,9 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
             Sₗ = wrk.update_shapes[l]
             λₐ = wrk.lambda_vals[l]
             αₗ = (Sₗ[n] / λₐ)  # Krotov step size
-            Δuₗₙ = αₗ * Δuₙ′[l]
-            if wrk.is_parametrized[l]
-                uₗ = wrk.parametrization[l].u_of_epsilon
-                ϵₗ = wrk.parametrization[l].epsilon_of_u
-                ϵ⁽ⁱ⁺¹⁾[l][n] = ϵₗ(uₗ(ϵ⁽ⁱ⁾[l][n]) + Δuₗₙ)
-            else
-                Δϵₗₙ = Δuₗₙ
-                ϵ⁽ⁱ⁺¹⁾[l][n] = ϵ⁽ⁱ⁾[l][n] + Δϵₗₙ
-            end
-            (∫gₐdt)[l] += αₗ * abs(Δuₙ′[l])^2 * dt
+            Δϵₗₙ = αₗ * Δuₙ[l]
+            ϵ⁽ⁱ⁺¹⁾[l][n] = ϵ⁽ⁱ⁾[l][n] + Δϵₗₙ
+            (∫gₐdt)[l] += αₗ * abs(Δuₙ[l])^2 * dt
         end
         # TODO: end of self-consistent loop
         @threadsif wrk.use_threads for k = 1:N
