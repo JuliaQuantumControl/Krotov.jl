@@ -3,7 +3,9 @@ using DrWatson
 
 using QuantumControl
 using QuantumControl.Shapes: flattop
-using Krotov:
+using QuantumControl.Generators
+using QuantumControl.Amplitudes: ParametrizedAmplitude
+using QuantumControl.PulseParametrizations:
     SquareParametrization,
     TanhParametrization,
     TanhSqParametrization,
@@ -32,7 +34,7 @@ display(fig)
 ϵ(t) = 0.2 * flattop(t, T=5, t_rise=0.3, func=:blackman);
 
 """Two-level-system Hamiltonian."""
-function tls_hamiltonian(Ω=1.0, ϵ=ϵ)
+function tls_hamiltonian(; Ω=1.0, ampl=ϵ)
     σ̂_z = ComplexF64[
         1  0
         0 -1
@@ -43,7 +45,7 @@ function tls_hamiltonian(Ω=1.0, ϵ=ϵ)
     ]
     Ĥ₀ = -0.5 * Ω * σ̂_z
     Ĥ₁ = σ̂_x
-    return hamiltonian(Ĥ₀, (Ĥ₁, ϵ))
+    return hamiltonian(Ĥ₀, (Ĥ₁, ampl))
 end;
 
 H = tls_hamiltonian();
@@ -51,13 +53,11 @@ H = tls_hamiltonian();
 
 tlist = collect(range(0, 5, length=500));
 
-function plot_control(pulse::Vector, tlist)
-    plot(tlist, pulse, xlabel="time", ylabel="amplitude", legend=false)
+function plot_amplitude(ampl, tlist)
+    plot(tlist, discretize(ampl, tlist), xlabel="time", ylabel="amplitude", legend=false)
 end
 
-plot_control(ϵ::T, tlist) where {T<:Function} = plot_control([ϵ(t) for t in tlist], tlist)
-
-plot_control(ϵ, tlist)
+plot_amplitude(ϵ, tlist)
 
 function ket(label)
     result = Dict("0" => Vector{ComplexF64}([1, 0]), "1" => Vector{ComplexF64}([0, 1]),)
@@ -70,13 +70,34 @@ objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
 
 @test length(objectives) == 1
 
+a = ParametrizedAmplitude(
+    ϵ,
+    tlist;
+    parametrization=SquareParametrization(),
+    parameterize=true
+)
+
+function plot_amplitude(ampl::ParametrizedAmplitude, tlist)
+    plot(
+        tlist,
+        discretize(Array(ampl), tlist),
+        xlabel="time",
+        ylabel="amplitude",
+        legend=false
+    )
+end
+
+plot_amplitude(a, tlist)
+
+H = tls_hamiltonian(ampl=a)
+objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
+
 problem = ControlProblem(
     objectives=objectives,
     pulse_options=IdDict(
-        ϵ => Dict(
+        a.control => Dict(
             :lambda_a => 5,
             :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
-            :parametrization => SquareParametrization(),
         )
     ),
     tlist=tlist,
@@ -95,17 +116,26 @@ opt_result_positive = @optimize_or_load(
 
 opt_result_positive
 
-@test minimum(opt_result_positive.optimized_controls[1]) ≥ 0.0
-@test minimum(opt_result_positive.optimized_controls[1]) < 1e-16
-@test maximum(opt_result_positive.optimized_controls[1]) > 0.0
+amplitude = Array(substitute_controls(a, IdDict(a.control => opt_result_positive.optimized_controls[1])))
+@test minimum(amplitude) ≥ 0.0
+@test minimum(amplitude) < 1e-16
+@test maximum(amplitude) > 0.0
+
+a = ParametrizedAmplitude(
+    ϵ,
+    tlist;
+    parametrization=TanhSqParametrization(3),
+    parameterize=true
+)
+H = tls_hamiltonian(ampl=a)
+objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
 
 problem_tanhsq = ControlProblem(
     objectives=objectives,
     pulse_options=IdDict(
-        ϵ => Dict(
+        a.control => Dict(
             :lambda_a => 10,
             :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
-            :parametrization => TanhSqParametrization(3),
         )
     ),
     tlist=tlist,
@@ -124,18 +154,27 @@ opt_result_tanhsq = @optimize_or_load(
 
 opt_result_tanhsq
 
-@test minimum(opt_result_tanhsq.optimized_controls[1]) ≥ 0.0
-@test minimum(opt_result_tanhsq.optimized_controls[1]) < 1e-16
-@test maximum(opt_result_tanhsq.optimized_controls[1]) > 0.0
+amplitude = Array(substitute_controls(a, IdDict(a.control => opt_result_tanhsq.optimized_controls[1])))
+@test minimum(amplitude) ≥ 0.0
+@test minimum(amplitude) < 1e-16
+@test maximum(amplitude) > 0.0
 @test maximum(opt_result_tanhsq.optimized_controls[1]) < 3.0
+
+a = ParametrizedAmplitude(
+    ϵ,
+    tlist;
+    parametrization=LogisticSqParametrization(3, k=1.0),
+    parameterize=true
+)
+H = tls_hamiltonian(ampl=a)
+objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
 
 problem_logisticsq = ControlProblem(
     objectives=objectives,
     pulse_options=IdDict(
-        ϵ => Dict(
+        a.control => Dict(
             :lambda_a => 1,
             :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
-            :parametrization => LogisticSqParametrization(3, k=1.0),
         )
     ),
     tlist=tlist,
@@ -152,18 +191,27 @@ opt_result_logisticsq = @optimize_or_load(
     method=:krotov
 );
 
-@test minimum(opt_result_logisticsq.optimized_controls[1]) ≥ 0.0
-@test minimum(opt_result_logisticsq.optimized_controls[1]) < 1e-16
-@test maximum(opt_result_logisticsq.optimized_controls[1]) > 0.0
-@test maximum(opt_result_logisticsq.optimized_controls[1]) < 3.0
+amplitude = Array(substitute_controls(a, IdDict(a.control => opt_result_logisticsq.optimized_controls[1])))
+@test minimum(amplitude) ≥ 0.0
+@test minimum(amplitude) < 1e-16
+@test maximum(amplitude) > 0.0
+@test maximum(amplitude) < 3.0
+
+a = ParametrizedAmplitude(
+    ϵ,
+    tlist;
+    parametrization=TanhParametrization(-0.5, 0.5),
+    parameterize=true
+)
+H = tls_hamiltonian(ampl=a)
+objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
 
 problem_tanh = ControlProblem(
     objectives=objectives,
     pulse_options=IdDict(
-        ϵ => Dict(
+        a.control => Dict(
             :lambda_a => 1,
             :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
-            :parametrization => TanhParametrization(-0.5, 0.5),
         )
     ),
     tlist=tlist,
@@ -180,8 +228,9 @@ opt_result_tanh = @optimize_or_load(
     method=:krotov
 );
 
-@test minimum(opt_result_tanh.optimized_controls[1]) > -0.5
-@test maximum(opt_result_tanh.optimized_controls[1]) < 0.5
+amplitude = Array(substitute_controls(a, IdDict(a.control => opt_result_tanh.optimized_controls[1])))
+@test minimum(amplitude) > -0.5
+@test maximum(amplitude) < 0.5
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 
