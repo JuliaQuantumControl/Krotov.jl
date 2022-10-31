@@ -1,6 +1,7 @@
 import QuantumControlBase
-using QuantumControlBase.QuantumPropagators.Generators:
-    getcontrols, getcontrolderivs, discretize_on_midpoints
+using QuantumControlBase: getcontrolderivs
+using QuantumControlBase.QuantumPropagators.Controls:
+    getcontrols, discretize_on_midpoints
 using QuantumControlBase.QuantumPropagators: init_storage, initprop
 using ConcreteStructs
 

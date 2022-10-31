@@ -1,4 +1,5 @@
-using QuantumControlBase.QuantumPropagators.Generators: discretize, Operator, evalcontrols
+using QuantumControlBase.QuantumPropagators.Generators:  Operator
+using QuantumControlBase.QuantumPropagators.Controls: discretize, evalcontrols
 using QuantumControlBase.QuantumPropagators:
     propstep!, reinitprop!, write_to_storage!, get_from_storage!
 using QuantumControlBase.Functionals: make_chi
@@ -35,7 +36,7 @@ arguments used in the instantiation of `problem`.
 
 * `pulse_options`: A dictionary that maps every control (as obtained by
   [`getcontrols`](@ref
-  QuantumControlBase.QuantumPropagators.Generators.getcontrols) from the
+  QuantumControlBase.QuantumPropagators.Controls.getcontrols) from the
   `problem.objectives`) to the following dict:
 
   - `:lambda_a`:  The value for inverse Krotov step width λₐ
