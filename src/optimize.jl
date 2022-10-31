@@ -1,4 +1,4 @@
-using QuantumControlBase.QuantumPropagators.Generators:  Operator
+using QuantumControlBase.QuantumPropagators.Generators: Operator
 using QuantumControlBase.QuantumPropagators.Controls: discretize, evalcontrols
 using QuantumControlBase.QuantumPropagators:
     propstep!, reinitprop!, write_to_storage!, get_from_storage!
