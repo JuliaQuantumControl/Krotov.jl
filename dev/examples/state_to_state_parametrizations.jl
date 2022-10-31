@@ -4,13 +4,14 @@ using DrWatson
 using QuantumControl
 using QuantumControl.Shapes: flattop
 using QuantumControl.Generators
-using QuantumControl.Amplitudes: ParametrizedAmplitude
+using QuantumControl.Controls
 using QuantumControl.PulseParametrizations:
     SquareParametrization,
     TanhParametrization,
     TanhSqParametrization,
     LogisticParametrization,
-    LogisticSqParametrization
+    LogisticSqParametrization,
+    ParametrizedAmplitude
 using LinearAlgebra
 
 using Test; println("")
