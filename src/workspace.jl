@@ -1,7 +1,7 @@
 import QuantumControlBase
-using QuantumControlBase: getcontrolderivs
-using QuantumControlBase.QuantumPropagators.Controls: getcontrols, discretize_on_midpoints
-using QuantumControlBase.QuantumPropagators: init_storage, initprop
+using QuantumControlBase: get_control_derivs
+using QuantumControlBase.QuantumPropagators.Controls: get_controls, discretize_on_midpoints
+using QuantumControlBase.QuantumPropagators: init_storage, init_prop
 using ConcreteStructs
 
 # Krotov workspace (for internal use)
@@ -66,8 +66,8 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     use_threads = get(problem.kwargs, :use_threads, false)
     objectives = [obj for obj in problem.objectives]
     adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
-    controls = getcontrols(objectives)
-    control_derivs = [getcontrolderivs(obj.generator, controls) for obj in objectives]
+    controls = get_controls(objectives)
+    control_derivs = [get_control_derivs(obj.generator, controls) for obj in objectives]
     tlist = problem.tlist
     kwargs = Dict(problem.kwargs)  # creates a shallow copy; ok to modify
     if :pulse_options ∉ keys(kwargs)
@@ -138,7 +138,7 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
         begin
             verbose &&
                 @info "Initializing fw-prop of objective $k with method $(fw_prop_method[k])"
-            initprop(
+            init_prop(
                 obj.initial_state,
                 obj.generator,
                 tlist;
@@ -151,7 +151,7 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
         begin
             verbose &&
                 @info "Initializing bw-prop of objective $k with method $(bw_prop_method[k])"
-            initprop(
+            init_prop(
                 obj.initial_state,
                 obj.generator,
                 tlist;

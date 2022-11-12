@@ -1,7 +1,7 @@
 using QuantumControlBase.QuantumPropagators.Generators: Operator
 using QuantumControlBase.QuantumPropagators.Controls: discretize, evalcontrols
 using QuantumControlBase.QuantumPropagators:
-    propstep!, reinitprop!, write_to_storage!, get_from_storage!
+    prop_step!, reinit_prop!, write_to_storage!, get_from_storage!
 using QuantumControlBase.Functionals: make_chi
 using QuantumControlBase.ConditionalThreads: @threadsif
 using LinearAlgebra
@@ -35,8 +35,8 @@ arguments used in the instantiation of `problem`.
 # Recommended problem keyword arguments
 
 * `pulse_options`: A dictionary that maps every control (as obtained by
-  [`getcontrols`](@ref
-  QuantumControlBase.QuantumPropagators.Controls.getcontrols) from the
+  [`get_controls`](@ref
+  QuantumControlBase.QuantumPropagators.Controls.get_controls) from the
   `problem.objectives`) to the following dict:
 
   - `:lambda_a`:  The value for inverse Krotov step width λₐ
@@ -154,16 +154,16 @@ function krotov_initial_fw_prop!(ϵ⁽⁰⁾, ϕₖⁱⁿ, k, wrk)
     for propagator in wrk.fw_propagators
         propagator.parameters = IdDict(zip(wrk.controls, ϵ⁽⁰⁾))
     end
-    reinitprop!(wrk.fw_propagators[k], ϕₖⁱⁿ; transform_control_ranges)
+    reinit_prop!(wrk.fw_propagators[k], ϕₖⁱⁿ; transform_control_ranges)
 
     Φ₀ = wrk.fw_storage[k]
     (Φ₀ !== nothing) && write_to_storage!(Φ₀, 1, ϕₖⁱⁿ)
     N_T = length(wrk.result.tlist) - 1
     for n = 1:N_T
-        ϕₖ = propstep!(wrk.fw_propagators[k])
+        ϕₖ = prop_step!(wrk.fw_propagators[k])
         (Φ₀ !== nothing) && write_to_storage!(Φ₀, n + 1, ϕₖ)
     end
-    # TODO: allow a custom propstep! routine
+    # TODO: allow a custom prop_step! routine
 end
 
 
@@ -200,10 +200,10 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     chi!(χ, ϕ, wrk.objectives)
     @threadsif wrk.use_threads for k = 1:N
         wrk.bw_propagators[k].parameters = guess_parameters
-        reinitprop!(wrk.bw_propagators[k], χ[k]; transform_control_ranges)
+        reinit_prop!(wrk.bw_propagators[k], χ[k]; transform_control_ranges)
         write_to_storage!(X[k], N_T + 1, χ[k])
         for n = N_T:-1:1
-            local χₖ = propstep!(wrk.bw_propagators[k])
+            local χₖ = prop_step!(wrk.bw_propagators[k])
             write_to_storage!(X[k], n, χₖ)
         end
     end
@@ -213,7 +213,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     @threadsif wrk.use_threads for k = 1:N
         wrk.fw_propagators[k].parameters = updated_parameters
         local ϕₖ = wrk.objectives[k].initial_state
-        reinitprop!(wrk.fw_propagators[k], ϕₖ; transform_control_ranges)
+        reinit_prop!(wrk.fw_propagators[k], ϕₖ; transform_control_ranges)
     end
 
     ∫gₐdt .= 0.0
@@ -246,7 +246,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         end
         # TODO: end of self-consistent loop
         @threadsif wrk.use_threads for k = 1:N
-            local ϕₖ = propstep!(wrk.fw_propagators[k])
+            local ϕₖ = prop_step!(wrk.fw_propagators[k])
             write_to_storage!(Φ[k], n, ϕₖ)
         end
         # TODO: update sigma
