@@ -357,14 +357,15 @@ plot_complex_pulse(tlist, Ω_opt)
 # We then propagate the optimized control field to analyze the resulting
 # quantum gate:
 
+using QuantumControl.Controls: substitute, get_controls
+
 opt_states = propagate_objectives(
-    objectives,
+    substitute(
+        objectives,
+        IdDict(zip(get_controls(objectives), opt_result.optimized_controls))
+    ),
     tlist;
-    use_threads=true,
-    controls_map=IdDict(
-        Ωre_guess => opt_result.optimized_controls[1],
-        Ωim_guess => opt_result.optimized_controls[2]
-    )
+    use_threads=true
 );
 
 U_opt = [basis[i] ⋅ opt_states[j] for i = 1:4, j = 1:4];
@@ -423,13 +424,12 @@ opt_result_direct = @optimize_or_load(
 opt_result_direct
 #-
 opt_states_direct = propagate_objectives(
-    objectives,
+    substitute(
+        objectives,
+        IdDict(zip(get_controls(objectives), opt_result_direct.optimized_controls))
+    ),
     tlist;
-    use_threads=true,
-    controls_map=IdDict(
-        Ωre_guess => opt_result_direct.optimized_controls[1],
-        Ωim_guess => opt_result_direct.optimized_controls[2]
-    )
+    use_threads=true
 );
 
 U_opt_direct = [basis[i] ⋅ opt_states_direct[j] for i = 1:4, j = 1:4];

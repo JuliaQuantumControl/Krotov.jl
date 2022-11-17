@@ -1,5 +1,5 @@
 using QuantumControlBase.QuantumPropagators.Generators: Operator
-using QuantumControlBase.QuantumPropagators.Controls: discretize, evalcontrols
+using QuantumControlBase.QuantumPropagators.Controls: discretize, evaluate
 using QuantumControlBase.QuantumPropagators:
     prop_step!, reinit_prop!, write_to_storage!, get_from_storage!
 using QuantumControlBase.Functionals: make_chi
@@ -170,7 +170,7 @@ end
 function _eval_mu(μ, wrk, ϵₙ, tlist, n)
     # Implementation for non-linear control terms
     vals_dict = IdDict(control => val for (control, val) ∈ zip(wrk.controls, ϵₙ))
-    evalcontrols(μ, vals_dict, tlist, n)
+    evaluate(μ, tlist, n; vals_dict)
 end
 
 # Linear control terms (static derivatives)
