@@ -2,6 +2,7 @@ using DrWatson
 @quickactivate "KrotovTests"
 
 using QuantumControl
+using QuantumPropagators.Controls: substitute
 using LinearAlgebra
 
 using Plots
@@ -103,9 +104,8 @@ fig = plot_control(opt_result.optimized_controls[1], tlist)
 display(fig)
 
 opt_dynamics = propagate_objective(
-    objectives[1],
+    substitute(objectives[1], IdDict(ϵ => opt_result.optimized_controls[1])),
     problem.tlist;
-    controls_map=IdDict(ϵ => opt_result.optimized_controls[1]),
     storage=true,
     observables=(Ψ -> abs.(Ψ) .^ 2,)
 )

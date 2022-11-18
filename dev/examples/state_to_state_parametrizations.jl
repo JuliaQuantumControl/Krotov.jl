@@ -90,11 +90,8 @@ end
 
 plot_amplitude(a, tlist)
 
-H = tls_hamiltonian(ampl=a)
-objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
-
 problem = ControlProblem(
-    objectives=objectives,
+    objectives=substitute(objectives, IdDict(ϵ => a)),
     pulse_options=IdDict(
         a.control => Dict(
             :lambda_a => 5,
@@ -117,7 +114,7 @@ opt_result_positive = @optimize_or_load(
 
 opt_result_positive
 
-amplitude = Array(substitute_controls(a, IdDict(a.control => opt_result_positive.optimized_controls[1])))
+amplitude = Array(substitute(a, IdDict(a.control => opt_result_positive.optimized_controls[1])))
 @test minimum(amplitude) ≥ 0.0
 @test minimum(amplitude) < 1e-16
 @test maximum(amplitude) > 0.0
@@ -128,11 +125,9 @@ a = ParametrizedAmplitude(
     parametrization=TanhSqParametrization(3),
     parameterize=true
 )
-H = tls_hamiltonian(ampl=a)
-objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
 
 problem_tanhsq = ControlProblem(
-    objectives=objectives,
+    objectives=substitute(objectives, IdDict(ϵ => a)),
     pulse_options=IdDict(
         a.control => Dict(
             :lambda_a => 10,
@@ -155,7 +150,7 @@ opt_result_tanhsq = @optimize_or_load(
 
 opt_result_tanhsq
 
-amplitude = Array(substitute_controls(a, IdDict(a.control => opt_result_tanhsq.optimized_controls[1])))
+amplitude = Array(substitute(a, IdDict(a.control => opt_result_tanhsq.optimized_controls[1])))
 @test minimum(amplitude) ≥ 0.0
 @test minimum(amplitude) < 1e-16
 @test maximum(amplitude) > 0.0
@@ -167,11 +162,9 @@ a = ParametrizedAmplitude(
     parametrization=LogisticSqParametrization(3, k=1.0),
     parameterize=true
 )
-H = tls_hamiltonian(ampl=a)
-objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
 
 problem_logisticsq = ControlProblem(
-    objectives=objectives,
+    objectives=substitute(objectives, IdDict(ϵ => a)),
     pulse_options=IdDict(
         a.control => Dict(
             :lambda_a => 1,
@@ -192,7 +185,7 @@ opt_result_logisticsq = @optimize_or_load(
     method=:krotov
 );
 
-amplitude = Array(substitute_controls(a, IdDict(a.control => opt_result_logisticsq.optimized_controls[1])))
+amplitude = Array(substitute(a, IdDict(a.control => opt_result_logisticsq.optimized_controls[1])))
 @test minimum(amplitude) ≥ 0.0
 @test minimum(amplitude) < 1e-16
 @test maximum(amplitude) > 0.0
@@ -204,11 +197,9 @@ a = ParametrizedAmplitude(
     parametrization=TanhParametrization(-0.5, 0.5),
     parameterize=true
 )
-H = tls_hamiltonian(ampl=a)
-objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
 
 problem_tanh = ControlProblem(
-    objectives=objectives,
+    objectives=substitute(objectives, IdDict(ϵ => a)),
     pulse_options=IdDict(
         a.control => Dict(
             :lambda_a => 1,
@@ -229,7 +220,7 @@ opt_result_tanh = @optimize_or_load(
     method=:krotov
 );
 
-amplitude = Array(substitute_controls(a, IdDict(a.control => opt_result_tanh.optimized_controls[1])))
+amplitude = Array(substitute(a, IdDict(a.control => opt_result_tanh.optimized_controls[1])))
 @test minimum(amplitude) > -0.5
 @test maximum(amplitude) < 0.5
 
