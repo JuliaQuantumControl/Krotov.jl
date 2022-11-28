@@ -92,12 +92,8 @@ plot_amplitude(a, tlist)
 
 problem = ControlProblem(
     objectives=substitute(objectives, IdDict(ϵ => a)),
-    pulse_options=IdDict(
-        a.control => Dict(
-            :lambda_a => 5,
-            :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
-        )
-    ),
+    lambda_a=5,
+    update_shape=(t -> flattop(t, T=5, t_rise=0.3, func=:blackman)),
     tlist=tlist,
     iter_stop=50,
     J_T=QuantumControl.Functionals.J_T_ss,
@@ -128,12 +124,8 @@ a = ParametrizedAmplitude(
 
 problem_tanhsq = ControlProblem(
     objectives=substitute(objectives, IdDict(ϵ => a)),
-    pulse_options=IdDict(
-        a.control => Dict(
-            :lambda_a => 10,
-            :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
-        )
-    ),
+    lambda_a=10,
+    update_shape=(t -> flattop(t, T=5, t_rise=0.3, func=:blackman)),
     tlist=tlist,
     iter_stop=50,
     J_T=QuantumControl.Functionals.J_T_ss,
@@ -165,12 +157,8 @@ a = ParametrizedAmplitude(
 
 problem_logisticsq = ControlProblem(
     objectives=substitute(objectives, IdDict(ϵ => a)),
-    pulse_options=IdDict(
-        a.control => Dict(
-            :lambda_a => 1,
-            :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
-        )
-    ),
+    lambda_a=1,
+    update_shape=(t -> flattop(t, T=5, t_rise=0.3, func=:blackman)),
     tlist=tlist,
     iter_stop=50,
     J_T=QuantumControl.Functionals.J_T_ss,
@@ -200,12 +188,8 @@ a = ParametrizedAmplitude(
 
 problem_tanh = ControlProblem(
     objectives=substitute(objectives, IdDict(ϵ => a)),
-    pulse_options=IdDict(
-        a.control => Dict(
-            :lambda_a => 1,
-            :update_shape => t -> flattop(t, T=5, t_rise=0.3, func=:blackman),
-        )
-    ),
+    lambda_a=1,
+    update_shape=(t -> flattop(t, T=5, t_rise=0.3, func=:blackman)),
     tlist=tlist,
     iter_stop=50,
     J_T=QuantumControl.Functionals.J_T_ss,

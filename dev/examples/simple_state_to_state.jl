@@ -60,13 +60,8 @@ objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]
 
 problem = ControlProblem(
     objectives=objectives,
-    pulse_options=IdDict(
-        ϵ => Dict(
-            :lambda_a => 5,
-            :update_shape =>
-                t -> QuantumControl.Shapes.flattop(t, T=5, t_rise=0.3, func=:blackman),
-        )
-    ),
+    lambda_a=5,
+    update_shape=(t -> QuantumControl.Shapes.flattop(t, T=5, t_rise=0.3, func=:blackman)),
     tlist=tlist,
     iter_stop=50,
     J_T=QuantumControl.Functionals.J_T_ss,
