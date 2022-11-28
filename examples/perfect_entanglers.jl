@@ -302,16 +302,8 @@ J_T_PE(guess_states, objectives)
 
 problem = ControlProblem(
     objectives=objectives,
-    pulse_options=IdDict(
-        Ωre_guess => Dict(
-            :lambda_a => 10.0,
-            :update_shape => t -> flattop(t, T=400ns, t_rise=15ns, func=:blackman),
-        ),
-        Ωim_guess => Dict(
-            :lambda_a => 10.0,
-            :update_shape => t -> flattop(t, T=400ns, t_rise=15ns, func=:blackman),
-        ),
-    ),
+    lambda_a=10.0,
+    update_shape=(t -> flattop(t, T=400ns, t_rise=15ns, func=:blackman)),
     tlist=tlist,
     iter_stop=100,
     J_T=J_T_PE,

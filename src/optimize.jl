@@ -34,21 +34,28 @@ arguments used in the instantiation of `problem`.
 
 # Recommended problem keyword arguments
 
+* `lambda_a=1.0`: The inverse Krotov step width λ_a for every pulse.
+* `update_shape=(t->1.0)`: A function `S(t)` for the "update shape" that scales
+  the update for every pulse
+
+If different controls require different `lambda_a` or `update_shape`, a dict
+`pulse_options` must be given instead of a global `lambda_a` and
+`update_shape`, see below.
+
+# Optional problem keyword arguments
+
+The following keyword arguments are supported (with default values):
+
 * `pulse_options`: A dictionary that maps every control (as obtained by
   [`get_controls`](@ref
   QuantumControlBase.QuantumPropagators.Controls.get_controls) from the
   `problem.objectives`) to the following dict:
 
   - `:lambda_a`:  The value for inverse Krotov step width λₐ
-  - `:update_shape`: A function `t -> S(t)` for the "update shape" that scaled
+  - `:update_shape`: A function `S(t)` for the "update shape" that scales
     the Krotov pulse update.
 
-  If `pulse_options` is not given, ``λₐ = 1`` and ``S(t) ≡ 1`` are used for all
-  controls.
-
-# Optional problem keyword arguments
-
-The following keyword arguments are supported (with default values):
+  This overrides the global `lambda_a` and `update_shape` arguments.
 
 * `chi`: A function `chi!(χ, ϕ, objectives)` what receives a list `ϕ`
   of the forward propagated states and must set ``|χₖ⟩ = -∂J_T/∂⟨ϕₖ|``. If not

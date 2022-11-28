@@ -282,18 +282,8 @@ const problem = ControlProblem(
     objectives=objectives,
     prop_method=:newton,
     use_threads=true,
-    pulse_options=IdDict(
-        Ωre => Dict(
-            :lambda_a => 1.0,
-            :update_shape =>
-                t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
-        ),
-        Ωim => Dict(
-            :lambda_a => 1.0,
-            :update_shape =>
-                t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman),
-        ),
-    ),
+    lambda_a=1.0,
+    update_shape=(t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman)),
     tlist=tlist,
     iter_stop=3000,
     J_T=QuantumControl.Functionals.J_T_re,

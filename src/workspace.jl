@@ -70,11 +70,24 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     control_derivs = [get_control_derivs(obj.generator, controls) for obj in objectives]
     tlist = problem.tlist
     kwargs = Dict(problem.kwargs)  # creates a shallow copy; ok to modify
-    if :pulse_options ∉ keys(kwargs)
-        @warn "Using default pulse_options: (:lambda_a => 1.0, :update_shape => (t -> 1.0))"
+    default_update_shape = get(problem.kwargs, :update_shape, t -> 1.0)
+    default_lambda_a = convert(Float64, get(problem.kwargs, :lambda_a, 1.0))
+    default_pulse_options = IdDict(
+        c => Dict(:lambda_a => default_lambda_a, :update_shape => default_update_shape)
+        for c ∈ controls
+    )
+    if :pulse_options in keys(kwargs)
+        if :update_shape in keys(kwargs)
+            @warn("`update_shape` is ignored due to given `pulse_options`")
+        end
+        if :lambda_a in keys(kwargs)
+            @warn("`lambda_a=$lambda_a` is ignored due to given `pulse_options`")
+        end
+    else
+        if (:update_shape ∉ keys(kwargs)) && (:lambda_a ∉ keys(kwargs))
+            @warn "Using default pulse_options: (:lambda_a => 1.0, :update_shape => (t -> 1.0))"
+        end
     end
-    default_pulse_options =
-        IdDict(c => Dict(:lambda_a => 1.0, :update_shape => (t -> 1.0)) for c ∈ controls)
     pulse_options = get(kwargs, :pulse_options, default_pulse_options)
     for c ∈ controls
         if c ∉ keys(pulse_options)
