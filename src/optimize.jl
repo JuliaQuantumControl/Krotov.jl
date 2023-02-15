@@ -1,27 +1,22 @@
 using QuantumControlBase.QuantumPropagators.Generators: Operator
 using QuantumControlBase.QuantumPropagators.Controls: discretize, evaluate
-using QuantumControlBase.QuantumPropagators:
-    prop_step!, reinit_prop!, write_to_storage!, get_from_storage!
-using QuantumControlBase.Functionals: make_chi
-using QuantumControlBase.ConditionalThreads: @threadsif
+using QuantumControlBase.QuantumPropagators: prop_step!, reinit_prop!
+using QuantumControlBase.QuantumPropagators.Storage: write_to_storage!, get_from_storage!
+using QuantumControlBase: make_chi
+using QuantumControlBase: @threadsif
 using LinearAlgebra
 using Printf
 
+import QuantumControlBase: optimize
 
-"""Optimize a control problem using Krotov's method.
-
+@doc raw"""
 ```julia
-result = optimize_krotov(problem)
+result = optimize(problem; method=:krotov, kwargs...)
 ```
 
 optimizes the given
-control [`problem`](@ref QuantumControlBase.ControlProblem),
-returning a [`KrotovResult`](@ref).
-
-!!! note
-
-    It is recommended to call [`optimize`](@ref QuantumControlBase.optimize)
-    with `method=:krotov` instead of calling `optimize_krotov` directly.
+control [`problem`](@ref QuantumControlBase.ControlProblem) using Krotov's
+method, returning a [`KrotovResult`](@ref).
 
 Keyword arguments that control the optimization are taken from the keyword
 arguments used in the instantiation of `problem`.
@@ -60,7 +55,7 @@ The following keyword arguments are supported (with default values):
 * `chi`: A function `chi!(χ, ϕ, objectives)` what receives a list `ϕ`
   of the forward propagated states and must set ``|χₖ⟩ = -∂J_T/∂⟨ϕₖ|``. If not
   given, it will be automatically determined from `J_T` via [`make_chi`](@ref
-  QuantumControlBase.Functionals.make_chi) with the default parameters.
+  QuantumControlBase.make_chi) with the default parameters.
 * `sigma=nothing`: Function that calculate the second-order contribution. If
   not given, the first-order Krotov method is used.
 * `iter_start=0`: the initial iteration number
@@ -72,12 +67,12 @@ The following keyword arguments are supported (with default values):
   positional arguments. The function may mutate any of its arguments. This may
   be used e.g. to apply a spectral filter to the updated pulses, or to update
   propagation workspaces inside the Krotov workspace.
-* `info_hook`: A function that receives the same argumens as `update_hook`, in
-  order to write information about the current iteration to the screen or to a
-  file. The default `info_hook` prints a table with convergence information to
-  the screen. Runs after `update_hook`. The `info_hook` function may return a
-  tuple, which is stored in the list of `records` inside the
-  [`KrotovResult`](@ref) object.
+* `info_hook`: A function (or tuple of functions) that receives the same
+  argumens as `update_hook`, in order to write information about the current
+  iteration to the screen or to a file. The default `info_hook` prints a table
+  with convergence information to the screen. Runs after `update_hook`. The
+  `info_hook` function may return a tuple, which is stored in the list of
+  `records` inside the [`KrotovResult`](@ref) object.
 * `check_convergence`: a function to check whether convergence has been
   reached. Receives a [`KrotovResult`](@ref) object `result`, and should set
   `result.converged` to `true` and `result.message` to an appropriate string in
@@ -97,6 +92,12 @@ determined by the first available item of the following:
 
 The propagation method for the backword propagation is determined similarly,
 but with `bw_prop_method` instead of `fw_prop_method`.
+"""
+optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
+optimize(problem, method::Val{:Krotov}) = optimize_krotov(problem)
+
+"""
+See [`optimize(problem; method=:krotov, kwargs...)`](@ref optimize(::Any, ::Val{:krotov})).
 """
 function optimize_krotov(problem)
     sigma = get(problem.kwargs, :sigma, nothing)

@@ -1,3 +1,4 @@
+using QuantumControlBase
 using Krotov
 using Documenter
 using Pkg

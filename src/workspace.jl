@@ -1,7 +1,8 @@
 import QuantumControlBase
 using QuantumControlBase: get_control_derivs
 using QuantumControlBase.QuantumPropagators.Controls: get_controls, discretize_on_midpoints
-using QuantumControlBase.QuantumPropagators: init_storage, init_prop
+using QuantumControlBase.QuantumPropagators: init_prop
+using QuantumControlBase.QuantumPropagators.Storage: init_storage
 using ConcreteStructs
 
 # Krotov workspace (for internal use)
