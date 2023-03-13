@@ -1,6 +1,7 @@
 using QuantumControlBase
 using Krotov
 using Documenter
+using QuantumCitations
 using Pkg
 using Plots
 
@@ -22,14 +23,17 @@ GITHUB = "https://github.com/JuliaQuantumControl/Krotov.jl"
 
 println("Starting makedocs")
 
-makedocs(;
+bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:numeric)
+
+makedocs(
+    bib;
     authors=AUTHORS,
     sitename="Krotov.jl",
     modules=[Krotov],
     format=Documenter.HTML(;
         prettyurls=true,
         canonical="https://juliaquantumcontrol.github.io/Krotov.jl",
-        assets=String[],
+        assets=String["assets/citations.css"],
         footer="[$NAME.jl]($GITHUB) v$VERSION docs powered by [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl).",
         mathengine=KaTeX()
     ),
@@ -44,6 +48,7 @@ makedocs(;
             "Example 4 (PE)" => "examples/perfect_entanglers.md",
         ],
         "API" => "api.md",
+        "References" => "references.md",
     ]
 )
 

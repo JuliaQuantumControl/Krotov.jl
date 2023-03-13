@@ -62,3 +62,8 @@ Depth = 1
 ## History
 
 See the [Releases](https://github.com/JuliaQuantumControl/Krotov.jl/releases) on Github.
+
+## References
+
+```@bibliography
+```

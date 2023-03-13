@@ -47,9 +47,10 @@ using DrWatson
 # This example illustrates the optimization towards a perfectly entangling
 # two-qubit gate for a system of two transmon qubits with a shared transmission
 # line. It uses both the indirect perfect entanglers functional shown in
-# Goerz et. al., Phys. Rev. A 91, 062307 (2015) and a direct maximization of
-# the gate concurrence and thus demonstrates the optimization for non-analytic
-# functions via the calculation of gradients with automatic differentiation.
+# Goerz *et al.*, Phys. Rev. A 91, 062307 (2015) [GoerzPRA2015](@cite)  and a
+# direct maximization of the gate concurrence and thus demonstrates the
+# optimization for non-analytic functions via the calculation of gradients with
+# automatic differentiation.
 
 # ## Hamiltonian and guess pulses
 
@@ -61,8 +62,8 @@ const MHz = 0.001GHz
 const ns = 1.0
 const μs = 1000ns;
 
-# The Hamiltonian and parameter are taken from Goerz et. al., Phys. Rev. A 91,
-# 062307 (2015)., cf. Table 1 in that Reference.
+# The Hamiltonian and parameters are taken from
+# Ref. [GoerzPRA2015; Table 1](@cite).
 
 ⊗ = kron
 const 𝕚 = 1im
@@ -380,8 +381,8 @@ gate_concurrence(U_opt)
 # indirectly via a geometric function in the Weyl chamber. The entire reason
 # that perfect entangler functional was formulated is because calculating the
 # gate concurrence directly involves the eigenvalues of the unitary, see
-# Kraus, Cirac, Phys. Rev. A 63, 062309 (2001) and
-# Childs et al., PRA 68, 052311 (2003), which are inherently non-analytic.
+# [KrausPRA2001](@citet) and [ChildsPRA2003](@citet), which are inherently
+# non-analytic.
 
 # However, since Krotov.jl can use automatic differentiation, this is no longer
 # an insurmountable obstacle!
