@@ -131,15 +131,22 @@ function optimize_krotov(problem)
     (info_tuple !== nothing) && push!(wrk.result.records, info_tuple)
 
     i = wrk.result.iter  # = 0, unless continuing from previous optimization
-    while !wrk.result.converged
-        i = i + 1
-        krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
-        update_result!(wrk, i)
-        update_hook!(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
-        info_tuple = info_hook(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
-        (info_tuple !== nothing) && push!(wrk.result.records, info_tuple)
-        check_convergence!(wrk.result)
-        ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾ = ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾
+    try
+        while !wrk.result.converged
+            i = i + 1
+            krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
+            update_result!(wrk, i)
+            update_hook!(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
+            info_tuple = info_hook(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
+            (info_tuple !== nothing) && push!(wrk.result.records, info_tuple)
+            check_convergence!(wrk.result)
+            ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾ = ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾
+        end
+    catch exc
+        # Primarily, this is intended to catch Ctrl-C in interactive
+        # optimizations
+        exc_msg = sprint(showerror, exc)
+        wrk.result.message = "Exception: $exc_msg"
     end
 
     finalize_result!(ϵ⁽ⁱ⁾, wrk)
