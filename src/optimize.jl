@@ -2,7 +2,7 @@ using QuantumControlBase.QuantumPropagators.Generators: Operator
 using QuantumControlBase.QuantumPropagators.Controls: discretize, evaluate
 using QuantumControlBase.QuantumPropagators: prop_step!, reinit_prop!
 using QuantumControlBase.QuantumPropagators.Storage: write_to_storage!, get_from_storage!
-using QuantumControlBase: make_chi
+using QuantumControlBase: make_chi, set_atexit_save_optimization
 using QuantumControlBase: @threadsif
 using LinearAlgebra
 using Printf
@@ -131,6 +131,17 @@ function optimize_krotov(problem)
     (info_tuple !== nothing) && push!(wrk.result.records, info_tuple)
 
     i = wrk.result.iter  # = 0, unless continuing from previous optimization
+    atexit_filename = get(problem.kwargs, :atexit_filename, nothing)
+    # atexit_filename is undocumented on purpose: this is considered a feature
+    # of @optimize_or_load
+    if !isnothing(atexit_filename)
+        set_atexit_save_optimization(atexit_filename, wrk.result)
+        if !isinteractive()
+            @info "Set callback to store result in $atexit_filename on unexpected exit."
+            # In interactive mode, `atexit` is very unlikely, and
+            # `InterruptException` is handles via try/catch instead.
+        end
+    end
     try
         while !wrk.result.converged
             i = i + 1
@@ -144,12 +155,15 @@ function optimize_krotov(problem)
         end
     catch exc
         # Primarily, this is intended to catch Ctrl-C in interactive
-        # optimizations
+        # optimizations (InterruptException)
         exc_msg = sprint(showerror, exc)
         wrk.result.message = "Exception: $exc_msg"
     end
 
     finalize_result!(ϵ⁽ⁱ⁾, wrk)
+    if !isnothing(atexit_filename)
+        popfirst!(Base.atexit_hooks)
+    end
 
     return wrk.result
 
