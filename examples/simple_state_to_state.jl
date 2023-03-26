@@ -47,9 +47,10 @@
 # simple canonical optimization problem: the transfer of population in a two
 # level system.
 
-using DrWatson
-@quickactivate "KrotovTests"
-#-
+const PROJECTDIR = dirname(Base.active_project())
+projectdir(names...) = joinpath(PROJECTDIR, names...)
+datadir(names...) = projectdir("data", names...)
+
 using QuantumControl
 using QuantumPropagators.Controls: substitute
 using LinearAlgebra
@@ -112,7 +113,7 @@ function plot_control(pulse::Vector, tlist)
     plot(tlist, pulse, xlabel="time", ylabel="amplitude", legend=false)
 end
 
-plot_control(ϵ::T, tlist) where {T<:Function} = plot_control([ϵ(t) for t in tlist], tlist);
+plot_control(ϵ::Function, tlist) = plot_control([ϵ(t) for t in tlist], tlist);
 #-
 fig = plot_control(ϵ, tlist)
 #jl display(fig)

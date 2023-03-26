@@ -40,8 +40,9 @@
 #nb # \newcommand{Im}[0]{\operatorname{Im}}
 #nb # $
 
-using DrWatson
-@quickactivate "KrotovTests"
+const PROJECTDIR = dirname(Base.active_project());
+projectdir(names...) = joinpath(PROJECTDIR, names...);
+datadir(names...) = projectdir("data", names...);
 #jl using Test; println("")
 
 # This example illustrates the optimization towards a perfectly entangling
@@ -134,8 +135,8 @@ using QuantumControl.Shapes: flattop
 function guess_pulses(; T=400ns, E₀=35MHz, dt=0.1ns, t_rise=15ns)
 
     tlist = collect(range(0, T, step=dt))
-    Ωre = t -> E₀ * flattop(t, T=T, t_rise=t_rise)
-    Ωim = t -> 0.0
+    Ωre(t) = E₀ * flattop(t, T=T, t_rise=t_rise)
+    Ωim(t) = 0.0
 
     return tlist, Ωre, Ωim
 
@@ -225,7 +226,7 @@ objectives = [Objective(; initial_state=Ψ, generator=H) for Ψ ∈ basis];
 # the Weyl chamber. Since the logical subspace defining the qubit is embedded
 # in the larger Hilbert space of the transmon, there may be loss of population
 # from the logical subspace. To counter this possibility in the optimization,
-# we add a unitarity measure  to $D_PE$. The two terms are added with equal
+# we add a unitarity measure  to $D_{PE}$. The two terms are added with equal
 # weight.
 
 using TwoQubitWeylChamber: D_PE, gate_concurrence, unitarity
@@ -391,7 +392,7 @@ gate_concurrence(U_opt)
 # concurrence and (as above) a unitarity measure to penalize loss of population
 # from the logical subspace:
 
-J_T_C = U -> 0.5 * (1 - gate_concurrence(U)) + 0.5 * (1 - unitarity(U));
+J_T_C(U) = 0.5 * (1 - gate_concurrence(U)) + 0.5 * (1 - unitarity(U));
 
 # In the optimization, we will convert this functional to one that takes the
 # propagated states as arguments (via the `gate_functional` routine).

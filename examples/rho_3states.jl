@@ -8,6 +8,7 @@
 #md #     Python package](https://qucontrol.github.io/krotov/v1.2.1/notebooks/06_example_3states.html).
 
 #md # ``\gdef\op#1{\hat{#1}}``
+#md # ``\gdef\ketbra#1#2{\vert#1\rangle\langle#2\vert}``
 #md # ``\gdef\init{\text{init}}``
 #md # ``\gdef\tgt{\text{tgt}}``
 
@@ -24,6 +25,7 @@
 #nb # \newcommand{rwa}[0]{\text{rwa}}
 #nb # \newcommand{bra}[1]{\langle#1\vert}
 #nb # \newcommand{ket}[1]{\vert#1\rangle}
+#nb # \newcommand{ketbra}[2]{\vert#1\rangle\langle#2\vert}
 #nb # \newcommand{Bra}[1]{\left\langle#1\right\vert}
 #nb # \newcommand{Ket}[1]{\left\vert#1\right\rangle}
 #nb # \newcommand{Braket}[2]{\left\langle #1\vphantom{#2}\mid{#2}\vphantom{#1}\right\rangle}
@@ -47,9 +49,10 @@
 # quantum system, where the dynamics is governed by the Liouville-von Neumann
 # equation.
 
-using DrWatson
-@quickactivate "KrotovTests"
-#-
+const PROJECTDIR = dirname(Base.active_project())
+projectdir(names...) = joinpath(PROJECTDIR, names...)
+datadir(names...) = projectdir("data", names...)
+
 using QuantumControl
 using LinearAlgebra
 using Serialization
@@ -134,8 +137,8 @@ end
 
 const T = 400ns;
 
-Ωre = t -> 35MHz * QuantumControl.Shapes.flattop(t; T=T, t_rise=20ns);
-Ωim = t -> 0.0;
+Ωre(t) = 35MHz * QuantumControl.Shapes.flattop(t; T=T, t_rise=20ns);
+Ωim(t) = 0.0;
 
 L = transmon_liouvillian(Ωre, Ωim);
 
@@ -147,7 +150,7 @@ function plot_control(pulse::Vector, tlist)
     plot(tlist, pulse, xlabel="time", ylabel="amplitude", legend=false)
 end
 
-plot_control(ϵ::T, tlist) where {T<:Function} = plot_control([ϵ(t) for t in tlist], tlist);
+plot_control(ϵ::Function, tlist) = plot_control([ϵ(t) for t in tlist], tlist);
 #-
 fig = plot_control(Ωre, tlist)
 #jl display(fig)
@@ -155,7 +158,7 @@ fig = plot_control(Ωre, tlist)
 
 # ## Optimization objectives
 
-# Our target gate is $\Op{O} = \sqrt{\text{iSWAP}}$:
+# Our target gate is $\op{O} = \sqrt{\text{iSWAP}}$:
 
 SQRTISWAP = [
     1  0    0   0
@@ -166,16 +169,16 @@ SQRTISWAP = [
 
 # The key idea explored in the paper is that a set of three density matrices is sufficient to track the optimization
 #
-# $$
+# ```math
 # \begin{align}
-# \Op{\rho}_1
+# \op{\rho}_1
 #     &= \sum_{i=1}^{d} \frac{2 (d-i+1)}{d (d+1)} \ketbra{i}{i} \\
-# \Op{\rho}_2
+# \op{\rho}_2
 #     &= \sum_{i,j=1}^{d} \frac{1}{d} \ketbra{i}{j} \\
-# \Op{\rho}_3
+# \op{\rho}_3
 #     &= \sum_{i=1}^{d} \frac{1}{d} \ketbra{i}{i}
 # \end{align}
-# $$
+# ```
 
 # In our case, $d=4$ for a two qubit-gate, and the $\ket{i}$, $\ket{j}$ are the canonical basis states $\ket{00}$, $\ket{01}$, $\ket{10}$, $\ket{11}$
 
@@ -212,12 +215,12 @@ const ρ̂₃_tgt = sum([(1 / d) * basis_tgt[i] * adjoint(basis_tgt[i]) for i �
 # The three density matrices play different roles in the optimization, and, as
 # shown in the paper, convergence may improve significantly by weighing the
 # states relatively to each other. For this example, we place a strong emphasis
-# on the optimization $\Op{\rho}_1 \rightarrow \Op{O}^\dagger \Op{\rho}_1
-# \Op{O}$, by a factor of 20. This reflects that the hardest part of the
+# on the optimization $\op{\rho}_1 \rightarrow \op{O}^\dagger \op{\rho}_1
+# \op{O}$, by a factor of 20. This reflects that the hardest part of the
 # optimization is identifying the basis in which the gate is diagonal. We will
 # be using the real-part functional ($J_{T,\text{re}}$) to evaluate the success
-# of $\Op{\rho}_i \rightarrow \Op{O}\Op{\rho}_i\Op{O}^\dagger$. Because
-# $\Op{\rho}_1$ and $\Op{\rho}_3$ are mixed states, the Hilbert-Schmidt overlap
+# of $\op{\rho}_i \rightarrow \op{O}\op{\rho}_i\op{O}^\dagger$. Because
+# $\op{\rho}_1$ and $\op{\rho}_3$ are mixed states, the Hilbert-Schmidt overlap
 # will take values smaller than one in the optimal case. To compensate, we
 # divide the weights by the purity of the respective states.
 #
@@ -259,10 +262,10 @@ function as_matrix(ρ⃗)
     return reshape(ρ⃗, N, N)
 end;
 
-pop00 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₀₀));
-pop01 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₀₁));
-pop10 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₁₀));
-pop11 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₁₁));
+pop00(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₀₀));
+pop01(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₀₁));
+pop10(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₁₀));
+pop11(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₁₁));
 
 
 rho_00_expvals = propagate_objective(
@@ -298,6 +301,3 @@ opt_result = @optimize_or_load(
     method = :krotov
 )
 #-
-opt_result
-
-# ## Optimization result

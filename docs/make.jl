@@ -8,7 +8,7 @@ using Plots
 gr()
 ENV["GKSwstype"] = "100"
 
-include(joinpath(@__DIR__, "download_dumps.jl"))
+include(joinpath("..", "test", "download_dumps.jl"))
 
 # Generate examples
 include("generate.jl")
