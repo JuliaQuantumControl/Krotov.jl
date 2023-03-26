@@ -16,6 +16,11 @@ include(joinpath(@__DIR__, "download_dumps.jl"))
         include("test_pulse_optimization.jl")
     end
 
+    print("\n* Emptry Optimization (test_empty_optimization.jl)")
+    @time @safetestset "Empty Optimization" begin
+        include("test_empty_optimization.jl")
+    end
+
     print("\n* Example 1 (examples/simple_state_to_state.jl):")
     @time @safetestset "Example 1" begin
         include(joinpath("examples", "simple_state_to_state.jl"))

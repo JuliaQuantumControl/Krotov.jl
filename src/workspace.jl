@@ -68,6 +68,9 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     objectives = [obj for obj in problem.objectives]
     adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
     controls = get_controls(objectives)
+    if length(controls) == 0
+        error("no controls in objectives: cannot optimize")
+    end
     control_derivs = [get_control_derivs(obj.generator, controls) for obj in objectives]
     tlist = problem.tlist
     kwargs = Dict(problem.kwargs)  # creates a shallow copy; ok to modify
