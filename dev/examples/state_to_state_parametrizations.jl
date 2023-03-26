@@ -1,5 +1,6 @@
-using DrWatson
-@quickactivate "KrotovTests"
+const PROJECTDIR = dirname(Base.active_project())
+projectdir(names...) = joinpath(PROJECTDIR, names...)
+datadir(names...) = projectdir("data", names...)
 
 using QuantumControl
 using QuantumControl.Shapes: flattop

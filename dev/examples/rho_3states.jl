@@ -1,5 +1,6 @@
-using DrWatson
-@quickactivate "KrotovTests"
+const PROJECTDIR = dirname(Base.active_project())
+projectdir(names...) = joinpath(PROJECTDIR, names...)
+datadir(names...) = projectdir("data", names...)
 
 using QuantumControl
 using LinearAlgebra
@@ -74,8 +75,8 @@ end
 
 const T = 400ns;
 
-Ωre = t -> 35MHz * QuantumControl.Shapes.flattop(t; T=T, t_rise=20ns);
-Ωim = t -> 0.0;
+Ωre(t) = 35MHz * QuantumControl.Shapes.flattop(t; T=T, t_rise=20ns);
+Ωim(t) = 0.0;
 
 L = transmon_liouvillian(Ωre, Ωim);
 
@@ -85,7 +86,7 @@ function plot_control(pulse::Vector, tlist)
     plot(tlist, pulse, xlabel="time", ylabel="amplitude", legend=false)
 end
 
-plot_control(ϵ::T, tlist) where {T<:Function} = plot_control([ϵ(t) for t in tlist], tlist);
+plot_control(ϵ::Function, tlist) = plot_control([ϵ(t) for t in tlist], tlist);
 
 fig = plot_control(Ωre, tlist)
 display(fig)
@@ -161,10 +162,10 @@ function as_matrix(ρ⃗)
     return reshape(ρ⃗, N, N)
 end;
 
-pop00 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₀₀));
-pop01 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₀₁));
-pop10 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₁₀));
-pop11 = ρ⃗ -> real(tr(as_matrix(ρ⃗) * ρ̂₁₁));
+pop00(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₀₀));
+pop01(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₀₁));
+pop10(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₁₀));
+pop11(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₁₁));
 
 
 rho_00_expvals = propagate_objective(
@@ -195,8 +196,6 @@ opt_result = @optimize_or_load(
     problem,
     method = :krotov
 )
-
-opt_result
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 

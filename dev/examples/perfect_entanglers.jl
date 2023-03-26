@@ -1,5 +1,6 @@
-using DrWatson
-@quickactivate "KrotovTests"
+const PROJECTDIR = dirname(Base.active_project());
+projectdir(names...) = joinpath(PROJECTDIR, names...);
+datadir(names...) = projectdir("data", names...);
 using Test; println("")
 
 const GHz = 2π
@@ -69,8 +70,8 @@ using QuantumControl.Shapes: flattop
 function guess_pulses(; T=400ns, E₀=35MHz, dt=0.1ns, t_rise=15ns)
 
     tlist = collect(range(0, T, step=dt))
-    Ωre = t -> E₀ * flattop(t, T=T, t_rise=t_rise)
-    Ωim = t -> 0.0
+    Ωre(t) = E₀ * flattop(t, T=T, t_rise=t_rise)
+    Ωim(t) = 0.0
 
     return tlist, Ωre, Ωim
 
@@ -220,7 +221,7 @@ gate_concurrence(U_opt)
 
 @test round(1 - unitarity(U_opt), digits=2) ≈ 0.01
 
-J_T_C = U -> 0.5 * (1 - gate_concurrence(U)) + 0.5 * (1 - unitarity(U));
+J_T_C(U) = 0.5 * (1 - gate_concurrence(U)) + 0.5 * (1 - unitarity(U));
 
 using QuantumControl.Functionals: make_gate_chi
 
