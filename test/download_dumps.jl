@@ -24,6 +24,7 @@ DOWNLOADS = Dict(
 
 function download_dump(url, destination; force=false, verbose=true)
     if !isfile(destination) || force
+        mkpath(dirname(destination))
         verbose && (@info "Downloading $url => $destination")
         Downloads.download(url, destination)
     else
