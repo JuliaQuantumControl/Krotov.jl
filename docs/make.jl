@@ -1,7 +1,7 @@
 using QuantumControlBase
 using Krotov
 using Documenter
-using QuantumCitations
+using DocumenterCitations
 using Pkg
 using Plots
 
@@ -25,8 +25,8 @@ println("Starting makedocs")
 
 bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:numeric)
 
-makedocs(
-    bib;
+makedocs(;
+    plugins=[bib],
     authors=AUTHORS,
     sitename="Krotov.jl",
     modules=[Krotov],
@@ -49,7 +49,8 @@ makedocs(
         ],
         "API" => "api.md",
         "References" => "references.md",
-    ]
+    ],
+    warnonly=true,
 )
 
 println("Finished makedocs")
