@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example 3 (Parametrization) · Krotov.jl</title><meta name="title" content="Example 3 (Parametrization) · Krotov.jl"/><meta property="og:title" content="Example 3 (Parametrization) · Krotov.jl"/><meta property="twitter:title" content="Example 3 (Parametrization) · Krotov.jl"/><meta name="description" content="Documentation for Krotov.jl."/><meta property="og:description" content="Documentation for Krotov.jl."/><meta property="twitter:description" content="Documentation for Krotov.jl."/><meta property="og:url" content="https://juliaquantumcontrol.github.io/Krotov.jl/examples/state_to_state_parametrizations/"/><meta property="twitter:url" content="https://juliaquantumcontrol.github.io/Krotov.jl/examples/state_to_state_parametrizations/"/><link rel="canonical" href="https://juliaquantumcontrol.github.io/Krotov.jl/examples/state_to_state_parametrizations/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/citations.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Krotov.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../overview/">Overview</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../">List of Examples</a></li><li><a class="tocitem" href="../simple_state_to_state/">Example 1 (TLS)</a></li><li><a class="tocitem" href="../rho_3states/">Example 2 (Diss. Gate)</a></li><li class="is-active"><a class="tocitem" href>Example 3 (Parametrization)</a><ul class="internal"><li><a class="tocitem" href="#Parametrizations"><span>Parametrizations</span></a></li><li><a class="tocitem" href="#Symmetric-Bounded-Controls"><span>Symmetric Bounded Controls</span></a></li><li><a class="tocitem" href="#Positive-(Bounded)-Controls"><span>Positive (Bounded) Controls</span></a></li><li><a class="tocitem" href="#Two-level-Hamiltonian"><span>Two-level Hamiltonian</span></a></li><li><a class="tocitem" href="#Optimization-target"><span>Optimization target</span></a></li><li><a class="tocitem" href="#Square-parametrization-for-positive-pulses"><span>Square-parametrization for positive pulses</span></a></li><li><a class="tocitem" href="#Tanh-Square-Parametrization-for-positive-amplitude-constrained-pulses"><span>Tanh-Square-Parametrization for positive amplitude-constrained pulses</span></a></li><li><a class="tocitem" href="#Logistic-Square-Parametrization-for-positive-amplitude-constrained-pulses"><span>Logistic-Square-Parametrization for positive amplitude-constrained pulses</span></a></li><li><a class="tocitem" href="#Tanh-parametrization-for-amplitude-constrained-pulses"><span>Tanh-parametrization for amplitude-constrained pulses</span></a></li></ul></li><li><a class="tocitem" href="../perfect_entanglers/">Example 4 (PE)</a></li></ul></li><li><a class="tocitem" href="../../api/">API</a></li><li><a class="tocitem" href="../../references/">References</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example 3 (Parametrization)</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example 3 (Parametrization)</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaQuantumControl/Krotov.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaQuantumControl/Krotov.jl/blob/master/examples/state_to_state_parametrizations.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Example-3:-Pulse-Parametrization"><a class="docs-heading-anchor" href="#Example-3:-Pulse-Parametrization">Example 3: Pulse Parametrization</a><a id="Example-3:-Pulse-Parametrization-1"></a><a class="docs-heading-anchor-permalink" href="#Example-3:-Pulse-Parametrization" title="Permalink"></a></h1><div class="admonition is-success"><header class="admonition-header">Tip</header><div class="admonition-body"><p>This example is also available as a Jupyter notebook: <a href="https://nbviewer.jupyter.org/github/JuliaQuantumControl/Krotov.jl/blob/gh-pages/v0.5.4/examples/state_to_state_parametrizations.ipynb"><code>state_to_state_parametrizations.ipynb</code></a>.</p></div></div><p><span>$\gdef\op#1{\hat{#1}}$</span> <span>$\gdef\init{\text{init}}$</span> <span>$\gdef\tgt{\text{tgt}}$</span></p><p>This example illustrates the parametrization of control pulses as a form of amplitude constraint.</p><pre><code class="language-julia hljs">const PROJECTDIR = dirname(Base.active_project())
+projectdir(names...) = joinpath(PROJECTDIR, names...)
+datadir(names...) = projectdir(&quot;data&quot;, names...)
+
+using QuantumControl
+using QuantumControl.Shapes: flattop
+using QuantumControl.Generators
+using QuantumControl.Controls
+using QuantumControl.PulseParametrizations:
+    SquareParametrization,
+    TanhParametrization,
+    TanhSqParametrization,
+    LogisticParametrization,
+    LogisticSqParametrization,
+    ParametrizedAmplitude
+using LinearAlgebra</code></pre><pre><code class="language-julia hljs">using Plots
+Plots.default(
+    linewidth               = 3,
+    size                    = (550, 300),
+    legend                  = :top,
+    foreground_color_legend = nothing,
+    background_color_legend = RGBA(1, 1, 1, 0.8),
+)</code></pre><h2 id="Parametrizations"><a class="docs-heading-anchor" href="#Parametrizations">Parametrizations</a><a id="Parametrizations-1"></a><a class="docs-heading-anchor-permalink" href="#Parametrizations" title="Permalink"></a></h2><h2 id="Symmetric-Bounded-Controls"><a class="docs-heading-anchor" href="#Symmetric-Bounded-Controls">Symmetric Bounded Controls</a><a id="Symmetric-Bounded-Controls-1"></a><a class="docs-heading-anchor-permalink" href="#Symmetric-Bounded-Controls" title="Permalink"></a></h2><img src="81337f52.svg" alt="Example block output"/><h2 id="Positive-(Bounded)-Controls"><a class="docs-heading-anchor" href="#Positive-(Bounded)-Controls">Positive (Bounded) Controls</a><a id="Positive-(Bounded)-Controls-1"></a><a class="docs-heading-anchor-permalink" href="#Positive-(Bounded)-Controls" title="Permalink"></a></h2><img src="31f0fc3d.svg" alt="Example block output"/><h2 id="Two-level-Hamiltonian"><a class="docs-heading-anchor" href="#Two-level-Hamiltonian">Two-level Hamiltonian</a><a id="Two-level-Hamiltonian-1"></a><a class="docs-heading-anchor-permalink" href="#Two-level-Hamiltonian" title="Permalink"></a></h2><p>We consider the Hamiltonian <span>$\op{H}_{0} = - \frac{\omega}{2} \op{\sigma}_{z}$</span>, representing a simple qubit with energy level splitting <span>$\omega$</span> in the basis <span>$\{\ket{0},\ket{1}\}$</span>. The control field <span>$\epsilon(t)$</span> is assumed to couple via the Hamiltonian <span>$\op{H}_{1}(t) = \epsilon(t) \op{\sigma}_{x}$</span> to the qubit, i.e., the control field effectively drives transitions between both qubit states.</p><p>We we will use</p><pre><code class="language-julia hljs">ϵ(t) = 0.2 * flattop(t, T=5, t_rise=0.3, func=:blackman);</code></pre><pre><code class="language-julia hljs">&quot;&quot;&quot;Two-level-system Hamiltonian.&quot;&quot;&quot;
+function tls_hamiltonian(; Ω=1.0, ampl=ϵ)
+    σ̂_z = ComplexF64[
+        1  0
+        0 -1
+    ]
+    σ̂_x = ComplexF64[
+        0  1
+        1  0
+    ]
+    Ĥ₀ = -0.5 * Ω * σ̂_z
+    Ĥ₁ = σ̂_x
+    return hamiltonian(Ĥ₀, (Ĥ₁, ampl))
+end;</code></pre><pre><code class="language-julia hljs">H = tls_hamiltonian();</code></pre><p>The control field here switches on from zero at <span>$t=0$</span> to it&#39;s maximum amplitude 0.2 within the time period 0.3 (the switch-on shape is half a <a href="https://en.wikipedia.org/wiki/Window_function#Blackman_window">Blackman pulse</a>). It switches off again in the time period 0.3 before the final time <span>$T=5$</span>). We use a time grid with 500 time steps between 0 and <span>$T$</span>:</p><pre><code class="language-julia hljs">tlist = collect(range(0, 5, length=500));</code></pre><pre><code class="language-julia hljs">function plot_amplitude(ampl, tlist)
+    plot(tlist, discretize(ampl, tlist), xlabel=&quot;time&quot;, ylabel=&quot;amplitude&quot;, legend=false)
+end
+
+plot_amplitude(ϵ, tlist)</code></pre><img src="e791b648.svg" alt="Example block output"/><h2 id="Optimization-target"><a class="docs-heading-anchor" href="#Optimization-target">Optimization target</a><a id="Optimization-target-1"></a><a class="docs-heading-anchor-permalink" href="#Optimization-target" title="Permalink"></a></h2><p>The <code>krotov</code> package requires the goal of the optimization to be described by a list of <code>Objective</code> instances. In this example, there is only a single objective: the state-to-state transfer from initial state <span>$\ket{\Psi_{\init}} = \ket{0}$</span> to the target state <span>$\ket{\Psi_{\tgt}} = \ket{1}$</span>, under the dynamics of the Hamiltonian <span>$\op{H}(t)$</span>:</p><pre><code class="language-julia hljs">function ket(label)
+    result = Dict(&quot;0&quot; =&gt; Vector{ComplexF64}([1, 0]), &quot;1&quot; =&gt; Vector{ComplexF64}([0, 1]),)
+    return result[string(label)]
+end;</code></pre><pre><code class="language-julia hljs">objectives = [Objective(initial_state=ket(0), generator=H, target_state=ket(1))]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1-element Vector{Objective{Vector{ComplexF64}, QuantumPropagators.Generators.Generator{Matrix{ComplexF64}, typeof(Main.ϵ)}}}:
+ Objective{Vector{ComplexF64}, QuantumPropagators.Generators.Generator{Matrix{ComplexF64}, typeof(Main.ϵ)}}(…)</code></pre><h2 id="Square-parametrization-for-positive-pulses"><a class="docs-heading-anchor" href="#Square-parametrization-for-positive-pulses">Square-parametrization for positive pulses</a><a id="Square-parametrization-for-positive-pulses-1"></a><a class="docs-heading-anchor-permalink" href="#Square-parametrization-for-positive-pulses" title="Permalink"></a></h2><pre><code class="language-julia hljs">a = ParametrizedAmplitude(
+    ϵ,
+    tlist;
+    parametrization=SquareParametrization(),
+    parameterize=true
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">ParametrizedAmplitude(::Vector{Float64}; parametrization=SquareParametrization())</code></pre><pre><code class="language-julia hljs">function plot_amplitude(ampl::ParametrizedAmplitude, tlist)
+    plot(
+        tlist,
+        discretize(Array(ampl), tlist),
+        xlabel=&quot;time&quot;,
+        ylabel=&quot;amplitude&quot;,
+        legend=false
+    )
+end
+
+plot_amplitude(a, tlist)</code></pre><img src="1901cb6b.svg" alt="Example block output"/><pre><code class="language-julia hljs">problem = ControlProblem(
+    objectives=substitute(objectives, IdDict(ϵ =&gt; a)),
+    lambda_a=5,
+    update_shape=(t -&gt; flattop(t, T=5, t_rise=0.3, func=:blackman)),
+    tlist=tlist,
+    iter_stop=50,
+    J_T=QuantumControl.Functionals.J_T_ss,
+    check_convergence=res -&gt; begin
+        ((res.J_T &lt; 1e-3) &amp;&amp; (res.converged = true) &amp;&amp; (res.message = &quot;J_T &lt; 10⁻³&quot;))
+    end
+);</code></pre><pre><code class="language-julia hljs">opt_result_positive = @optimize_or_load(
+    datadir(&quot;parametrization#opt_result_positive.jld2&quot;),
+    problem;
+    method=:krotov
+);</code></pre><pre><code class="language-julia hljs">opt_result_positive</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Krotov Optimization Result
+--------------------------
+- Started at 2022-10-28T20:42:00.334
+- Number of objectives: 1
+- Number of iterations: 50
+- Value of functional: 3.53585e-02
+- Reason for termination: Reached maximum number of iterations
+- Ended at 2022-10-28T20:42:04.552 (4 seconds, 218 milliseconds)
+</code></pre><p>We can plot the optimized field:</p><pre><code class="language-julia hljs">plot_amplitude(
+    substitute(a, IdDict(a.control =&gt; opt_result_positive.optimized_controls[1])),
+    tlist
+)</code></pre><img src="bb9bea43.svg" alt="Example block output"/><h2 id="Tanh-Square-Parametrization-for-positive-amplitude-constrained-pulses"><a class="docs-heading-anchor" href="#Tanh-Square-Parametrization-for-positive-amplitude-constrained-pulses">Tanh-Square-Parametrization for positive amplitude-constrained pulses</a><a id="Tanh-Square-Parametrization-for-positive-amplitude-constrained-pulses-1"></a><a class="docs-heading-anchor-permalink" href="#Tanh-Square-Parametrization-for-positive-amplitude-constrained-pulses" title="Permalink"></a></h2><pre><code class="language-julia hljs">a = ParametrizedAmplitude(
+    ϵ,
+    tlist;
+    parametrization=TanhSqParametrization(3),
+    parameterize=true
+)
+
+problem_tanhsq = ControlProblem(
+    objectives=substitute(objectives, IdDict(ϵ =&gt; a)),
+    lambda_a=10,
+    update_shape=(t -&gt; flattop(t, T=5, t_rise=0.3, func=:blackman)),
+    tlist=tlist,
+    iter_stop=50,
+    J_T=QuantumControl.Functionals.J_T_ss,
+    check_convergence=res -&gt; begin
+        ((res.J_T &lt; 1e-3) &amp;&amp; (res.converged = true) &amp;&amp; (res.message = &quot;J_T &lt; 10⁻³&quot;))
+    end
+);</code></pre><pre><code class="language-julia hljs">opt_result_tanhsq = @optimize_or_load(
+    datadir(&quot;parametrization#opt_result_tanhsq.jld2&quot;),
+    problem_tanhsq;
+    method=:krotov
+);</code></pre><pre><code class="language-julia hljs">opt_result_tanhsq</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Krotov Optimization Result
+--------------------------
+- Started at 2022-10-28T20:42:11.014
+- Number of objectives: 1
+- Number of iterations: 50
+- Value of functional: 6.69321e-02
+- Reason for termination: Reached maximum number of iterations
+- Ended at 2022-10-28T20:42:11.381 (367 milliseconds)
+</code></pre><p>We can plot the optimized field:</p><pre><code class="language-julia hljs">plot_amplitude(
+    substitute(a, IdDict(a.control =&gt; opt_result_tanhsq.optimized_controls[1])),
+    tlist
+)</code></pre><img src="0e48e942.svg" alt="Example block output"/><h2 id="Logistic-Square-Parametrization-for-positive-amplitude-constrained-pulses"><a class="docs-heading-anchor" href="#Logistic-Square-Parametrization-for-positive-amplitude-constrained-pulses">Logistic-Square-Parametrization for positive amplitude-constrained pulses</a><a id="Logistic-Square-Parametrization-for-positive-amplitude-constrained-pulses-1"></a><a class="docs-heading-anchor-permalink" href="#Logistic-Square-Parametrization-for-positive-amplitude-constrained-pulses" title="Permalink"></a></h2><pre><code class="language-julia hljs">a = ParametrizedAmplitude(
+    ϵ,
+    tlist;
+    parametrization=LogisticSqParametrization(3, k=1.0),
+    parameterize=true
+)
+
+problem_logisticsq = ControlProblem(
+    objectives=substitute(objectives, IdDict(ϵ =&gt; a)),
+    lambda_a=1,
+    update_shape=(t -&gt; flattop(t, T=5, t_rise=0.3, func=:blackman)),
+    tlist=tlist,
+    iter_stop=50,
+    J_T=QuantumControl.Functionals.J_T_ss,
+    check_convergence=res -&gt; begin
+        ((res.J_T &lt; 1e-3) &amp;&amp; (res.converged = true) &amp;&amp; (res.message = &quot;J_T &lt; 10⁻³&quot;))
+    end
+);</code></pre><pre><code class="language-julia hljs">opt_result_logisticsq = @optimize_or_load(
+    datadir(&quot;parametrization#opt_result_logisticsq.jld2&quot;),
+    problem_logisticsq;
+    method=:krotov
+);</code></pre><p>We can plot the optimized field:</p><pre><code class="language-julia hljs">plot_amplitude(
+    substitute(a, IdDict(a.control =&gt; opt_result_logisticsq.optimized_controls[1])),
+    tlist
+)</code></pre><img src="a3168306.svg" alt="Example block output"/><h2 id="Tanh-parametrization-for-amplitude-constrained-pulses"><a class="docs-heading-anchor" href="#Tanh-parametrization-for-amplitude-constrained-pulses">Tanh-parametrization for amplitude-constrained pulses</a><a id="Tanh-parametrization-for-amplitude-constrained-pulses-1"></a><a class="docs-heading-anchor-permalink" href="#Tanh-parametrization-for-amplitude-constrained-pulses" title="Permalink"></a></h2><pre><code class="language-julia hljs">a = ParametrizedAmplitude(
+    ϵ,
+    tlist;
+    parametrization=TanhParametrization(-0.5, 0.5),
+    parameterize=true
+)
+
+problem_tanh = ControlProblem(
+    objectives=substitute(objectives, IdDict(ϵ =&gt; a)),
+    lambda_a=1,
+    update_shape=(t -&gt; flattop(t, T=5, t_rise=0.3, func=:blackman)),
+    tlist=tlist,
+    iter_stop=50,
+    J_T=QuantumControl.Functionals.J_T_ss,
+    check_convergence=res -&gt; begin
+        ((res.J_T &lt; 1e-3) &amp;&amp; (res.converged = true) &amp;&amp; (res.message = &quot;J_T &lt; 10⁻³&quot;))
+    end
+);</code></pre><pre><code class="language-julia hljs">opt_result_tanh = @optimize_or_load(
+    datadir(&quot;parametrization#opt_result_tanh.jld2&quot;),
+    problem_tanh;
+    method=:krotov
+);</code></pre><pre><code class="language-julia hljs">plot_amplitude(
+    substitute(a, IdDict(a.control =&gt; opt_result_tanh.optimized_controls[1])),
+    tlist
+)</code></pre><img src="b75639cc.svg" alt="Example block output"/><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../rho_3states/">« Example 2 (Diss. Gate)</a><a class="docs-footer-nextpage" href="../perfect_entanglers/">Example 4 (PE) »</a><div class="flexbox-break"></div><p class="footer-message"><a href="https://github.com/JuliaQuantumControl/Krotov.jl">Krotov.jl</a> v0.5.4 docs powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.1.0 on <span class="colophon-date" title="Friday 6 October 2023 18:19">Friday 6 October 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
