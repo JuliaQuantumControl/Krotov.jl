@@ -255,4 +255,3 @@ gate_concurrence(U_opt_direct)
 @test round(1 - unitarity(U_opt_direct), digits=3) ≈ 0.002
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
-

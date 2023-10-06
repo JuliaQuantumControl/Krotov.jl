@@ -210,4 +210,3 @@ amplitude = Array(substitute(a, IdDict(a.control => opt_result_tanh.optimized_co
 @test maximum(amplitude) < 0.5
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
-

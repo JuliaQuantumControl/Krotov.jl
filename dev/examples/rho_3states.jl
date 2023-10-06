@@ -198,4 +198,3 @@ opt_result = @optimize_or_load(
 )
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
-

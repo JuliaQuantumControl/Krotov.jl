@@ -112,4 +112,3 @@ display(fig)
 @test opt_dynamics[2,end] > 0.99
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
-
