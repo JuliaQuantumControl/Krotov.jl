@@ -243,8 +243,9 @@ J_T_PE = gate_functional(D_PE; unitarity_weight=0.5);
 # entangler
 
 using QuantumControl: propagate_objectives
+using QuantumPropagators: Cheby
 
-guess_states = propagate_objectives(objectives, tlist; use_threads=true);
+guess_states = propagate_objectives(objectives, tlist; method=Cheby, use_threads=true);
 
 U_guess = [basis[i] ⋅ guess_states[j] for i = 1:4, j = 1:4]
 
@@ -359,6 +360,7 @@ opt_states = propagate_objectives(
         IdDict(zip(get_controls(objectives), opt_result.optimized_controls))
     ),
     tlist;
+    method=Cheby,
     use_threads=true
 );
 
@@ -423,6 +425,7 @@ opt_states_direct = propagate_objectives(
         IdDict(zip(get_controls(objectives), opt_result_direct.optimized_controls))
     ),
     tlist;
+    method=Cheby,
     use_threads=true
 );
 

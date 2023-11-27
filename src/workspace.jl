@@ -131,23 +131,19 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
     kwargs[:piecewise] = true  # only accept piecewise propagators
     fw_prop_method = [
-        Val(
-            QuantumControlBase.get_objective_prop_method(
-                obj,
-                :fw_prop_method,
-                :prop_method;
-                kwargs...
-            )
+        QuantumControlBase.get_objective_prop_method(
+            obj,
+            :fw_prop_method,
+            :prop_method;
+            kwargs...
         ) for obj in objectives
     ]
     bw_prop_method = [
-        Val(
-            QuantumControlBase.get_objective_prop_method(
-                obj,
-                :bw_prop_method,
-                :prop_method;
-                kwargs...
-            )
+        QuantumControlBase.get_objective_prop_method(
+            obj,
+            :bw_prop_method,
+            :prop_method;
+            kwargs...
         ) for obj in objectives
     ]
 

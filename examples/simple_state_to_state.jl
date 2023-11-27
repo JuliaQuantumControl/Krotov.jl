@@ -53,6 +53,7 @@ datadir(names...) = projectdir("data", names...)
 
 using QuantumControl
 using QuantumPropagators.Controls: substitute
+using QuantumPropagators: ExpProp
 using LinearAlgebra
 #-
 using Plots
@@ -147,6 +148,7 @@ problem = ControlProblem(
     update_shape=(t -> QuantumControl.Shapes.flattop(t, T=5, t_rise=0.3, func=:blackman)),
     tlist=tlist,
     iter_stop=50,
+    prop_method=ExpProp,
     J_T=QuantumControl.Functionals.J_T_ss,
     check_convergence=res -> begin
         ((res.J_T < 1e-3) && (res.converged = true) && (res.message = "J_T < 10⁻³"))
@@ -163,6 +165,7 @@ problem = ControlProblem(
 guess_dynamics = propagate_objective(
     objectives[1],
     problem.tlist;
+    method=ExpProp,
     storage=true,
     observables=(Ψ -> abs.(Ψ) .^ 2,)
 )
@@ -212,6 +215,7 @@ fig = plot_control(opt_result.optimized_controls[1], tlist)
 opt_dynamics = propagate_objective(
     substitute(objectives[1], IdDict(ϵ => opt_result.optimized_controls[1])),
     problem.tlist;
+    method=ExpProp,
     storage=true,
     observables=(Ψ -> abs.(Ψ) .^ 2,)
 )

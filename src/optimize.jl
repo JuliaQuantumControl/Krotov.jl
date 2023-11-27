@@ -68,7 +68,7 @@ The following keyword arguments are supported (with default values):
   be used e.g. to apply a spectral filter to the updated pulses, or to update
   propagation workspaces inside the Krotov workspace.
 * `info_hook`: A function (or tuple of functions) that receives the same
-  argumens as `update_hook`, in order to write information about the current
+  arguments as `update_hook`, in order to write information about the current
   iteration to the screen or to a file. The default `info_hook` prints a table
   with convergence information to the screen. Runs after `update_hook`. The
   `info_hook` function may return a tuple, which is stored in the list of
@@ -90,7 +90,7 @@ determined by the first available item of the following:
 * a property `prop_method` of the objective
 * the value `:auto`
 
-The propagation method for the backword propagation is determined similarly,
+The propagation method for the backward propagation is determined similarly,
 but with `bw_prop_method` instead of `fw_prop_method`.
 """
 optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
