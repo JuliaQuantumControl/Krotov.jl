@@ -168,18 +168,20 @@ pop10(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₁₀));
 pop11(ρ⃗) = real(tr(as_matrix(ρ⃗) * ρ̂₁₁));
 
 
+using QuantumPropagators: Newton
+
 rho_00_expvals = propagate_objective(
     objectives[1],
     tlist;
     initial_state=reshape(ρ̂₀₀, :),
-    method=:newton,
+    method=Newton,
     observables=(pop00, pop01, pop10, pop11),
     storage=true
 );
 
 const problem = ControlProblem(
     objectives=objectives,
-    prop_method=:newton,
+    prop_method=Newton,
     use_threads=true,
     lambda_a=1.0,
     update_shape=(t -> QuantumControl.Shapes.flattop(t, T=T, t_rise=20ns, func=:blackman)),
