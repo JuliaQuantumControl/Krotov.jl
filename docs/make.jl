@@ -2,6 +2,7 @@ using QuantumControlBase
 using Krotov
 using Documenter
 using DocumenterCitations
+using DocumenterInterLinks
 using Pkg
 using Plots
 
@@ -27,15 +28,23 @@ bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:numeric
 
 makedocs(;
     plugins=[bib],
+    modules=[Krotov],
     authors=AUTHORS,
     sitename="Krotov.jl",
-    modules=[Krotov],
     format=Documenter.HTML(;
         prettyurls=true,
         canonical="https://juliaquantumcontrol.github.io/Krotov.jl",
-        assets=String["assets/citations.css"],
+        assets=[
+            "assets/citations.css",
+            asset(
+                "https://juliaquantumcontrol.github.io/QuantumControl.jl/dev/assets/topbar/topbar.css"
+            ),
+            asset(
+                "https://juliaquantumcontrol.github.io/QuantumControl.jl/dev/assets/topbar/topbar.js"
+            ),
+        ],
+        mathengine=KaTeX(),
         footer="[$NAME.jl]($GITHUB) v$VERSION docs powered by [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl).",
-        mathengine=KaTeX()
     ),
     pages=[
         "Home" => "index.md",
@@ -57,4 +66,4 @@ println("Finished makedocs")
 
 rm(joinpath(@__DIR__, "build", "examples", ".gitignore"))
 
-deploydocs(; repo="github.com/JuliaQuantumControl/Krotov.jl")
+deploydocs(; repo="github.com/JuliaQuantumControl/Krotov.jl", devbranch="master")
