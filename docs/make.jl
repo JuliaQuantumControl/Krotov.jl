@@ -1,4 +1,5 @@
 using QuantumControlBase
+using QuantumPropagators
 using Krotov
 using Documenter
 using DocumenterCitations
@@ -9,12 +10,6 @@ using Plots
 gr()
 ENV["GKSwstype"] = "100"
 
-include(joinpath("..", "test", "download_dumps.jl"))
-
-# Generate examples
-include("generate.jl")
-
-DocMeta.setdocmeta!(Krotov, :DocTestSetup, :(using Krotov); recursive=true)
 
 PROJECT_TOML = Pkg.TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
 VERSION = PROJECT_TOML["version"]
@@ -22,12 +17,37 @@ NAME = PROJECT_TOML["name"]
 AUTHORS = join(PROJECT_TOML["authors"], ", ") * " and contributors"
 GITHUB = "https://github.com/JuliaQuantumControl/Krotov.jl"
 
+DEV_OR_STABLE = "stable/"
+if endswith(VERSION, "dev")
+    DEV_OR_STABLE = "dev/"
+end
+
+links = InterLinks(
+    "TimerOutputs" => (
+        "https://github.com/KristofferC/TimerOutputs.jl",
+        joinpath(@__DIR__, "src", "inventories", "TimerOutputs.toml")
+    ),
+    "QuantumPropagators" => "https://juliaquantumcontrol.github.io/QuantumPropagators.jl/$DEV_OR_STABLE",
+    "QuantumControl" => "https://juliaquantumcontrol.github.io/QuantumControl.jl/$DEV_OR_STABLE",
+    "GRAPE" => "https://juliaquantumcontrol.github.io/GRAPE.jl/$DEV_OR_STABLE",
+    "Examples" => "https://juliaquantumcontrol.github.io/QuantumControlExamples.jl/$DEV_OR_STABLE",
+)
+
 println("Starting makedocs")
 
 bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:numeric)
 
+PAGES = [
+    "Home" => "index.md",
+    "Overview" => "overview.md",
+    "Examples" => "examples.md",
+    "API" => "api.md",
+    "References" => "references.md",
+    hide("externals.md"),
+]
+
 makedocs(;
-    plugins=[bib],
+    plugins=[bib, links],
     modules=[Krotov],
     authors=AUTHORS,
     sitename="Krotov.jl",
@@ -43,27 +63,14 @@ makedocs(;
                 "https://juliaquantumcontrol.github.io/QuantumControl.jl/dev/assets/topbar/topbar.js"
             ),
         ],
+        size_threshold_ignore=["externals.md"],
         mathengine=KaTeX(),
         footer="[$NAME.jl]($GITHUB) v$VERSION docs powered by [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl).",
     ),
-    pages=[
-        "Home" => "index.md",
-        "Overview" => "overview.md",
-        "Examples" => [
-            "List of Examples" => "examples/index.md",
-            "Example 1 (TLS)" => "examples/simple_state_to_state.md",
-            "Example 2 (Diss. Gate)" => "examples/rho_3states.md",
-            "Example 3 (Parametrization)" => "examples/state_to_state_parametrizations.md",
-            "Example 4 (PE)" => "examples/perfect_entanglers.md",
-        ],
-        "API" => "api.md",
-        "References" => "references.md",
-    ],
+    pages=PAGES,
     warnonly=true,
 )
 
 println("Finished makedocs")
-
-rm(joinpath(@__DIR__, "build", "examples", ".gitignore"))
 
 deploydocs(; repo="github.com/JuliaQuantumControl/Krotov.jl", devbranch="master")

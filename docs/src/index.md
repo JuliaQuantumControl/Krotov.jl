@@ -17,7 +17,7 @@ version_badge = "![v$VERSION](https://img.shields.io/badge/version-v$VERSION-gre
 Markdown.parse("$github_badge $version_badge")
 ```
 
-Implementation of [Krotov's method of optimal control](https://arxiv.org/abs/1008.5126) enhanced with automatic differentiation.
+Implementation of Krotov's method of optimal control [Krotov1996,SomloiCP1993,BartanaJCP1997,PalaoPRA2003,ReichJCP2012,GoerzSPP2019](@cite) enhanced with automatic differentiation [GoerzQ2022](@cite).
 
 Part of [`QuantumControl.jl`](https://github.com/JuliaQuantumControl/QuantumControl.jl#readme) and the [JuliaQuantumControl](https://github.com/JuliaQuantumControl) organization.
 
@@ -26,44 +26,12 @@ Part of [`QuantumControl.jl`](https://github.com/JuliaQuantumControl/QuantumCont
 
 ## Contents
 
-### Overview
-
 ```@contents
-Pages = [
-    "overview.md",
-]
-Depth = 1
+Depth = 2
+Pages = [pair[2] for pair in Main.PAGES[2:end-1]]
 ```
 
-### Examples
-
-```@contents
-Pages = [
-    "examples/simple_state_to_state.md",
-    "examples/rho_3states.md",
-    "examples/state_to_state_parametrizations.md",
-    "examples/perfect_entanglers.md",
-]
-Depth = 1
-```
-
-See also the [general examples](https://juliaquantumcontrol.github.io/QuantumControl.jl/stable/examples/) of the [QuantumControl](https://juliaquantumcontrol.github.io/QuantumControl.jl/stable/) package.
-
-
-### API
-
-```@contents
-Pages = [
-    "api.md",
-]
-Depth = 1
-```
 
 ## History
 
 See the [Releases](https://github.com/JuliaQuantumControl/Krotov.jl/releases) on Github.
-
-## References
-
-```@bibliography
-```
