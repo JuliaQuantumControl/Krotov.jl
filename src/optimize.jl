@@ -116,6 +116,14 @@ function optimize_krotov(problem)
     ϵ⁽ⁱ⁾ = wrk.pulses0
     ϵ⁽ⁱ⁺¹⁾ = wrk.pulses1
 
+    if haskey(wrk.kwargs, :chi)
+        chi! = wrk.kwargs[:chi]
+    else
+        # we only want to evaluate `make_chi` if `chi` is not a kwarg
+        J_T_func = wrk.kwargs[:J_T]
+        chi! = make_chi(J_T_func, wrk.objectives)
+    end
+
     if skip_initial_forward_propagation
         @info "Skipping initial forward propagation"
     else
@@ -145,7 +153,7 @@ function optimize_krotov(problem)
     try
         while !wrk.result.converged
             i = i + 1
-            krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
+            krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾, chi!)
             update_result!(wrk, i)
             update_hook!(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
             info_tuple = info_hook(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
@@ -207,11 +215,10 @@ _eval_mu(μ::Operator, _...) = μ
 _eval_mu(μ::AbstractMatrix, _...) = μ
 
 
-function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
+function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾, chi!)
 
     χ = [propagator.state for propagator in wrk.bw_propagators]
     J_T_func = wrk.kwargs[:J_T]
-    chi! = get(wrk.kwargs, :chi, make_chi(J_T_func, wrk.objectives))
     tlist = wrk.result.tlist
     N_T = length(tlist) - 1
     N = length(wrk.objectives)
