@@ -1,6 +1,6 @@
 using Test
 using StableRNGs
-using QuantumControl: hamiltonian, optimize, ControlProblem, Objective
+using QuantumControl: hamiltonian, optimize, ControlProblem, Trajectory
 using QuantumControl.Controls: get_controls
 using QuantumControlTestUtils.RandomObjects: random_matrix, random_state_vector
 
@@ -13,21 +13,21 @@ using QuantumControlTestUtils.RandomObjects: random_matrix, random_state_vector
 
     N = 10
     H = random_matrix(N; rng)
-    objectives = [
-        Objective(;
-            initial_state=random_state_vector(N; rng),
-            generator=H,
+    trajectories = [
+        Trajectory(
+            random_state_vector(N; rng),
+            H;
             target_state=random_state_vector(N; rng)
         )
     ]
 
-    @test length(get_controls(objectives)) == 0
+    @test length(get_controls(trajectories)) == 0
 
     tlist = collect(range(0; length=1001, step=1.0))
 
-    problem = ControlProblem(; objectives, tlist, pulse_options=Dict())
+    problem = ControlProblem(trajectories, tlist; pulse_options=Dict())
 
-    msg = "no controls in objectives: cannot optimize"
+    msg = "no controls in trajectories: cannot optimize"
     @test_throws ErrorException(msg) optimize(problem; method=:krotov)
 
 end

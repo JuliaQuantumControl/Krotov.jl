@@ -1,19 +1,19 @@
 import QuantumControlBase
 using QuantumControlBase: get_control_derivs
 using QuantumControlBase.QuantumPropagators.Controls: get_controls, discretize_on_midpoints
-using QuantumControlBase.QuantumPropagators: init_prop
+using QuantumControlBase: init_prop_trajectory
 using QuantumControlBase.QuantumPropagators.Storage: init_storage
 using ConcreteStructs
 
 # Krotov workspace (for internal use)
 @concrete terse struct KrotovWrk
 
-    # a copy of the objectives
-    objectives
+    # a copy of the trajectories
+    trajectories
 
-    # the adjoint objectives, containing the adjoint generators for the
+    # the adjoint trajectories, containing the adjoint generators for the
     # backward propagation
-    adjoint_objectives
+    adjoint_trajectories
 
     # The kwargs from the control problem
     kwargs
@@ -44,15 +44,15 @@ using ConcreteStructs
     result
 
     #################################
-    # scratch objects, per objective:
+    # scratch objects, per trajectory:
 
     control_derivs
 
-    fw_storage # forward storage array (per objective)
+    fw_storage # forward storage array (per trajectory)
 
-    fw_storage2 # forward storage array (per objective)
+    fw_storage2 # forward storage array (per trajectory)
 
-    bw_storage # backward storage array (per objective)
+    bw_storage # backward storage array (per trajectory)
 
     fw_propagators
 
@@ -65,13 +65,13 @@ end
 
 function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     use_threads = get(problem.kwargs, :use_threads, false)
-    objectives = [obj for obj in problem.objectives]
-    adjoint_objectives = [adjoint(obj) for obj in problem.objectives]
-    controls = get_controls(objectives)
+    trajectories = [traj for traj in problem.trajectories]
+    adjoint_trajectories = [adjoint(traj) for traj in problem.trajectories]
+    controls = get_controls(trajectories)
     if length(controls) == 0
-        error("no controls in objectives: cannot optimize")
+        error("no controls in trajectories: cannot optimize")
     end
-    control_derivs = [get_control_derivs(obj.generator, controls) for obj in objectives]
+    control_derivs = [get_control_derivs(traj.generator, controls) for traj in trajectories]
     tlist = problem.tlist
     kwargs = Dict(problem.kwargs)  # creates a shallow copy; ok to modify
     default_update_shape = get(problem.kwargs, :update_shape, t -> 1.0)
@@ -125,58 +125,39 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
     pulses1 = [copy(pulse) for pulse in pulses0]
     g_a_int = zeros(length(pulses0))
     # TODO: forward_storage only if g_b != 0
-    fw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
+    fw_storage = [init_storage(traj.initial_state, tlist) for traj in trajectories]
     # TODO: second forward storage only if second order
-    fw_storage2 = [init_storage(obj.initial_state, tlist) for obj in objectives]
-    bw_storage = [init_storage(obj.initial_state, tlist) for obj in objectives]
+    fw_storage2 = [init_storage(traj.initial_state, tlist) for traj in trajectories]
+    bw_storage = [init_storage(traj.initial_state, tlist) for traj in trajectories]
     kwargs[:piecewise] = true  # only accept piecewise propagators
-    fw_prop_method = [
-        QuantumControlBase.get_objective_prop_method(
-            obj,
-            :fw_prop_method,
-            :prop_method;
-            kwargs...
-        ) for obj in objectives
-    ]
-    bw_prop_method = [
-        QuantumControlBase.get_objective_prop_method(
-            obj,
-            :bw_prop_method,
-            :prop_method;
-            kwargs...
-        ) for obj in objectives
-    ]
-
+    _prefixes = ["prop_", "fw_prop_"]
     fw_propagators = [
-        begin
-            verbose &&
-                @info "Initializing fw-prop of objective $k with method $(fw_prop_method[k])"
-            init_prop(
-                obj.initial_state,
-                obj.generator,
-                tlist;
-                method=fw_prop_method[k],
-                kwargs...
-            )
-        end for (k, obj) in enumerate(objectives)
+        init_prop_trajectory(
+            traj,
+            tlist;
+            verbose,
+            _msg="Initializing fw-prop of trajectory $k",
+            _prefixes,
+            _filter_kwargs=true,
+            kwargs...
+        ) for (k, traj) in enumerate(trajectories)
     ]
+    _prefixes = ["prop_", "bw_prop_"]
     bw_propagators = [
-        begin
-            verbose &&
-                @info "Initializing bw-prop of objective $k with method $(bw_prop_method[k])"
-            init_prop(
-                obj.initial_state,
-                obj.generator,
-                tlist;
-                method=bw_prop_method[k],
-                backward=true,
-                kwargs...
-            )
-        end for (k, obj) in enumerate(adjoint_objectives)
+        init_prop_trajectory(
+            traj,
+            tlist;
+            verbose,
+            _msg="Initializing bw-prop of trajectory $k",
+            _prefixes,
+            _filter_kwargs=true,
+            bw_prop_backward=true,  # will filter to `backward=true`
+            kwargs...
+        ) for (k, traj) in enumerate(adjoint_trajectories)
     ]
     return KrotovWrk(
-        objectives,
-        adjoint_objectives,
+        trajectories,
+        adjoint_trajectories,
         kwargs,
         controls,
         pulses0,

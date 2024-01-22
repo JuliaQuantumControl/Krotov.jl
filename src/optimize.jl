@@ -1,9 +1,9 @@
 using QuantumControlBase.QuantumPropagators.Generators: Operator
 using QuantumControlBase.QuantumPropagators.Controls: discretize, evaluate
-using QuantumControlBase.QuantumPropagators: prop_step!, reinit_prop!
+using QuantumControlBase.QuantumPropagators: prop_step!, reinit_prop!, propagate
 using QuantumControlBase.QuantumPropagators.Storage: write_to_storage!, get_from_storage!
 using QuantumControlBase: make_chi, set_atexit_save_optimization
-using QuantumControlBase: @threadsif
+using QuantumControlBase: @threadsif, Trajectory
 using LinearAlgebra
 using Printf
 
@@ -14,18 +14,18 @@ import QuantumControlBase: optimize
 result = optimize(problem; method=:krotov, kwargs...)
 ```
 
-optimizes the given
-control [`problem`](@ref QuantumControlBase.ControlProblem) using Krotov's
-method, returning a [`KrotovResult`](@ref).
+optimizes the given control [`problem`](@ref QuantumControlBase.ControlProblem)
+using Krotov's method, returning a [`KrotovResult`](@ref).
 
 Keyword arguments that control the optimization are taken from the keyword
-arguments used in the instantiation of `problem`.
+arguments used in the instantiation of `problem`; any of these can be overriden
+with explicit keyword arguments to `optimize`.
 
 # Required problem keyword arguments
 
-* `J_T`: A function `J_T(ϕ, objectives)` that evaluates the final time
+* `J_T`: A function `J_T(ϕ, trajectories)` that evaluates the final time
   functional from a list `ϕ` of forward-propagated states and
-  `problem.objectives`.
+  `problem.trajectories`.
 
 # Recommended problem keyword arguments
 
@@ -44,7 +44,7 @@ The following keyword arguments are supported (with default values):
 * `pulse_options`: A dictionary that maps every control (as obtained by
   [`get_controls`](@ref
   QuantumControlBase.QuantumPropagators.Controls.get_controls) from the
-  `problem.objectives`) to the following dict:
+  `problem.trajectories`) to the following dict:
 
   - `:lambda_a`:  The value for inverse Krotov step width λₐ
   - `:update_shape`: A function `S(t)` for the "update shape" that scales
@@ -52,7 +52,7 @@ The following keyword arguments are supported (with default values):
 
   This overrides the global `lambda_a` and `update_shape` arguments.
 
-* `chi`: A function `chi!(χ, ϕ, objectives)` what receives a list `ϕ`
+* `chi`: A function `chi!(χ, ϕ, trajectories)` what receives a list `ϕ`
   of the forward propagated states and must set ``|χₖ⟩ = -∂J_T/∂⟨ϕₖ|``. If not
   given, it will be automatically determined from `J_T` via [`make_chi`](@ref
   QuantumControlBase.make_chi) with the default parameters.
@@ -60,13 +60,12 @@ The following keyword arguments are supported (with default values):
   not given, the first-order Krotov method is used.
 * `iter_start=0`: the initial iteration number
 * `iter_stop=5000`: the maximum iteration number
-* `prop_method`/`fw_prop_method`/`bw_prop_method`: The propagation method to
-  use for each objective, see below.
+* `prop_method`: The propagation method to use for each trajectory, see below.
 * `update_hook`: A function that receives the Krotov workspace, the iteration
   number, the list of updated pulses and the list of guess pulses as
   positional arguments. The function may mutate any of its arguments. This may
-  be used e.g. to apply a spectral filter to the updated pulses, or to update
-  propagation workspaces inside the Krotov workspace.
+  be used e.g. to apply a spectral filter to the updated pulses or to perform
+  similar manipulations.
 * `info_hook`: A function (or tuple of functions) that receives the same
   arguments as `update_hook`, in order to write information about the current
   iteration to the screen or to a file. The default `info_hook` prints a table
@@ -81,17 +80,23 @@ The following keyword arguments are supported (with default values):
   `update_hook` and `info_hook`.
 * `verbose=false`: If `true`, print information during initialization
 
-The propagation method for the forward propagation of each objective is
-determined by the first available item of the following:
+# Trajectory propagation
 
-* a `fw_prop_method` keyword argument
-* a `prop_method` keyword argument
-* a property `fw_prop_method` of the objective
-* a property `prop_method` of the objective
-* the value `:auto`
+Krotov's method involves the forward and backward propagation for every
+[`Trajectory`](@ref) in the `problem`. The keyword arguments for each
+propagation (see [`propagate`](@ref)) are determined from any properties of
+each [`Trajectory`](@ref) that have a `prop_` prefix, cf.
+[`init_prop_trajectory`](@ref).
 
-The propagation method for the backward propagation is determined similarly,
-but with `bw_prop_method` instead of `fw_prop_method`.
+In situations where different parameters are required for the forward and
+backward propagation, instead of the `prop_` prefix, the `fw_prop_` and
+`bw_prop_` prefix can be used, respectively. These override any setting with
+the `prop_` prefix. This applies both to the properties of each
+[`Trajectory`](@ref) and the problem keyword arguments.
+
+Note that the propagation method for each propagation must be specified. In
+most cases, it is sufficient (and recommended) to pass a global `prop_method`
+problem keyword argument.
 """
 optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
 optimize(problem, method::Val{:Krotov}) = optimize_krotov(problem)
@@ -121,14 +126,14 @@ function optimize_krotov(problem)
     else
         # we only want to evaluate `make_chi` if `chi` is not a kwarg
         J_T_func = wrk.kwargs[:J_T]
-        chi! = make_chi(J_T_func, wrk.objectives)
+        chi! = make_chi(J_T_func, wrk.trajectories)
     end
 
     if skip_initial_forward_propagation
         @info "Skipping initial forward propagation"
     else
-        @threadsif wrk.use_threads for (k, obj) in collect(enumerate(wrk.objectives))
-            krotov_initial_fw_prop!(ϵ⁽ⁱ⁾, obj.initial_state, k, wrk)
+        @threadsif wrk.use_threads for (k, traj) in collect(enumerate(wrk.trajectories))
+            krotov_initial_fw_prop!(ϵ⁽ⁱ⁾, traj.initial_state, k, wrk)
         end
     end
 
@@ -221,7 +226,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾, chi!)
     J_T_func = wrk.kwargs[:J_T]
     tlist = wrk.result.tlist
     N_T = length(tlist) - 1
-    N = length(wrk.objectives)
+    N = length(wrk.trajectories)
     L = length(wrk.controls)
     X = wrk.bw_storage
     Φ = wrk.fw_storage  # TODO: pass in Φ₁, Φ₀ as parameters
@@ -233,7 +238,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾, chi!)
 
     # backward propagation
     ϕ = [propagator.state for propagator in wrk.fw_propagators]
-    chi!(χ, ϕ, wrk.objectives)
+    chi!(χ, ϕ, wrk.trajectories)
     @threadsif wrk.use_threads for k = 1:N
         wrk.bw_propagators[k].parameters = guess_parameters
         reinit_prop!(wrk.bw_propagators[k], χ[k]; transform_control_ranges)
@@ -248,7 +253,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾, chi!)
 
     @threadsif wrk.use_threads for k = 1:N
         wrk.fw_propagators[k].parameters = updated_parameters
-        local ϕₖ = wrk.objectives[k].initial_state
+        local ϕₖ = wrk.trajectories[k].initial_state
         reinit_prop!(wrk.fw_propagators[k], ϕₖ; transform_control_ranges)
     end
 
@@ -262,7 +267,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾, chi!)
         # TODO: we could add a self-consistent loop here for ϵₙ⁽ⁱ⁺¹⁾
         Δuₙ = zeros(L)  # Δu is Δϵ without (Sₗₙ/λₐ) factor
         for l = 1:L  # `l` is the index for the different controls
-            for k = 1:N  # k is the index over the objectives
+            for k = 1:N  # k is the index over the trajectories
                 ϕₖ = wrk.fw_propagators[k].state
                 μₖₗ = wrk.control_derivs[k][l]
                 if !isnothing(μₖₗ)
@@ -297,7 +302,7 @@ function update_result!(wrk::KrotovWrk, i::Int64)
     for k in eachindex(wrk.fw_propagators)
         res.states[k] = wrk.fw_propagators[k].state
     end
-    res.J_T = J_T_func(res.states, wrk.objectives)
+    res.J_T = J_T_func(res.states, wrk.trajectories)
     (i > 0) && (res.iter = i)
     if i >= res.iter_stop
         res.converged = true

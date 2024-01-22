@@ -17,16 +17,16 @@ using QuantumControl.Functionals: J_T_re
     # call `discretize_on_midpoints` internally
     problem = dummy_control_problem(; pulses_as_controls=true)
     nt = length(problem.tlist)
-    guess_pulse = QuantumControl.Controls.get_controls(problem.objectives)[1]
+    guess_pulse = QuantumControl.Controls.get_controls(problem.trajectories)[1]
     @test length(guess_pulse) == nt - 1
-    guess_pulse_copy = copy(QuantumControl.Controls.get_controls(problem.objectives)[1])
+    guess_pulse_copy = copy(QuantumControl.Controls.get_controls(problem.trajectories)[1])
 
     # Optimizing this should not modify the original generator in any way
     res = optimize(problem; method=:krotov, J_T=J_T_re, iter_stop=2)
     opt_control = res.optimized_controls[1]
     @test length(opt_control) == nt  # optimized_controls are always *on* tlist
     opt_pulse = discretize_on_midpoints(opt_control, problem.tlist)
-    post_pulse = QuantumControl.Controls.get_controls(problem.objectives)[1]
+    post_pulse = QuantumControl.Controls.get_controls(problem.trajectories)[1]
 
     # * The generator should still have the exact same objects as controls
     @test guess_pulse ≡ post_pulse
