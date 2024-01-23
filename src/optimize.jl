@@ -11,7 +11,8 @@ import QuantumControlBase: optimize
 
 @doc raw"""
 ```julia
-result = optimize(problem; method=:krotov, kwargs...)
+using Krotov
+result = optimize(problem; method=Krotov, kwargs...)
 ```
 
 optimizes the given control [`problem`](@ref QuantumControlBase.ControlProblem)
@@ -98,11 +99,11 @@ Note that the propagation method for each propagation must be specified. In
 most cases, it is sufficient (and recommended) to pass a global `prop_method`
 problem keyword argument.
 """
-optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
 optimize(problem, method::Val{:Krotov}) = optimize_krotov(problem)
+optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
 
 """
-See [`optimize(problem; method=:krotov, kwargs...)`](@ref optimize(::Any, ::Val{:krotov})).
+See [`optimize(problem; method=Krotov, kwargs...)`](@ref optimize(::Any, ::Val{:krotov})).
 """
 function optimize_krotov(problem)
     sigma = get(problem.kwargs, :sigma, nothing)

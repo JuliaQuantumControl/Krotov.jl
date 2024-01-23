@@ -3,6 +3,7 @@ using StableRNGs
 using QuantumControl: hamiltonian, optimize, ControlProblem, Trajectory
 using QuantumControl.Controls: get_controls
 using QuantumControlTestUtils.RandomObjects: random_matrix, random_state_vector
+using Krotov
 
 @testset "empty optimization" begin
 
@@ -28,6 +29,6 @@ using QuantumControlTestUtils.RandomObjects: random_matrix, random_state_vector
     problem = ControlProblem(trajectories, tlist; pulse_options=Dict())
 
     msg = "no controls in trajectories: cannot optimize"
-    @test_throws ErrorException(msg) optimize(problem; method=:krotov)
+    @test_throws ErrorException(msg) optimize(problem; method=Krotov)
 
 end
