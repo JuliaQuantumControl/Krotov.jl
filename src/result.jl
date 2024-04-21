@@ -21,44 +21,44 @@ mutable struct KrotovResult{STST}
     records::Vector{Tuple}  # storage for info_hook to write data into at each iteration
     converged::Bool
     message::String
+end
 
-    function KrotovResult(problem)
-        tlist = problem.tlist
-        controls = get_controls(problem.trajectories)
-        iter_start = get(problem.kwargs, :iter_start, 0)
-        iter_stop = get(problem.kwargs, :iter_stop, 5000)
-        iter = iter_start
-        secs = 0
-        tau_vals = Vector{ComplexF64}()
-        guess_controls = [discretize(control, tlist) for control in controls]
-        J_T = 0.0
-        J_T_prev = 0.0
-        optimized_controls = [copy(guess) for guess in guess_controls]
-        states = [similar(traj.initial_state) for traj in problem.trajectories]
-        start_local_time = now()
-        end_local_time = now()
-        records = Vector{Tuple}()
-        converged = false
-        message = "in progress"
-        new{eltype(states)}(
-            tlist,
-            iter_start,
-            iter_stop,
-            iter,
-            secs,
-            tau_vals,
-            J_T,
-            J_T_prev,
-            guess_controls,
-            optimized_controls,
-            states,
-            start_local_time,
-            end_local_time,
-            records,
-            converged,
-            message
-        )
-    end
+function KrotovResult(problem)
+    tlist = problem.tlist
+    controls = get_controls(problem.trajectories)
+    iter_start = get(problem.kwargs, :iter_start, 0)
+    iter_stop = get(problem.kwargs, :iter_stop, 5000)
+    iter = iter_start
+    secs = 0
+    tau_vals = Vector{ComplexF64}()
+    guess_controls = [discretize(control, tlist) for control in controls]
+    J_T = 0.0
+    J_T_prev = 0.0
+    optimized_controls = [copy(guess) for guess in guess_controls]
+    states = [similar(traj.initial_state) for traj in problem.trajectories]
+    start_local_time = now()
+    end_local_time = now()
+    records = Vector{Tuple}()
+    converged = false
+    message = "in progress"
+    KrotovResult{eltype(states)}(
+        tlist,
+        iter_start,
+        iter_stop,
+        iter,
+        secs,
+        tau_vals,
+        J_T,
+        J_T_prev,
+        guess_controls,
+        optimized_controls,
+        states,
+        start_local_time,
+        end_local_time,
+        records,
+        converged,
+        message
+    )
 end
 
 Base.show(io::IO, r::KrotovResult) = print(io, "KrotovResult<$(r.message)>")
