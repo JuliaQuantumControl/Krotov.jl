@@ -223,7 +223,10 @@ _eval_mu(μ::AbstractMatrix, _...) = μ
 
 function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾, chi!)
 
-    χ = [propagator.state for propagator in wrk.bw_propagators]
+    χ = [
+        (ismutable(propagator.state) ? propagator.state : similar(propagator.state)) for
+        propagator in wrk.bw_propagators
+    ]
     J_T_func = wrk.kwargs[:J_T]
     tlist = wrk.result.tlist
     N_T = length(tlist) - 1
