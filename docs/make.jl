@@ -23,6 +23,11 @@ if endswith(VERSION, "dev")
 end
 
 links = InterLinks(
+    "Julia" => (
+        "https://docs.julialang.org/en/v1/",
+        "https://docs.julialang.org/en/v1/objects.inv",
+        joinpath(@__DIR__, "src", "inventories", "Julia.toml"),
+    ),
     "TimerOutputs" => (
         "https://github.com/KristofferC/TimerOutputs.jl",
         joinpath(@__DIR__, "src", "inventories", "TimerOutputs.toml")
@@ -31,6 +36,16 @@ links = InterLinks(
     "QuantumControl" => "https://juliaquantumcontrol.github.io/QuantumControl.jl/$DEV_OR_STABLE",
     "GRAPE" => "https://juliaquantumcontrol.github.io/GRAPE.jl/$DEV_OR_STABLE",
     "Examples" => "https://juliaquantumcontrol.github.io/QuantumControlExamples.jl/$DEV_OR_STABLE",
+    "ComponentArrays" => (
+        "https://jonniedie.github.io/ComponentArrays.jl/stable/",
+        "https://jonniedie.github.io/ComponentArrays.jl/stable/objects.inv",
+        joinpath(@__DIR__, "src", "inventories", "ComponentArrays.toml")
+    ),
+    "RecursiveArrayTools" => (
+        "https://docs.sciml.ai/RecursiveArrayTools/stable/",
+        "https://docs.sciml.ai/RecursiveArrayTools/stable/objects.inv",
+        joinpath(@__DIR__, "src", "inventories", "RecursiveArrayTools.toml")
+    ),
 )
 
 println("Starting makedocs")
