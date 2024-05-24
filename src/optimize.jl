@@ -80,6 +80,12 @@ The following keyword arguments are supported (with default values):
   functions with `∘`. The convergence check is performed after any calls to
   `update_hook` and `info_hook`.
 * `verbose=false`: If `true`, print information during initialization
+* `rethrow_exceptions`: By default, any exception ends the optimization, but
+  still returns a [`KrotovResult`](@ref) that captures the message associated
+  with the exception. This is to avoid losing results from a long-running
+  optimization when an exception occurs in a later iteration. If
+  `rethrow_exceptions=true`, instead of capturing the exception, it will be
+  thrown normally.
 
 # Trajectory propagation
 
@@ -168,6 +174,9 @@ function optimize_krotov(problem)
             ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾ = ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾
         end
     catch exc
+        if get(problem.kwargs, :rethrow_exceptions, false)
+            rethrow()
+        end
         # Primarily, this is intended to catch Ctrl-C in interactive
         # optimizations (InterruptException)
         exc_msg = sprint(showerror, exc)
