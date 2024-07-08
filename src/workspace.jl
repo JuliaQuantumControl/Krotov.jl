@@ -3,61 +3,56 @@ using QuantumControlBase: get_control_derivs
 using QuantumControlBase.QuantumPropagators.Controls: get_controls, discretize_on_midpoints
 using QuantumControlBase: init_prop_trajectory
 using QuantumControlBase.QuantumPropagators.Storage: init_storage
-using ConcreteStructs
+using ConcreteStructs: @concrete
 
-# Krotov workspace (for internal use)
-@concrete terse struct KrotovWrk
+"""Krotov workspace.
 
-    # a copy of the trajectories
+The workspace is for internal use. However, it is also accessible in a
+`callback` function. The callback may use or modify some of the following
+attributes:
+
+* `trajectories`: a copy of the trajectories defining the control problem
+* `adjoint_trajectories`: The `trajectories` with the adjoint generator
+* `kwargs`: The keyword arguments from the [`ControlProblem`](@ref) or the
+  call to [`optimize`](@ref).
+* `controls`: A tuple of the original controls (probably functions)
+* `ga_a_int`: The current value of ``∫gₐ(t)dt`` for each control
+* `update_shapes`: The update shapes ``S(t)`` for each pulse, discretized on
+  the intervals of the time grid.
+* `lambda_vals`: The current value of λₐ for each control
+* `result`: The current result object
+* `fw_storage`: The storage of states for the forward propagation
+* `fw_propagators`: The propagators used for the forward propagation
+* `bw_propagators`: The propagators used for the backward propagation
+* `use_threads`: Flag indicating whether the propagations are performed in
+  parallel.
+"""
+mutable struct KrotovWrk
+
     trajectories
-
-    # the adjoint trajectories, containing the adjoint generators for the
-    # backward propagation
     adjoint_trajectories
-
-    # The kwargs from the control problem
     kwargs
-
-    # Tuple of the original controls (probably functions)
     controls
-
     # storage for controls discretized on intervals of tlist
     pulses0::Vector{Vector{Float64}}
-
     # second pulse storage: pulses0 and pulses1 alternate in storing the guess
     # pulses and optimized pulses in each iteration
     pulses1::Vector{Vector{Float64}}
-
-    # values of ∫gₐ(t)dt for each pulse
     g_a_int::Vector{Float64}
-
-    # update shapes S(t) for each pulse, discretized on intervals
     update_shapes::Vector{Vector{Float64}}
-
     lambda_vals::Vector{Float64}
-
     # map of controls to options
-    pulse_options
-
-    # Result object
-
     result
 
     #################################
     # scratch objects, per trajectory:
 
     control_derivs
-
     fw_storage # forward storage array (per trajectory)
-
     fw_storage2 # forward storage array (per trajectory)
-
     bw_storage # backward storage array (per trajectory)
-
     fw_propagators
-
     bw_propagators
-
     use_threads::Bool
 
 end
@@ -85,7 +80,7 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
             @warn("`update_shape` is ignored due to given `pulse_options`")
         end
         if :lambda_a in keys(kwargs)
-            @warn("`lambda_a=$lambda_a` is ignored due to given `pulse_options`")
+            @warn("`lambda_a=$(kwargs[:lambda_a])` is ignored due to given `pulse_options`")
         end
     else
         if (:update_shape ∉ keys(kwargs)) && (:lambda_a ∉ keys(kwargs))
@@ -165,7 +160,7 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
         g_a_int,
         update_shapes,
         lambda_vals,
-        pulse_options,
+        # pulse_options, # XXX
         result,
         control_derivs,
         fw_storage,

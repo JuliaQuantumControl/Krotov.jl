@@ -17,5 +17,10 @@ unicodeplots()
         include("test_empty_optimization.jl")
     end
 
+    println("\n* Iterations (test_iterations.jl)")
+    @time @safetestset "Iterations" begin
+        include("test_iterations.jl")
+    end
+
 end
 nothing

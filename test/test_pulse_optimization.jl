@@ -16,7 +16,7 @@ using Krotov
     # The problem occurs when the controls are actually pulses (on the
     # midpoints of the time grid), so that the optimization does not have to
     # call `discretize_on_midpoints` internally
-    problem = dummy_control_problem(; pulses_as_controls=true)
+    problem = dummy_control_problem(; pulses_as_controls=true, rng)
     nt = length(problem.tlist)
     guess_pulse = QuantumControl.Controls.get_controls(problem.trajectories)[1]
     @test length(guess_pulse) == nt - 1
