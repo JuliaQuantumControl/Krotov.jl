@@ -12,16 +12,19 @@ The attributes of a `KrotovResult` object include
 * `iter`:  The number of the current iteration
 * `J_T`: The value of the final-time functional in the current iteration
 * `J_T_prev`: The value of the final-time functional in the previous iteration
-* `tlist`: The time grid on which the control are discetized.
+* `tlist`: The time grid on which the control are discretized.
 * `guess_controls`: A vector of the original control fields (each field
   discretized to the points of `tlist`)
-* optimized_controls: A vector of the optimized control fileds in the current
-  iterations
-* records: A vector of tuples with values returned by a `callback` routine
+* `optimized_controls`: A vector of the optimized control fields. Calculated only
+  at the end of the optimization, not after each iteration.
+* `tau_vals`: For any trajectory that defines a `target_state`, the complex
+  overlap of that target state with the propagated state. For any trajectory
+  for which the `target_state` is `nothing`, the value is zero.
+* `records`: A vector of tuples with values returned by a `callback` routine
   passed to [`optimize`](@ref)
-* converged: A boolean flag on whether the optimization is converged. This
+* `converged`: A boolean flag on whether the optimization is converged. This
   may be set to `true` by a `check_convergence` function.
-* message: A message string to explain the reason for convergence. This may be
+* `message`: A message string to explain the reason for convergence. This may be
   set by a `check_convergence` function.
 
 All of the above attributes may be referenced in a `check_convergence` function
@@ -53,7 +56,7 @@ function KrotovResult(problem)
     iter_stop = get(problem.kwargs, :iter_stop, 5000)
     iter = iter_start
     secs = 0
-    tau_vals = Vector{ComplexF64}()
+    tau_vals = zeros(ComplexF64, length(problem.trajectories))
     guess_controls = [discretize(control, tlist) for control in controls]
     J_T = 0.0
     J_T_prev = 0.0

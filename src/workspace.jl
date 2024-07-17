@@ -41,6 +41,8 @@ mutable struct KrotovWrk
     g_a_int::Vector{Float64}
     update_shapes::Vector{Vector{Float64}}
     lambda_vals::Vector{Float64}
+    J_T_takes_tau::Bool  # Does J_T have a tau keyword arg?
+    chi_takes_tau::Bool # Does chi have a tau keyword arg?
     # map of controls to options
     result
 
@@ -150,6 +152,21 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
             kwargs...
         ) for (k, traj) in enumerate(adjoint_trajectories)
     ]
+    J_T_takes_tau = false
+    if haskey(kwargs, :J_T)
+        J_T = kwargs[:J_T]
+    else
+        msg = "`optimize` for `method=Krotov` must be passed the functional `J_T`."
+        throw(ArgumentError(msg))
+    end
+    J_T_takes_tau =
+        hasmethod(J_T, Tuple{typeof(result.states),typeof(trajectories)}, (:tau,))
+    if !haskey(kwargs, :chi)
+        kwargs[:chi] = make_chi(J_T, trajectories)
+    end
+    chi = kwargs[:chi]
+    chi_takes_tau =
+        hasmethod(chi, Tuple{typeof(result.states),typeof(trajectories)}, (:tau,))
     return KrotovWrk(
         trajectories,
         adjoint_trajectories,
@@ -160,7 +177,8 @@ function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
         g_a_int,
         update_shapes,
         lambda_vals,
-        # pulse_options, # XXX
+        J_T_takes_tau,
+        chi_takes_tau,
         result,
         control_derivs,
         fw_storage,
