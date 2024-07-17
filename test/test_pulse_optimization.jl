@@ -1,15 +1,17 @@
 using Test
-using QuantumControl
-using LinearAlgebra
-using StableRNGs
-using QuantumControlTestUtils.DummyOptimization: dummy_control_problem
-using QuantumControl.Controls: get_controls, discretize_on_midpoints
-using QuantumControl.Functionals: J_T_re
-using Krotov
+using TestItems
 
-@testset "pulse optimization" begin
+@testitem "pulse optimization" begin
 
     # Test the resolution of #28
+
+    using QuantumControl
+    using LinearAlgebra
+    using StableRNGs
+    using QuantumControlTestUtils.DummyOptimization: dummy_control_problem
+    using QuantumControl.Controls: get_controls, discretize_on_midpoints
+    using QuantumControl.Functionals: J_T_re
+    using Krotov
 
     rng = StableRNG(1244561944)
 

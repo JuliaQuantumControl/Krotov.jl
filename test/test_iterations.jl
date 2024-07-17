@@ -1,18 +1,17 @@
 using Test
-using QuantumControl: optimize
-using StableRNGs
-using LinearAlgebra: norm
-using LinearAlgebra.BLAS: scal!
-using Krotov
-using QuantumControlTestUtils.DummyOptimization: dummy_control_problem
-using QuantumControl.Functionals: J_T_ss
-using IOCapture
+using TestItems
 
-PASSTHROUGH = false
-
-@testset "iter_start_stop" begin
+@testitem "iter_start_stop" begin
     # Test that setting iter_start and iter_stop in fact restricts the
     # optimization to those numbers
+
+    using QuantumControl: optimize
+    using StableRNGs
+    using Krotov
+    using QuantumControlTestUtils.DummyOptimization: dummy_control_problem
+    using QuantumControl.Functionals: J_T_ss
+    using IOCapture
+
     rng = StableRNG(1244568944)
     problem = dummy_control_problem(;
         iter_start=10,
@@ -23,7 +22,7 @@ PASSTHROUGH = false
         J_T=J_T_ss,
         store_iter_info=["iter.", "J_T"]
     )
-    captured = IOCapture.capture(passthrough=PASSTHROUGH) do
+    captured = IOCapture.capture(passthrough=false) do
         optimize(problem; method=Krotov, iter_stop=12)
     end
     res = captured.value
@@ -32,12 +31,24 @@ PASSTHROUGH = false
     @test res.iter_stop == 12
     iters = [values[1] for values in res.records]
     @test iters == [0, 11, 12]
+
 end
 
 
-@testset "callback" begin
+@testitem "callback" begin
+
+    using QuantumControl: optimize
+    using LinearAlgebra: norm
+    using LinearAlgebra.BLAS: scal!
+    using Krotov
+    using StableRNGs
+    using QuantumControlTestUtils.DummyOptimization: dummy_control_problem
+    using QuantumControl.Functionals: J_T_ss
+    using IOCapture
 
     rng = StableRNG(1244568944)
+    PASSTHROUGH = false
+
 
     function callback1(_, iter, args...)
         println("This is callback 1 for iter $iter")

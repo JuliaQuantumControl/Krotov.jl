@@ -1,11 +1,13 @@
 using Test
-using StableRNGs
-using QuantumControl: hamiltonian, optimize, ControlProblem, Trajectory
-using QuantumControl.Controls: get_controls
-using QuantumControlTestUtils.RandomObjects: random_matrix, random_state_vector
-using Krotov
+using TestItems
 
-@testset "empty optimization" begin
+@testitem "empty optimization" begin
+
+    using StableRNGs
+    using QuantumControl: optimize, ControlProblem, Trajectory
+    using QuantumControl.Controls: get_controls
+    using QuantumControlTestUtils.RandomObjects: random_matrix, random_state_vector
+    using Krotov
 
     # Test that trying to run an optimization without any controls produces a
     # meaningful error message
