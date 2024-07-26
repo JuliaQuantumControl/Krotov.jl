@@ -1,5 +1,6 @@
 using QuantumControlBase.QuantumPropagators.Generators: Operator
 using QuantumControlBase.QuantumPropagators.Controls: discretize, evaluate
+using QuantumControlBase.QuantumPropagators.Interfaces: supports_inplace
 using QuantumControlBase.QuantumPropagators: prop_step!, reinit_prop!, propagate
 using QuantumControlBase.QuantumPropagators.Storage:
     write_to_storage!, get_from_storage!, get_from_storage
@@ -282,7 +283,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
     for n = 1:N_T  # `n` is the index for the time interval
         dt = tlist[n+1] - tlist[n]
         for k = 1:N
-            if ismutable(χ[k])
+            if supports_inplace(χ[k])
                 get_from_storage!(χ[k], X[k], n)
             else
                 χ[k] = get_from_storage(X[k], n)
