@@ -1,6 +1,6 @@
 # Krotov.jl
 
-[![Version](https://juliahub.com/docs/Krotov/version.svg)](https://juliahub.com/ui/Packages/Krotov/3mCxK)
+[![Version](https://juliahub.com/docs/General/Krotov/stable/version.svg)](https://juliahub.com/ui/Packages/General/Krotov)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaquantumcontrol.github.io/Krotov.jl/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaquantumcontrol.github.io/Krotov.jl/dev)
 [![Build Status](https://github.com/JuliaQuantumControl/Krotov.jl/workflows/CI/badge.svg)](https://github.com/JuliaQuantumControl/Krotov.jl/actions)
