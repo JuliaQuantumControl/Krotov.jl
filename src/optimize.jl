@@ -1,16 +1,16 @@
-using QuantumControlBase.QuantumPropagators.Generators: Operator
-using QuantumControlBase.QuantumPropagators.Controls: discretize, evaluate
-using QuantumControlBase.QuantumPropagators.Interfaces: supports_inplace
-using QuantumControlBase.QuantumPropagators: prop_step!, reinit_prop!, propagate
-using QuantumControlBase.QuantumPropagators.Storage:
+using QuantumControl.QuantumPropagators.Generators: Operator
+using QuantumControl.QuantumPropagators.Controls: discretize, evaluate
+using QuantumControl.QuantumPropagators.Interfaces: supports_inplace
+using QuantumControl.QuantumPropagators: prop_step!, reinit_prop!, propagate
+using QuantumControl.QuantumPropagators.Storage:
     write_to_storage!, get_from_storage!, get_from_storage
-using QuantumControlBase: make_chi, set_atexit_save_optimization
-using QuantumControlBase: taus!
-using QuantumControlBase: @threadsif, Trajectory
+using QuantumControl.Functionals: make_chi, taus!
+using QuantumControl: set_atexit_save_optimization
+using QuantumControl: @threadsif, Trajectory
 using LinearAlgebra
 using Printf
 
-import QuantumControlBase: optimize, make_print_iters
+import QuantumControl: optimize, make_print_iters
 
 @doc raw"""
 ```julia
@@ -18,7 +18,7 @@ using Krotov
 result = optimize(problem; method=Krotov, kwargs...)
 ```
 
-optimizes the given control [`problem`](@ref QuantumControlBase.ControlProblem)
+optimizes the given control [`problem`](@ref QuantumControl.ControlProblem)
 using Krotov's method, returning a [`KrotovResult`](@ref).
 
 Keyword arguments that control the optimization are taken from the keyword
@@ -50,7 +50,7 @@ The following keyword arguments are supported (with default values):
 
 * `pulse_options`: A dictionary that maps every control (as obtained by
   [`get_controls`](@ref
-  QuantumControlBase.QuantumPropagators.Controls.get_controls) from the
+  QuantumControl.QuantumPropagators.Controls.get_controls) from the
   `problem.trajectories`) to the following dict:
 
   - `:lambda_a`:  The value for inverse Krotov step width λₐ.

@@ -1,4 +1,4 @@
-using QuantumControlBase
+using QuantumControl
 using QuantumPropagators
 using Krotov
 using Documenter

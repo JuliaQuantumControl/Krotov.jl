@@ -1,8 +1,8 @@
-import QuantumControlBase
-using QuantumControlBase: get_control_derivs
-using QuantumControlBase.QuantumPropagators.Controls: get_controls, discretize_on_midpoints
-using QuantumControlBase: init_prop_trajectory
-using QuantumControlBase.QuantumPropagators.Storage: init_storage
+import QuantumControl
+using QuantumControl.Controls: get_control_derivs
+using QuantumControl.QuantumPropagators.Controls: get_controls, discretize_on_midpoints
+using QuantumControl: init_prop_trajectory
+using QuantumControl.QuantumPropagators.Storage: init_storage
 using ConcreteStructs: @concrete
 
 """Krotov workspace.
@@ -60,7 +60,7 @@ mutable struct KrotovWrk
 end
 
 
-function KrotovWrk(problem::QuantumControlBase.ControlProblem; verbose=false)
+function KrotovWrk(problem::QuantumControl.ControlProblem; verbose=false)
     use_threads = get(problem.kwargs, :use_threads, false)
     trajectories = [traj for traj in problem.trajectories]
     adjoint_trajectories = [adjoint(traj) for traj in problem.trajectories]

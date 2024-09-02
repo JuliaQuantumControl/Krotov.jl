@@ -1,5 +1,5 @@
 ```@autodocs
-Modules = [QuantumControlBase]
+Modules = [QuantumControl]
 ```
 
 ```@autodocs

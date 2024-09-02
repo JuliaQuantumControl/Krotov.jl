@@ -1,4 +1,4 @@
-using QuantumControlBase.QuantumPropagators.Controls: get_controls, discretize
+using QuantumControl.QuantumPropagators.Controls: get_controls, discretize
 using Printf
 using Dates
 
@@ -28,7 +28,7 @@ The attributes of a `KrotovResult` object include
   set by a `check_convergence` function.
 
 All of the above attributes may be referenced in a `check_convergence` function
-passed to [`optimize(problem; method=Krotov)`](@ref QuantumControlBase.optimize(::ControlProblem, ::Val{:Krotov}))
+passed to [`optimize(problem; method=Krotov)`](@ref QuantumControl.optimize(::ControlProblem, ::Val{:Krotov}))
 """
 mutable struct KrotovResult{STST}
     tlist::Vector{Float64}
