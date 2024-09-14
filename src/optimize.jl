@@ -7,6 +7,7 @@ using QuantumControl.QuantumPropagators.Storage:
 using QuantumControl.Functionals: make_chi, taus!
 using QuantumControl: set_atexit_save_optimization
 using QuantumControl: @threadsif, Trajectory
+using QuantumControl.QuantumPropagators: _StoreState
 using LinearAlgebra
 using Printf
 
@@ -219,9 +220,13 @@ function krotov_initial_fw_prop!(ϵ⁽⁰⁾, ϕₖ, k, wrk)
     N_T = length(wrk.result.tlist) - 1
     for n = 1:N_T
         Ψₖ = prop_step!(wrk.fw_propagators[k])
+        if haskey(wrk.fw_prop_kwargs[k], :callback)
+            local cb = wrk.fw_prop_kwargs[k][:callback]
+            local observables = get(wrk.fw_prop_kwargs[k], :observables, _StoreState())
+            cb(wrk.fw_propagators[k], observables)
+        end
         (Φ₀ !== nothing) && write_to_storage!(Φ₀, n + 1, Ψₖ)
     end
-    # TODO: allow a custom prop_step! routine
 end
 
 
@@ -267,6 +272,11 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         write_to_storage!(X[k], N_T + 1, χ[k])
         for n = N_T:-1:1
             local χₖ = prop_step!(wrk.bw_propagators[k])
+            if haskey(wrk.bw_prop_kwargs[k], :callback)
+                local cb = wrk.bw_prop_kwargs[k][:callback]
+                local observables = get(wrk.bw_prop_kwargs[k], :observables, _StoreState())
+                cb(wrk.bw_propagators[k], observables)
+            end
             write_to_storage!(X[k], n, χₖ)
         end
     end
@@ -314,6 +324,11 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
         # TODO: end of self-consistent loop
         @threadsif wrk.use_threads for k = 1:N
             local Ψₖ = prop_step!(wrk.fw_propagators[k])
+            if haskey(wrk.fw_prop_kwargs[k], :callback)
+                local cb = wrk.fw_prop_kwargs[k][:callback]
+                local observables = get(wrk.fw_prop_kwargs[k], :observables, _StoreState())
+                cb(wrk.fw_propagators[k], observables)
+            end
             write_to_storage!(Φ[k], n, Ψₖ)
         end
         # TODO: update sigma

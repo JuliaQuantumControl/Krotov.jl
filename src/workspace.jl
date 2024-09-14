@@ -47,9 +47,11 @@ mutable struct KrotovWrk
     result
 
     #################################
-    # scratch objects, per trajectory:
+    # Per trajectory:
 
     control_derivs
+    fw_prop_kwargs::Vector{Dict{Symbol,Any}}
+    bw_prop_kwargs::Vector{Dict{Symbol,Any}}
     fw_storage # forward storage array (per trajectory)
     fw_storage2 # forward storage array (per trajectory)
     bw_storage # backward storage array (per trajectory)
@@ -63,6 +65,7 @@ end
 function KrotovWrk(problem::QuantumControl.ControlProblem; verbose=false)
     use_threads = get(problem.kwargs, :use_threads, false)
     trajectories = [traj for traj in problem.trajectories]
+    N = length(trajectories)
     adjoint_trajectories = [adjoint(traj) for traj in problem.trajectories]
     controls = get_controls(trajectories)
     if length(controls) == 0
@@ -128,6 +131,8 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose=false)
     bw_storage = [init_storage(traj.initial_state, tlist) for traj in trajectories]
     kwargs[:piecewise] = true  # only accept piecewise propagators
     _prefixes = ["prop_", "fw_prop_"]
+    fw_prop_kwargs = [Dict{Symbol,Any}() for _ = 1:N]
+    bw_prop_kwargs = [Dict{Symbol,Any}() for _ = 1:N]
     fw_propagators = [
         init_prop_trajectory(
             traj,
@@ -136,6 +141,7 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose=false)
             _msg="Initializing fw-prop of trajectory $k",
             _prefixes,
             _filter_kwargs=true,
+            _kwargs_dict=fw_prop_kwargs[k],
             kwargs...
         ) for (k, traj) in enumerate(trajectories)
     ]
@@ -149,6 +155,7 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose=false)
             _prefixes,
             _filter_kwargs=true,
             bw_prop_backward=true,  # will filter to `backward=true`
+            _kwargs_dict=bw_prop_kwargs[k],
             kwargs...
         ) for (k, traj) in enumerate(adjoint_trajectories)
     ]
@@ -181,6 +188,8 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose=false)
         chi_takes_tau,
         result,
         control_derivs,
+        fw_prop_kwargs,
+        bw_prop_kwargs,
         fw_storage,
         fw_storage2,
         bw_storage,
