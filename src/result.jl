@@ -1,4 +1,5 @@
 using QuantumControl.QuantumPropagators.Controls: get_controls, discretize
+using QuantumControl: AbstractOptimizationResult
 using Printf
 using Dates
 
@@ -30,7 +31,7 @@ The attributes of a `KrotovResult` object include
 All of the above attributes may be referenced in a `check_convergence` function
 passed to [`optimize(problem; method=Krotov)`](@ref QuantumControl.optimize(::ControlProblem, ::Val{:Krotov}))
 """
-mutable struct KrotovResult{STST}
+mutable struct KrotovResult{STST} <: AbstractOptimizationResult
     tlist::Vector{Float64}
     iter_start::Int64  # the starting iteration number
     iter_stop::Int64 # the maximum iteration number
