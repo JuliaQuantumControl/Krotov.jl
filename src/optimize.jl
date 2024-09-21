@@ -20,7 +20,42 @@ result = optimize(problem; method=Krotov, kwargs...)
 ```
 
 optimizes the given control [`problem`](@ref QuantumControl.ControlProblem)
-using Krotov's method, returning a [`KrotovResult`](@ref).
+using Krotov's method, by minimizing the functional
+
+```math
+J(\{ϵ_l(t)\}) =
+    J_T(\{|Ψ_k(T)⟩\})
+    + ∑_l \int_{0}^{T} \frac{λ_{a,l}}{S_l(t)} [ϵ_l(t) - ϵ_l^{(0)}(t)]^2 \, dt\,,
+```
+
+cf. the [general form of a quantum control functional](@ref "Functional").
+The "reference field" ``ϵ_l^{(0)}(t)`` is the guess control for that particular
+iteration. The above functional implies a first-order update equation
+
+```math
+Δϵ_l(t) = \frac{S_l(t)}{λ_{a,l}} \Im ∑_k \left[
+\Big\langle
+    \chi_k^{(0)}(t)
+\Big\vert
+    \frac{\partial \hat{H}_k}{\partial ϵ_l(t)}
+\Big\vert
+    \Psi_k(t)
+\Big\rangle
+\right]\,,
+```
+
+where ``|\chi^{(0)}_k(t)⟩`` is the state backward-propagated under
+``Ĥ_k^{\dagger}(\{ϵ_l^{(0)}(t)\})`` with the boundary condition
+``|\chi_k(T)⟩ = \partial J_T / \partial ⟨Ψ_k^{(0)}(T)|`` and ``Ĥ_k`` is
+the `generator` of the ``k``'th trajectory.
+
+Note that the particular control-dependent running cost in the above functional
+is required to obtain the given Krotov update equation. Other running costs, or
+state-dependent running costs are not supported in this implementation of
+Krotov's method (even though *some* running costs are mathematically compatible
+with Krotov's method).
+
+Returns a [`KrotovResult`](@ref).
 
 Keyword arguments that control the optimization are taken from the keyword
 arguments used in the instantiation of `problem`; any of these can be overridden

@@ -2,6 +2,7 @@ using QuantumControl
 using QuantumPropagators
 using Krotov
 using Documenter
+using Documenter.HTMLWriter: KaTeX
 using DocumenterCitations
 using DocumenterInterLinks
 using Pkg
@@ -22,6 +23,17 @@ if endswith(VERSION, "dev")
     DEV_OR_STABLE = "dev/"
 end
 
+
+function org_inv(pkgname)
+    objects_inv =
+        joinpath(@__DIR__, "..", "..", "$pkgname.jl", "docs", "build", "objects.inv")
+    if isfile(objects_inv)
+        return ("https://juliaquantumcontrol.github.io/$pkgname.jl/dev/", objects_inv,)
+    else
+        return "https://juliaquantumcontrol.github.io/$pkgname.jl/$DEV_OR_STABLE"
+    end
+end
+
 links = InterLinks(
     "Julia" => (
         "https://docs.julialang.org/en/v1/",
@@ -32,9 +44,9 @@ links = InterLinks(
         "https://github.com/KristofferC/TimerOutputs.jl",
         joinpath(@__DIR__, "src", "inventories", "TimerOutputs.toml")
     ),
-    "QuantumPropagators" => "https://juliaquantumcontrol.github.io/QuantumPropagators.jl/$DEV_OR_STABLE",
-    "QuantumControl" => "https://juliaquantumcontrol.github.io/QuantumControl.jl/$DEV_OR_STABLE",
-    "GRAPE" => "https://juliaquantumcontrol.github.io/GRAPE.jl/$DEV_OR_STABLE",
+    "QuantumPropagators" => org_inv("QuantumPropagators"),
+    "QuantumControl" => org_inv("QuantumControl"),
+    "GRAPE" => org_inv("GRAPE"),
     "Examples" => "https://juliaquantumcontrol.github.io/QuantumControlExamples.jl/$DEV_OR_STABLE",
     "ComponentArrays" => (
         "https://jonniedie.github.io/ComponentArrays.jl/stable/",
@@ -79,7 +91,17 @@ makedocs(;
             ),
         ],
         size_threshold_ignore=["externals.md"],
-        mathengine=KaTeX(),
+        mathengine=KaTeX(
+            Dict(
+                :macros => Dict(
+                    "\\Op" => "\\hat{#1}",
+                    "\\ket" => "\\vert#1\\rangle",
+                    "\\bra" => "\\langle#1\\vert",
+                    "\\Im" => "\\operatorname{Im}",
+                    "\\Re" => "\\operatorname{Re}",
+                ),
+            ),
+        ),
         footer="[$NAME.jl]($GITHUB) v$VERSION docs powered by [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl).",
     ),
     pages=PAGES,
