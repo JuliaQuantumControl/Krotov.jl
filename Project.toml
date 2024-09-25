@@ -1,7 +1,7 @@
 name = "Krotov"
 uuid = "b05dcdc7-62f6-4360-bf2c-0898bba419de"
 authors = ["Michael Goerz <mail@michaelgoerz.net>"]
-version = "0.7.1+dev"
+version = "0.7.2"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -16,6 +16,6 @@ Dates = "1"
 LinearAlgebra = "1"
 Printf = "1"
 ConcreteStructs = "0.2"
-QuantumControl = ">=0.11.0"
+QuantumControl = "0.11.1"
 SparseArrays = "1"
 julia = "1.9"
