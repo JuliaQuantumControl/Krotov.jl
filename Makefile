@@ -18,10 +18,12 @@ export PRINT_HELP_JLSCRIPT
 
 
 help:  ## show this help
+	@git config --local blame.ignoreRevsFile .git-blame-ignore-revs
 	@julia -e "$$PRINT_HELP_JLSCRIPT" < $(MAKEFILE_LIST)
 
 
 test:  test/Manifest.toml  ## Run the test suite
+	@git config --local blame.ignoreRevsFile .git-blame-ignore-revs
 	$(JULIA) --project=test --banner=no --startup-file=yes -e 'include("devrepl.jl"); test()'
 	@echo "Done. Consider using 'make devrepl'"
 
