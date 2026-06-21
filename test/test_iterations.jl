@@ -15,16 +15,16 @@ PASSTHROUGH = false
     # optimization to those numbers
     rng = StableRNG(1244568944)
     problem = dummy_control_problem(;
-        iter_start=10,
-        N=2,
-        density=1.0,
-        complex_operators=false,
+        iter_start = 10,
+        N = 2,
+        density = 1.0,
+        complex_operators = false,
         rng,
-        J_T=J_T_ss,
-        store_iter_info=["iter.", "J_T"]
+        J_T = J_T_ss,
+        store_iter_info = ["iter.", "J_T"]
     )
-    captured = IOCapture.capture(passthrough=PASSTHROUGH) do
-        optimize(problem; method=Krotov, iter_stop=12)
+    captured = IOCapture.capture(passthrough = PASSTHROUGH) do
+        optimize(problem; method = Krotov, iter_stop = 12)
     end
     res = captured.value
     @test res.converged
@@ -57,16 +57,16 @@ end
     end
 
     problem = dummy_control_problem(;
-        N=2,
-        density=1.0,
-        complex_operators=false,
+        N = 2,
+        density = 1.0,
+        complex_operators = false,
         rng,
-        J_T=J_T_ss,
-        callback=callback1,
+        J_T = J_T_ss,
+        callback = callback1,
     )
 
-    captured = IOCapture.capture(passthrough=PASSTHROUGH) do
-        optimize(problem; method=Krotov, iter_stop=1)
+    captured = IOCapture.capture(passthrough = PASSTHROUGH) do
+        optimize(problem; method = Krotov, iter_stop = 1)
     end
     @test contains(
         captured.output,
@@ -75,21 +75,21 @@ end
     @test contains(captured.output, "This is callback 1 for iter 1\n     1")
 
     # passing `callback` to `optimize` overwrites `callback` in `problem`
-    captured = IOCapture.capture(passthrough=PASSTHROUGH) do
-        optimize(problem; method=Krotov, iter_stop=1, callback=callback2)
+    captured = IOCapture.capture(passthrough = PASSTHROUGH) do
+        optimize(problem; method = Krotov, iter_stop = 1, callback = callback2)
     end
     @test !contains(captured.output, "This is callback 1 for iter 0")
     @test !contains(captured.output, "This is callback 1 for iter 1")
     @test contains(captured.output, "This is callback 2 for iter 0")
     @test contains(captured.output, "This is callback 2 for iter 1")
 
-    captured = IOCapture.capture(passthrough=PASSTHROUGH) do
+    captured = IOCapture.capture(passthrough = PASSTHROUGH) do
         optimize(
             problem;
-            method=Krotov,
-            iter_stop=1,
-            callback=(callback1, callback2),
-            print_iters=false
+            method = Krotov,
+            iter_stop = 1,
+            callback = (callback1, callback2),
+            print_iters = false
         )
     end
     @test captured.value.converged
@@ -104,13 +104,13 @@ end
     )
     @test captured.value.records == [("cb2", 0), ("cb2", 1)]
 
-    captured = IOCapture.capture(passthrough=PASSTHROUGH) do
+    captured = IOCapture.capture(passthrough = PASSTHROUGH) do
         optimize(
             problem;
-            method=Krotov,
-            iter_stop=1,
-            callback=(callback1, callback2),
-            store_iter_info=["J_T"]
+            method = Krotov,
+            iter_stop = 1,
+            callback = (callback1, callback2),
+            store_iter_info = ["J_T"]
         )
     end
     @test captured.value.converged
@@ -122,13 +122,13 @@ end
 
     # we should also be able to modify the updated pulses in the callback and
     # have that take effect.
-    captured = IOCapture.capture(passthrough=PASSTHROUGH) do
+    captured = IOCapture.capture(passthrough = PASSTHROUGH) do
         optimize(
             problem;
-            method=Krotov,
-            iter_stop=3,
-            callback=reduce_pulse,
-            store_iter_info=["iter.", "J_T"]
+            method = Krotov,
+            iter_stop = 3,
+            callback = reduce_pulse,
+            store_iter_info = ["iter.", "J_T"]
         )
     end
     @test captured.value.converged

@@ -62,7 +62,7 @@ mutable struct KrotovWrk
 end
 
 
-function KrotovWrk(problem::QuantumControl.ControlProblem; verbose=false)
+function KrotovWrk(problem::QuantumControl.ControlProblem; verbose = false)
     use_threads = get(problem.kwargs, :use_threads, false)
     trajectories = [traj for traj in problem.trajectories]
     N = length(trajectories)
@@ -138,10 +138,10 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose=false)
             traj,
             tlist;
             verbose,
-            _msg="Initializing fw-prop of trajectory $k",
+            _msg = "Initializing fw-prop of trajectory $k",
             _prefixes,
-            _filter_kwargs=true,
-            _kwargs_dict=fw_prop_kwargs[k],
+            _filter_kwargs = true,
+            _kwargs_dict = fw_prop_kwargs[k],
             kwargs...
         ) for (k, traj) in enumerate(trajectories)
     ]
@@ -151,11 +151,11 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose=false)
             traj,
             tlist;
             verbose,
-            _msg="Initializing bw-prop of trajectory $k",
+            _msg = "Initializing bw-prop of trajectory $k",
             _prefixes,
-            _filter_kwargs=true,
-            bw_prop_backward=true,  # will filter to `backward=true`
-            _kwargs_dict=bw_prop_kwargs[k],
+            _filter_kwargs = true,
+            bw_prop_backward = true,  # will filter to `backward=true`
+            _kwargs_dict = bw_prop_kwargs[k],
             kwargs...
         ) for (k, traj) in enumerate(adjoint_trajectories)
     ]

@@ -62,7 +62,7 @@ links = InterLinks(
 
 println("Starting makedocs")
 
-bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:numeric)
+bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style = :numeric)
 
 PAGES = [
     "Home" => "index.md",
@@ -74,14 +74,14 @@ PAGES = [
 ]
 
 makedocs(;
-    plugins=[bib, links],
-    modules=[Krotov],
-    authors=AUTHORS,
-    sitename="Krotov.jl",
-    format=Documenter.HTML(;
-        prettyurls=true,
-        canonical="https://juliaquantumcontrol.github.io/Krotov.jl",
-        assets=[
+    plugins = [bib, links],
+    modules = [Krotov],
+    authors = AUTHORS,
+    sitename = "Krotov.jl",
+    format = Documenter.HTML(;
+        prettyurls = true,
+        canonical = "https://juliaquantumcontrol.github.io/Krotov.jl",
+        assets = [
             "assets/citations.css",
             asset(
                 "https://juliaquantumcontrol.github.io/QuantumControl.jl/dev/assets/topbar/topbar.css"
@@ -90,8 +90,8 @@ makedocs(;
                 "https://juliaquantumcontrol.github.io/QuantumControl.jl/dev/assets/topbar/topbar.js"
             ),
         ],
-        size_threshold_ignore=["externals.md"],
-        mathengine=KaTeX(
+        size_threshold_ignore = ["externals.md"],
+        mathengine = KaTeX(
             Dict(
                 :macros => Dict(
                     "\\Op" => "\\hat{#1}",
@@ -102,12 +102,12 @@ makedocs(;
                 ),
             ),
         ),
-        footer="[$NAME.jl]($GITHUB) v$VERSION docs powered by [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl).",
+        footer = "[$NAME.jl]($GITHUB) v$VERSION docs powered by [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl).",
     ),
-    pages=PAGES,
-    warnonly=true,
+    pages = PAGES,
+    warnonly = true,
 )
 
 println("Finished makedocs")
 
-deploydocs(; repo="github.com/JuliaQuantumControl/Krotov.jl", devbranch="master")
+deploydocs(; repo = "github.com/JuliaQuantumControl/Krotov.jl", devbranch = "master")

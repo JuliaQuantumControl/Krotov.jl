@@ -296,7 +296,7 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
 
     Ψ = [propagator.state for propagator in wrk.fw_propagators]
     if wrk.chi_takes_tau
-        χ = chi(Ψ, wrk.trajectories; tau=wrk.result.tau_vals)
+        χ = chi(Ψ, wrk.trajectories; tau = wrk.result.tau_vals)
     else
         χ = chi(Ψ, wrk.trajectories)
     end
@@ -378,9 +378,9 @@ function update_result!(wrk::KrotovWrk, i::Int64)
     for k in eachindex(wrk.fw_propagators)
         res.states[k] = wrk.fw_propagators[k].state
     end
-    taus!(res.tau_vals, res.states, wrk.trajectories; ignore_missing_target_state=true)
+    taus!(res.tau_vals, res.states, wrk.trajectories; ignore_missing_target_state = true)
     if wrk.J_T_takes_tau
-        res.J_T = J_T(res.states, wrk.trajectories; tau=res.tau_vals)
+        res.J_T = J_T(res.states, wrk.trajectories; tau = res.tau_vals)
     else
         res.J_T = J_T(res.states, wrk.trajectories)
     end

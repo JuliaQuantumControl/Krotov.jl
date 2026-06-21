@@ -18,17 +18,17 @@ using Krotov
         Trajectory(
             random_state_vector(N; rng),
             H;
-            target_state=random_state_vector(N; rng)
+            target_state = random_state_vector(N; rng)
         )
     ]
 
     @test length(get_controls(trajectories)) == 0
 
-    tlist = collect(range(0; length=1001, step=1.0))
+    tlist = collect(range(0; length = 1001, step = 1.0))
 
-    problem = ControlProblem(trajectories, tlist; pulse_options=Dict())
+    problem = ControlProblem(trajectories, tlist; pulse_options = Dict())
 
     msg = "no controls in trajectories: cannot optimize"
-    @test_throws ErrorException(msg) optimize(problem; method=Krotov)
+    @test_throws ErrorException(msg) optimize(problem; method = Krotov)
 
 end
