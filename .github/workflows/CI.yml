@@ -56,12 +56,12 @@ jobs:
         run: |
           set -x
           /usr/bin/python3 -m pip install zip-files
-      - name: "Instantiate test environment"
+      - name: "Instantiate build environment"
         run: |
           wget https://raw.githubusercontent.com/JuliaQuantumControl/JuliaQuantumControl/master/scripts/installorg.jl
-          julia --project=test installorg.jl --no-precompile
+          julia --project=docs installorg.jl --no-precompile
       - name: "Build documentation"
-        run: julia  --threads auto --project=test docs/make.jl
+        run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}

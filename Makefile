@@ -33,12 +33,22 @@ test/Manifest.toml: test/Project.toml ../scripts/installorg.jl
 	@touch $@
 
 
+docs/Manifest.toml: docs/Project.toml
+	@git config --local blame.ignoreRevsFile .git-blame-ignore-revs
+	@if [ -e ../scripts/installorg.jl ]; then \
+	    $(JULIA) --project=docs ../scripts/installorg.jl; \
+	else \
+	    $(JULIA) --project=docs -e 'import Pkg; Pkg.develop(path="."); Pkg.instantiate()'; \
+	fi
+	@touch $@
+
+
 devrepl:  ## Start an interactive REPL for testing and building documentation
 	$(JULIA) --project=test --banner=no --startup-file=yes -i devrepl.jl
 
 
-docs: test/Manifest.toml  ## Build the documentation
-	$(JULIA) --project=test docs/make.jl
+docs: docs/Manifest.toml  ## Build the documentation
+	$(JULIA) --project=docs docs/make.jl
 	@echo "Done. Consider using 'make devrepl'"
 
 servedocs: test/Manifest.toml  ## Build (auto-rebuild) and serve documentation at PORT=8000
