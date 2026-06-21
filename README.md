@@ -3,7 +3,7 @@
 [![Version](https://juliahub.com/docs/General/Krotov/stable/version.svg)](https://juliahub.com/ui/Packages/General/Krotov)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliaquantumcontrol.github.io/Krotov.jl/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaquantumcontrol.github.io/Krotov.jl/dev)
-[![Build Status](https://github.com/JuliaQuantumControl/Krotov.jl/workflows/CI/badge.svg)](https://github.com/JuliaQuantumControl/Krotov.jl/actions)
+[![Build Status](https://github.com/JuliaQuantumControl/Krotov.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/JuliaQuantumControl/Krotov.jl/actions/workflows/CI.yml?query=branch%3Amaster)
 [![Coverage](https://codecov.io/gh/JuliaQuantumControl/Krotov.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaQuantumControl/Krotov.jl)
 
 Implementation of [Krotov's method of optimal control](https://arxiv.org/abs/1008.5126) enhanced with automatic differentiation.
