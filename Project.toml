@@ -12,7 +12,7 @@ QuantumControl = "8a270532-f23f-47a8-83a9-b33d10cad486"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-Dates = "1"
+Dates = "1, < 0.0.1"
 LinearAlgebra = "1"
 Printf = "1"
 ConcreteStructs = "0.2"
