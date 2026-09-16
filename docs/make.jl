@@ -110,4 +110,4 @@ makedocs(;
 
 println("Finished makedocs")
 
-deploydocs(; repo = "github.com/JuliaQuantumControl/Krotov.jl", devbranch = "master")
+# The documentation is deployed by `docs/deploy.jl`, in a separate CI job
