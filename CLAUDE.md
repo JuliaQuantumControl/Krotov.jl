@@ -10,25 +10,16 @@ The package is a port of the krotov Python package, adapted to the API of Quantu
 
 ## Development Commands
 
-### Development Environment
-- `make devrepl`: Start an interactive REPL for testing and building documentation (recommended)
-- `julia -i --project=test devrepl.jl`: Alternative way to start development REPL
+Run `make help` for all targets. The development workflow is documented in the org-wide [CONTRIBUTING.md](https://github.com/JuliaQuantumControl/.github/blob/master/CONTRIBUTING.md) (`../.github/CONTRIBUTING.md` in the development environment).
 
-### Testing
-- `make test`: Run the complete test suite
-- `julia --project=test --banner=no --startup-file=yes -e 'include("devrepl.jl"); test()'`: Alternative test command
-- Test individual files by running them from the test REPL
+- `make test`: Run the test suite in the `test` environment (or `julia --project=test -e 'include("test/runtests.jl")'`)
+- `make devrepl`: REPL with the `test` environment active and the `docs` environment stacked; run individual test files (`include("test/test_tls_optimization.jl")`), `include("test/runtests.jl")`, or `include("docs/make.jl")` from there
+- `make docs`: Build the documentation in the `docs` environment
+- `make coverage` / `make htmlcoverage`: Test coverage
+- `make codestyle`: Apply JuliaFormatter (version pinned in the `Makefile`) and check `[sources]`
+- `make clean` / `make distclean`: Remove build/test artifacts
 
-### Documentation
-- `make docs`: Build the documentation
-
-### Code Quality
-- `make codestyle`: Apply JuliaFormatter to the entire project
-- Requires `../.JuliaFormatter.toml` configuration file
-
-### Cleanup
-- `make clean`: Clean up build/doc/testing artifacts
-- `make distclean`: Restore to a clean checkout state
+Sibling packages (QuantumControl, QuantumPropagators, GRAPE, …) come from their registered releases, or temporarily from a GitHub branch via a URL `[sources]` entry in `test/Project.toml` / `docs/Project.toml`. Never commit a `path` source for a sibling (as written by `../scripts/installorg.jl`). The `test` and `docs` environments reference the package itself via `[sources]` (`{path = ".."}`); this needs Julia ≥ 1.11.
 
 ## Architecture
 
@@ -78,8 +69,6 @@ Internal workspace containing:
 
 ## Development Notes
 
-- Part of JuliaQuantumControl ecosystem - may use shared development scripts in `../scripts/`
-- This package is designed to work within the JuliaQuantumControl development environment
+- Part of the JuliaQuantumControl ecosystem
 - Code formatting follows JuliaQuantumControl organization standards
-- Tests require the full test environment with additional dependencies
-- Uses `devrepl.jl` for unified development environment setup
+- Tests use `QuantumControl.DummyOptimization` (experimental) for dummy control problems and `QuantumControlTestUtils.RandomObjects` for random states and matrices

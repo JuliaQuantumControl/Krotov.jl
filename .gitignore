@@ -1,5 +1,6 @@
 *.jl.*.cov
 *.jl.cov
+*.jl.*.mem
 *.jl.mem
 /Manifest.toml
 /examples/dump/
@@ -11,4 +12,5 @@
 /gh-pages/
 /.JuliaFormatter.toml
 /lcov.info
-/coverage
+/coverage/
+/.coverage/
