@@ -27,6 +27,11 @@ unicodeplots()
         include("test_workspace.jl")
     end
 
+    println("\n* atexit hook (test_atexit.jl)")
+    @time @safetestset "atexit hook" begin
+        include("test_atexit.jl")
+    end
+
     println("\n* Iterations (test_iterations.jl)")
     @time @safetestset "Iterations" begin
         include("test_iterations.jl")
