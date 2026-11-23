@@ -10,23 +10,35 @@ using Dates
 
 The attributes of a `KrotovResult` object include
 
-* `iter`:  The number of the current iteration
-* `J_T`: The value of the final-time functional in the current iteration
+* `iter`:  The number of the last completed iteration
+* `J_T`: The value of the final-time functional for the `states`
 * `J_T_prev`: The value of the final-time functional in the previous iteration
 * `tlist`: The time grid on which the control are discretized.
 * `guess_controls`: A vector of the original control fields (each field
   discretized to the points of `tlist`)
-* `optimized_controls`: A vector of the optimized control fields. Calculated only
-  at the end of the optimization, not after each iteration.
+* `optimized_controls`: A vector of the control fields obtained in the last
+  completed iteration (each field discretized to the points of `tlist`). If a
+  `callback` modifies the updated pulses, `optimized_controls` contains the
+  modified pulses, whereas `states`, `tau_vals`, and `J_T` are obtained from
+  the pulses before the modification.
+* `states`: The states obtained by forward-propagating the initial state of
+  each trajectory under the control fields of the last completed iteration
 * `tau_vals`: For any trajectory that defines a `target_state`, the complex
-  overlap of that target state with the propagated state. For any trajectory
-  for which the `target_state` is `nothing`, the value is zero.
+  overlap of that target state with the corresponding state in `states`. For
+  any trajectory for which the `target_state` is `nothing`, the value is zero.
 * `records`: A vector of tuples with values returned by a `callback` routine
   passed to [`optimize`](@ref)
 * `converged`: A boolean flag on whether the optimization is converged. This
   may be set to `true` by a `check_convergence` function.
 * `message`: A message string to explain the reason for convergence. This may be
   set by a `check_convergence` function.
+
+Before the first iteration, the attributes describe the guess (iteration 0, or
+the starting iteration given by `iter_start` or `continue_from`). After that,
+they describe the last completed iteration. This also holds if the optimization
+ends because of an exception (e.g., an `InterruptException`). An exception that
+occurs before the guess has been evaluated, or in the `callback` for the guess,
+is not caught, so that no result is returned.
 
 All of the above attributes may be referenced in a `check_convergence` function
 passed to [`optimize(problem; method=Krotov)`](@ref QuantumControl.optimize(::ControlProblem, ::Val{:Krotov}))
@@ -42,7 +54,7 @@ mutable struct KrotovResult{STST} <: AbstractOptimizationResult
     J_T_prev::Float64  # previous value of J_T
     guess_controls::Vector{Vector{Float64}}
     optimized_controls::Vector{Vector{Float64}}
-    states::Vector{STST} # the forward-propagated states after each iteration
+    states::Vector{STST} # the forward-propagated states of the last iteration
     start_local_time::DateTime
     end_local_time::DateTime
     records::Vector{Tuple}  # storage for callback to write data into at each iteration

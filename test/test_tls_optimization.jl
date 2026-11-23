@@ -115,6 +115,7 @@ end
         end,
     )
     res_grape = optimize(problem; method = GRAPE, iter_stop = 2)
+    res_grape_copy = deepcopy(res_grape)
     res = optimize(
         problem;
         method = Krotov,
@@ -125,6 +126,11 @@ end
     @test res.J_T < 1e-5
     @test abs(res.records[1][1] - res_grape.J_T) < 1e-14
     @test length(res.records) == 4
+    # Continuing from the GRAPE result must not modify it
+    @test res_grape.optimized_controls == res_grape_copy.optimized_controls
+    @test res_grape.states == res_grape_copy.states
+    @test res_grape.tau_vals == res_grape_copy.tau_vals
+    @test res_grape.records == res_grape_copy.records
     println("===================================================\n")
 
 end
