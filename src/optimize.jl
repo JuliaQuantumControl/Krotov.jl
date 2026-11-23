@@ -159,7 +159,7 @@ optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
 See [`optimize(problem; method=Krotov, kwargs...)`](@ref optimize(::Any, ::Val{:krotov})).
 """
 function optimize_krotov(problem)
-    callback = get(problem.kwargs, :callback, (args...) -> nothing)
+    callback = something(get(problem.kwargs, :callback, nothing), (args...) -> nothing)
     if haskey(problem.kwargs, :update_hook) || haskey(problem.kwargs, :info_hook)
         msg = "The `update_hook` and `info_hook` arguments have been superseded by the `callback` argument"
         throw(ArgumentError(msg))

@@ -143,3 +143,24 @@ end
     end
 
 end
+
+
+@testset "callback = nothing" begin
+    # An explicit `callback = nothing` in the problem is equivalent to no
+    # callback. We call the Krotov backend directly, since
+    # `QuantumControl.optimize` may drop `callback = nothing`.
+    rng = StableRNG(1244568944)
+    problem = dummy_control_problem(;
+        N = 2,
+        density = 1.0,
+        complex_operators = false,
+        rng,
+        J_T = J_T_ss,
+        iter_stop = 1,
+        callback = nothing,
+    )
+    res = optimize(problem, Val(:Krotov))
+    @test res.converged
+    @test res.iter == 1
+    @test res.message == "Reached maximum number of iterations"
+end
