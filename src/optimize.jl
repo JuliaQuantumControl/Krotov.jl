@@ -141,12 +141,14 @@ The following keyword arguments are supported (with default values):
   case of convergence. Multiple convergence checks can be performed by chaining
   functions with `∘`. The convergence check is performed after any `callback`.
 * `verbose=false`: If `true`, print information during initialization.
-* `rethrow_exceptions`: By default, any exception ends the optimization but
-  still returns a [`KrotovResult`](@ref) that captures the message associated
-  with the exception. This is to avoid losing results from a long-running
-  optimization when an exception occurs in a later iteration. If
-  `rethrow_exceptions=true`, instead of capturing the exception, it will be
-  thrown normally.
+* `rethrow_exceptions`: By default, any exception after the guess has been
+  evaluated ends the optimization but still returns a [`KrotovResult`](@ref)
+  that captures the message associated with the exception. This is to avoid
+  losing results from a long-running optimization when an exception occurs in
+  a later iteration. If `rethrow_exceptions=true`, instead of capturing the
+  exception, it will be thrown normally. An exception that occurs before the
+  guess has been evaluated, or in the `callback` for the guess, is always
+  thrown.
 
 # Trajectory propagation
 
@@ -214,7 +216,7 @@ function optimize_krotov(problem)
     end
 
     # TODO: if sigma, fw_storage0 = fw_storage
-    update_result!(wrk, 0)
+    update_result!(wrk, 0, ϵ⁽ⁱ⁾)
     info_tuple = callback(wrk, 0, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
     if !(isnothing(info_tuple) || isempty(info_tuple))
         push!(wrk.result.records, info_tuple)
@@ -236,11 +238,13 @@ function optimize_krotov(problem)
         while !wrk.result.converged
             i = i + 1
             krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
-            update_result!(wrk, i)
+            update_result!(wrk, i, ϵ⁽ⁱ⁺¹⁾)
             info_tuple = callback(wrk, i, ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾)
             if !(isnothing(info_tuple) || isempty(info_tuple))
                 push!(wrk.result.records, info_tuple)
             end
+            # The callback may have modified the updated pulses
+            set_optimized_controls!(wrk.result, ϵ⁽ⁱ⁺¹⁾)
             check_convergence!(wrk.result)
             ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾ = ϵ⁽ⁱ⁺¹⁾, ϵ⁽ⁱ⁾
         end
@@ -254,7 +258,7 @@ function optimize_krotov(problem)
         wrk.result.message = "Exception: $exc_msg"
     end
 
-    finalize_result!(ϵ⁽ⁱ⁾, wrk)
+    finalize_result!(wrk)
     if !isnothing(atexit_filename)
         popfirst!(Base.atexit_hooks)
     end
@@ -400,19 +404,38 @@ function krotov_iteration(wrk, ϵ⁽ⁱ⁾, ϵ⁽ⁱ⁺¹⁾)
 end
 
 
-function update_result!(wrk::KrotovWrk, i::Int64)
+# Update `wrk.result` for the completed iteration `i` (or the guess, for
+# `i = 0`), with the pulses `ϵ` of that iteration. Apart from the
+# `set_optimized_controls!` after the `callback`, this is the only code that
+# writes the data of an iteration to the result during the optimization, so
+# that the result always describes the last completed iteration. (The
+# `records`, `converged`, `message`, and `end_local_time` are also written
+# elsewhere.)
+function update_result!(wrk::KrotovWrk, i::Int64, ϵ)
     res = wrk.result
-    J_T = wrk.kwargs[:J_T]
-    res.J_T_prev = res.J_T
+    # Evaluate everything that may throw an exception (in particular, the
+    # user-supplied `J_T`) before writing to `res`. The propagator's state is
+    # modified during the next iteration, so `res.states` must not alias it.
+    states = similar(res.states)
     for k in eachindex(wrk.fw_propagators)
-        res.states[k] = wrk.fw_propagators[k].state
+        states[k] = copy(wrk.fw_propagators[k].state)
     end
-    taus!(res.tau_vals, res.states, wrk.trajectories; ignore_missing_target_state = true)
+    tau_vals = zeros(ComplexF64, length(states))
+    taus!(tau_vals, states, wrk.trajectories; ignore_missing_target_state = true)
+    J_T = wrk.kwargs[:J_T]
     if wrk.J_T_takes_tau
-        res.J_T = J_T(res.states, wrk.trajectories; tau = res.tau_vals)
+        J_T_val = J_T(states, wrk.trajectories; tau = tau_vals)
     else
-        res.J_T = J_T(res.states, wrk.trajectories)
+        J_T_val = J_T(states, wrk.trajectories)
     end
+    optimized_controls = [discretize(ϵₗ, res.tlist) for ϵₗ in ϵ]
+    # Write to `res`. Assign new arrays, so that any reference to the arrays
+    # of a previous iteration remains unchanged.
+    res.states .= states
+    res.tau_vals .= tau_vals
+    res.J_T_prev = res.J_T
+    res.J_T = J_T_val
+    res.optimized_controls .= optimized_controls
     (i > 0) && (res.iter = i)
     if res.iter >= res.iter_stop
         res.converged = true
@@ -426,12 +449,17 @@ function update_result!(wrk::KrotovWrk, i::Int64)
 end
 
 
-function finalize_result!(ϵ_opt, wrk::KrotovWrk)
-    res = wrk.result
-    res.end_local_time = now()
-    for l in eachindex(ϵ_opt)
-        res.optimized_controls[l] = discretize(ϵ_opt[l], res.tlist)
+function set_optimized_controls!(res::KrotovResult, ϵ)
+    for l in eachindex(ϵ)
+        # `ϵ` is discretized on the midpoints of `tlist`. Assign a new array,
+        # so that any reference to the previous array remains unchanged.
+        res.optimized_controls[l] = discretize(ϵ[l], res.tlist)
     end
+end
+
+
+function finalize_result!(wrk::KrotovWrk)
+    wrk.result.end_local_time = now()
 end
 
 
