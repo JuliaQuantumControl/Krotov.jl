@@ -104,7 +104,18 @@ The following keyword arguments are supported (with default values):
 * `sigma=nothing`: A function that calculates the second-order contribution. If
   not given, the first-order Krotov method is used.
 * `iter_start=0`: The initial iteration number.
-* `iter_stop=5000`: The maximum iteration number.
+* `iter_stop=5000`: The maximum iteration number. The optimization stops after
+  this iteration. If the starting iteration (`iter_start`, or the last
+  iteration of `continue_from`) is not smaller than `iter_stop`, only the guess
+  is evaluated.
+* `continue_from`: A result object from a previous optimization (a
+  [`KrotovResult`](@ref), or a result that can be converted to a
+  `KrotovResult`). The optimization starts from the optimized controls of that
+  result, and the iteration numbers continue from its last iteration
+  (`iter_start` is ignored). A `KrotovResult` given as `continue_from` is
+  updated in place and returned.
+* `use_threads=false`: If `true`, propagate the different trajectories in
+  parallel, using multiple threads.
 * `prop_method`: The propagation method to use for each trajectory; see below.
 * `print_iters=true`: Whether to print information after each iteration.
 * `store_iter_info=Set()`: Which fields from `print_iters` to store in
