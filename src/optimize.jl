@@ -5,7 +5,7 @@ using QuantumControl.QuantumPropagators: prop_step!, reinit_prop!, propagate
 using QuantumControl.QuantumPropagators.Storage:
     write_to_storage!, get_from_storage!, get_from_storage
 using QuantumControl.Functionals: make_chi, taus!
-using QuantumControl: set_atexit_save_optimization
+using QuantumControl: set_atexit_save_optimization, remove_atexit_save_optimization
 using QuantumControl: @threadsif, Trajectory
 using QuantumControl.QuantumPropagators: _StoreState
 using LinearAlgebra
@@ -226,13 +226,16 @@ function optimize_krotov(problem)
     atexit_filename = get(problem.kwargs, :atexit_filename, nothing)
     # atexit_filename is undocumented on purpose: this is considered a feature
     # of @optimize_or_load
+    if !isnothing(atexit_filename) && !isinteractive()
+        @info "Set callback to store result in $(relpath(atexit_filename)) on unexpected exit."
+        # In interactive mode, `atexit` is very unlikely, and
+        # `InterruptException` is handled via try/catch instead.
+    end
+    # Nothing that could throw an exception may come between registering the
+    # hook and the `try` whose `finally` removes it
+    atexit_hook = nothing
     if !isnothing(atexit_filename)
-        set_atexit_save_optimization(atexit_filename, wrk.result)
-        if !isinteractive()
-            @info "Set callback to store result in $(relpath(atexit_filename)) on unexpected exit."
-            # In interactive mode, `atexit` is very unlikely, and
-            # `InterruptException` is handles via try/catch instead.
-        end
+        atexit_hook = set_atexit_save_optimization(atexit_filename, wrk.result)
     end
     try
         while !wrk.result.converged
@@ -256,12 +259,12 @@ function optimize_krotov(problem)
         # optimizations (InterruptException)
         exc_msg = sprint(showerror, exc)
         wrk.result.message = "Exception: $exc_msg"
+    finally
+        # Also if the exception is rethrown
+        remove_atexit_save_optimization(atexit_hook)
     end
 
     finalize_result!(wrk)
-    if !isnothing(atexit_filename)
-        popfirst!(Base.atexit_hooks)
-    end
 
     return wrk.result
 
