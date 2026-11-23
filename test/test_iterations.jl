@@ -164,3 +164,36 @@ end
     @test res.iter == 1
     @test res.message == "Reached maximum number of iterations"
 end
+
+
+@testset "iter_stop reached before first iteration" begin
+    # If `iter_start` (or the iteration of a `continue_from` result) already
+    # reaches `iter_stop`, no iteration should be performed
+    rng = StableRNG(1244568944)
+    problem = dummy_control_problem(;
+        N = 2,
+        density = 1.0,
+        complex_operators = false,
+        rng,
+        J_T = J_T_ss,
+        print_iters = false,
+    )
+
+    res = optimize(problem; method = Krotov, iter_start = 5, iter_stop = 5)
+    @test res.converged
+    @test res.iter == 5
+    @test res.message == "Reached maximum number of iterations"
+
+    res1 = optimize(problem; method = Krotov, iter_stop = 3)
+    @test res1.iter == 3
+    controls1 = copy.(res1.optimized_controls)
+    res2 = optimize(problem; method = Krotov, iter_stop = 3, continue_from = res1)
+    @test res2 === res1  # updated in place
+    @test res2.converged
+    @test res2.iter == 3
+    @test res2.message == "Reached maximum number of iterations"
+    @test res2.optimized_controls ≈ controls1
+
+    res3 = optimize(problem; method = Krotov, iter_stop = 5, continue_from = res1)
+    @test res3.iter == 5
+end
