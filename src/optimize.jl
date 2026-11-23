@@ -139,18 +139,33 @@ The following keyword arguments are supported (with default values):
 Krotov's method involves the forward and backward propagation for every
 [`Trajectory`](@ref) in the `problem`. The keyword arguments for each
 propagation (see [`propagate`](@ref)) are determined from any properties of
-each [`Trajectory`](@ref) that have a `prop_` prefix, cf.
-[`init_prop_trajectory`](@ref).
+each [`Trajectory`](@ref) and any problem keyword arguments that have a `prop_`
+prefix, cf. [`init_prop_trajectory`](@ref).
 
 In situations where different parameters are required for the forward and
 backward propagation, instead of the `prop_` prefix, the `fw_prop_` and
-`bw_prop_` prefixes can be used, respectively. These override any setting with
-the `prop_` prefix. This applies both to the properties of each
-[`Trajectory`](@ref) and the problem keyword arguments.
+`bw_prop_` prefixes can be used, respectively.
+
+If the same parameter is set in more than one way, the following rules
+determine which setting is used:
+
+1. Any problem keyword argument (including keyword arguments passed directly
+   to `optimize`) that applies to a propagation overrides any property of a
+   [`Trajectory`](@ref) for that propagation, regardless of the prefix.
+2. Among the problem keyword arguments, and among the properties of a
+   [`Trajectory`](@ref), a `fw_prop_` or `bw_prop_` prefix overrides the
+   `prop_` prefix.
+
+For example, a `prop_method` problem keyword argument overrides a
+`fw_prop_method` property of a [`Trajectory`](@ref).
 
 Note that the propagation method for each propagation must be specified. In
 most cases, it is sufficient (and recommended) to pass a global `prop_method`
-problem keyword argument.
+problem keyword argument. Since this overrides any per-trajectory setting, use
+trajectory properties instead if different trajectories require different
+propagation methods. Krotov's method requires a piecewise propagation method
+(see [`init_prop`](@extref QuantumPropagators.init_prop)); other methods are
+rejected.
 """
 optimize(problem, method::Val{:Krotov}) = optimize_krotov(problem)
 optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
