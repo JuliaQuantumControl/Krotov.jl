@@ -104,7 +104,18 @@ The following keyword arguments are supported (with default values):
 * `sigma=nothing`: A function that calculates the second-order contribution. If
   not given, the first-order Krotov method is used.
 * `iter_start=0`: The initial iteration number.
-* `iter_stop=5000`: The maximum iteration number.
+* `iter_stop=5000`: The maximum iteration number. The optimization stops after
+  this iteration. If the starting iteration (`iter_start`, or the last
+  iteration of `continue_from`) is not smaller than `iter_stop`, only the guess
+  is evaluated.
+* `continue_from`: A result object from a previous optimization (a
+  [`KrotovResult`](@ref), or a result that can be converted to a
+  `KrotovResult`). The optimization starts from the optimized controls of that
+  result, and the iteration numbers continue from its last iteration
+  (`iter_start` is ignored). A `KrotovResult` given as `continue_from` is
+  updated in place and returned.
+* `use_threads=false`: If `true`, propagate the different trajectories in
+  parallel, using multiple threads.
 * `prop_method`: The propagation method to use for each trajectory; see below.
 * `print_iters=true`: Whether to print information after each iteration.
 * `store_iter_info=Set()`: Which fields from `print_iters` to store in
@@ -112,15 +123,18 @@ The following keyword arguments are supported (with default values):
   `Set(["iter.", "J_T", "∫gₐ(t)dt", "J", "ΔJ_T", "ΔJ", "secs"])`.
 * `callback`: A function (or tuple of functions) that receives the
   [Krotov workspace](@ref KrotovWrk), the iteration number, the list of updated
-  pulses, and the list of guess pulses as positional arguments. The function
-  may return a tuple of values which are stored in the
-  [`KrotovResult`](@ref) object `result.records`. The function can also mutate
-  any of its arguments, in particular the updated pulses. This may be used,
-  e.g., to apply a spectral filter to the updated pulses or to perform
-  similar manipulations. Note that `print_iters=true` (default) adds an
-  automatic callback to print information after each iteration. With
-  `store_iter_info`, that callback automatically stores a subset of the
-  printed information.
+  pulses, and the list of guess pulses as positional arguments. It is called
+  once for the guess, with an iteration number of 0, and then after each
+  iteration. The guess is iteration 0 even if the optimization starts at a
+  later iteration (`iter_start` or `continue_from`). In that case, the actual
+  starting iteration is `wrk.result.iter`. The function may return a tuple of
+  values which are stored in the [`KrotovResult`](@ref) object
+  `result.records`. The function can also mutate any of its arguments, in
+  particular the updated pulses. This may be used, e.g., to apply a spectral
+  filter to the updated pulses or to perform similar manipulations. Note that
+  `print_iters=true` (default) adds an automatic callback to print information
+  after each iteration. With `store_iter_info`, that callback automatically
+  stores a subset of the printed information.
 * `check_convergence`: A function to check whether convergence has been
   reached. Receives a [`KrotovResult`](@ref) object `result`, and should set
   `result.converged` to `true` and `result.message` to an appropriate string in
@@ -139,18 +153,33 @@ The following keyword arguments are supported (with default values):
 Krotov's method involves the forward and backward propagation for every
 [`Trajectory`](@ref) in the `problem`. The keyword arguments for each
 propagation (see [`propagate`](@ref)) are determined from any properties of
-each [`Trajectory`](@ref) that have a `prop_` prefix, cf.
-[`init_prop_trajectory`](@ref).
+each [`Trajectory`](@ref) and any problem keyword arguments that have a `prop_`
+prefix, cf. [`init_prop_trajectory`](@ref).
 
 In situations where different parameters are required for the forward and
 backward propagation, instead of the `prop_` prefix, the `fw_prop_` and
-`bw_prop_` prefixes can be used, respectively. These override any setting with
-the `prop_` prefix. This applies both to the properties of each
-[`Trajectory`](@ref) and the problem keyword arguments.
+`bw_prop_` prefixes can be used, respectively.
+
+If the same parameter is set in more than one way, the following rules
+determine which setting is used:
+
+1. Any problem keyword argument (including keyword arguments passed directly
+   to `optimize`) that applies to a propagation overrides any property of a
+   [`Trajectory`](@ref) for that propagation, regardless of the prefix.
+2. Among the problem keyword arguments, and among the properties of a
+   [`Trajectory`](@ref), a `fw_prop_` or `bw_prop_` prefix overrides the
+   `prop_` prefix.
+
+For example, a `prop_method` problem keyword argument overrides a
+`fw_prop_method` property of a [`Trajectory`](@ref).
 
 Note that the propagation method for each propagation must be specified. In
 most cases, it is sufficient (and recommended) to pass a global `prop_method`
-problem keyword argument.
+problem keyword argument. Since this overrides any per-trajectory setting, use
+trajectory properties instead if different trajectories require different
+propagation methods. Krotov's method requires a piecewise propagation method
+(see [`init_prop`](@extref QuantumPropagators.init_prop)); other methods are
+rejected.
 """
 optimize(problem, method::Val{:Krotov}) = optimize_krotov(problem)
 optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
@@ -159,7 +188,7 @@ optimize(problem, method::Val{:krotov}) = optimize_krotov(problem)
 See [`optimize(problem; method=Krotov, kwargs...)`](@ref optimize(::Any, ::Val{:krotov})).
 """
 function optimize_krotov(problem)
-    callback = get(problem.kwargs, :callback, (args...) -> nothing)
+    callback = something(get(problem.kwargs, :callback, nothing), (args...) -> nothing)
     if haskey(problem.kwargs, :update_hook) || haskey(problem.kwargs, :info_hook)
         msg = "The `update_hook` and `info_hook` arguments have been superseded by the `callback` argument"
         throw(ArgumentError(msg))
@@ -385,7 +414,7 @@ function update_result!(wrk::KrotovWrk, i::Int64)
         res.J_T = J_T(res.states, wrk.trajectories)
     end
     (i > 0) && (res.iter = i)
-    if i >= res.iter_stop
+    if res.iter >= res.iter_stop
         res.converged = true
         res.message = "Reached maximum number of iterations"
         # Note: other convergence checks are done in user-supplied

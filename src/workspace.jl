@@ -129,7 +129,6 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose = false)
     # TODO: second forward storage only if second order
     fw_storage2 = [init_storage(traj.initial_state, tlist) for traj in trajectories]
     bw_storage = [init_storage(traj.initial_state, tlist) for traj in trajectories]
-    kwargs[:piecewise] = true  # only accept piecewise propagators
     _prefixes = ["prop_", "fw_prop_"]
     fw_prop_kwargs = [Dict{Symbol,Any}() for _ = 1:N]
     bw_prop_kwargs = [Dict{Symbol,Any}() for _ = 1:N]
@@ -142,7 +141,9 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose = false)
             _prefixes,
             _filter_kwargs = true,
             _kwargs_dict = fw_prop_kwargs[k],
-            kwargs...
+            kwargs...,
+            # After `kwargs...`, so that these cannot be overridden:
+            fw_prop_piecewise = true,  # only accept piecewise propagators
         ) for (k, traj) in enumerate(trajectories)
     ]
     _prefixes = ["prop_", "bw_prop_"]
@@ -154,9 +155,11 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose = false)
             _msg = "Initializing bw-prop of trajectory $k",
             _prefixes,
             _filter_kwargs = true,
-            bw_prop_backward = true,  # will filter to `backward=true`
             _kwargs_dict = bw_prop_kwargs[k],
-            kwargs...
+            kwargs...,
+            # After `kwargs...`, so that these cannot be overridden:
+            bw_prop_backward = true,  # will filter to `backward=true`
+            bw_prop_piecewise = true,  # only accept piecewise propagators
         ) for (k, traj) in enumerate(adjoint_trajectories)
     ]
     J_T_takes_tau = false

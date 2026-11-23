@@ -22,6 +22,11 @@ unicodeplots()
         include("test_empty_optimization.jl")
     end
 
+    println("\n* Workspace (test_workspace.jl)")
+    @time @safetestset "Workspace" begin
+        include("test_workspace.jl")
+    end
+
     println("\n* Iterations (test_iterations.jl)")
     @time @safetestset "Iterations" begin
         include("test_iterations.jl")
