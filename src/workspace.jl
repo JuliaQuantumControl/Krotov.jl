@@ -108,8 +108,10 @@ function KrotovWrk(problem::QuantumControl.ControlProblem; verbose = false)
         @info "Continuing previous optimization"
         result = kwargs[:continue_from]
         if !(result isa KrotovResult)
-            # account for continuing from a different optimization method
-            result = convert(KrotovResult, result)
+            # Account for continuing from a different optimization method. The
+            # converted result may share arrays with the original `result`,
+            # which must not be modified (QuantumControl.jl#124).
+            result = convert(KrotovResult, deepcopy(result))
         end
         result.iter_stop = get(kwargs, :iter_stop, 5000)
         result.converged = false
