@@ -123,15 +123,18 @@ The following keyword arguments are supported (with default values):
   `Set(["iter.", "J_T", "∫gₐ(t)dt", "J", "ΔJ_T", "ΔJ", "secs"])`.
 * `callback`: A function (or tuple of functions) that receives the
   [Krotov workspace](@ref KrotovWrk), the iteration number, the list of updated
-  pulses, and the list of guess pulses as positional arguments. The function
-  may return a tuple of values which are stored in the
-  [`KrotovResult`](@ref) object `result.records`. The function can also mutate
-  any of its arguments, in particular the updated pulses. This may be used,
-  e.g., to apply a spectral filter to the updated pulses or to perform
-  similar manipulations. Note that `print_iters=true` (default) adds an
-  automatic callback to print information after each iteration. With
-  `store_iter_info`, that callback automatically stores a subset of the
-  printed information.
+  pulses, and the list of guess pulses as positional arguments. It is called
+  once for the guess, with an iteration number of 0, and then after each
+  iteration. The guess is iteration 0 even if the optimization starts at a
+  later iteration (`iter_start` or `continue_from`). In that case, the actual
+  starting iteration is `wrk.result.iter`. The function may return a tuple of
+  values which are stored in the [`KrotovResult`](@ref) object
+  `result.records`. The function can also mutate any of its arguments, in
+  particular the updated pulses. This may be used, e.g., to apply a spectral
+  filter to the updated pulses or to perform similar manipulations. Note that
+  `print_iters=true` (default) adds an automatic callback to print information
+  after each iteration. With `store_iter_info`, that callback automatically
+  stores a subset of the printed information.
 * `check_convergence`: A function to check whether convergence has been
   reached. Receives a [`KrotovResult`](@ref) object `result`, and should set
   `result.converged` to `true` and `result.message` to an appropriate string in
