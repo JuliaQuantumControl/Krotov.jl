@@ -65,6 +65,7 @@ Internal workspace containing:
   - `test_tls_optimization.jl`: Two-level system optimization
   - `test_pulse_optimization.jl`: General pulse optimization
   - `test_iterations.jl`: Iteration mechanics
+  - `test_workspace.jl`: Propagator keyword arguments in the workspace
   - `test_empty_optimization.jl`: Edge cases
 
 ## Development Notes
