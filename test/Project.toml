@@ -16,7 +16,6 @@ UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [sources]
 Krotov = {path = ".."}
-QuantumControl = {url = "https://github.com/JuliaQuantumControl/QuantumControl.jl", rev = "master"}
 
 [compat]
 julia = "1.10"

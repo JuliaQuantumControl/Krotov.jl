@@ -10,7 +10,6 @@ QuantumPropagators = "7bf12567-5742-4b91-a078-644e72a65fc1"
 
 [sources]
 Krotov = {path = ".."}
-QuantumControl = {url = "https://github.com/JuliaQuantumControl/QuantumControl.jl", rev = "master"}
 
 [compat]
 Documenter = "1.1"
