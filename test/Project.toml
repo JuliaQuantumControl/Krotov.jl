@@ -16,6 +16,7 @@ UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [sources]
 Krotov = {path = ".."}
+GRAPE = {url = "https://github.com/JuliaQuantumControl/GRAPE.jl", rev = "master"}
 
 [compat]
 julia = "1.10"
